@@ -2,10 +2,11 @@ import type { Metadata } from "next";
 import { Suspense } from "react";
 import { JetBrains_Mono, Space_Mono } from "next/font/google";
 import "./globals.css";
-import Nav from "@/components/Nav";
+import Navbar from "@/components/Navbar";
 import Breadcrumbs from "@/components/Breadcrumbs";
 import Footer from "@/components/Footer";
 import GaTag from "@/components/GaTag";
+import SmoothScroll from "@/components/SmoothScroll";
 import { organizationSchema, siteUrl } from "@/lib/seo";
 import { site } from "@/content/copy";
 
@@ -37,7 +38,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en">
+    <html lang="en" suppressHydrationWarning>
       <head>
         <script dangerouslySetInnerHTML={{ __html: themeBoot }} />
       </head>
@@ -46,8 +47,9 @@ export default function RootLayout({
           type="application/ld+json"
           dangerouslySetInnerHTML={{ __html: JSON.stringify(organizationSchema()) }}
         />
-        <Nav />
+        <Navbar />
         <Breadcrumbs />
+        <SmoothScroll />
         {children}
         <Footer />
         <Suspense fallback={null}>
