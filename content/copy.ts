@@ -24,9 +24,9 @@ export const nav = {
 export const hero = {
   tag: "Local MCP policy proxy",
   titleLines: [
-    { text: "Your agent", accent: false, dim: false },
-    { text: "policed locally.", accent: true, dim: false },
-    { text: "zero cloud routing.", accent: false, dim: true },
+    { text: "Your agent", accent: false, dim: false, highlight: false },
+    { text: "policed locally.", accent: true, dim: false, highlight: false },
+    { text: "zero cloud routing.", accent: false, dim: true, highlight: true },
   ],
   sub: "Context Fence sits between your AI agent and its MCP tools on your own machine. Every action a schema check, not an LLM judge, so it stays under 10ms. Nothing leaves your machine. That is the point.",
   primaryCta: { label: "Get early access", href: "/#early-access" },
@@ -59,12 +59,50 @@ export const stats = [
 
 export const problem = {
   eyebrow: "// why this exists",
-  title: "One agent read a .env file. Keys went out the door.",
-  body: [
-    "On July 18, someone's coding agent read their .env file, then called a GitHub MCP tool with what it had just read. The keys left the machine inside an API payload, and nothing on the machine objected. The agent was doing what agents do: everything it was asked, including the parts nobody asked for.",
-    "The pattern is not new. But the response has been wrong everywhere: route all agent traffic through a cloud gateway and hope the vendor's list of bad things is good enough.",
-    "We think the guard should live where the agent lives. On your machine, checking every call before it happens, at the speed of a schema check, not at the speed of a jury.",
+  title: ["One agent read a .env file.", "Keys went out the door."],
+  lead: "The July 18 incident — what happened, why the usual fix doesn't fix it, and where the guard actually lives.",
+  narrative: [
+    { text: "On July 18, a coding agent read the .env file it was never asked to open, then sent what it had read across the wire. " },
+    { text: "The keys left the machine inside an API payload.", hl: "incident" },
+    { text: " The usual fix — a cloud gateway and a vendor's deny-list — would have hoped for the best: " },
+    { text: "every call leaves your machine first.", hl: "wrong" },
+    { text: " Ours doesn't. The guard lives where the agent lives: " },
+    { text: "a gate at the boundary. Nothing leaves.", hl: "right" },
   ],
+  times: ["00:02", "00:06", "00:10"],
+  incident: {
+    num: "01",
+    label: "the incident",
+    title: "The agent did what agents do.",
+    body: "Everything it was asked — including the parts nobody asked for. Nothing on the machine objected. The keys left inside an API payload.",
+    bullets: [
+      "Everything it was asked — including the parts nobody asked for.",
+      "Nothing on the machine objected.",
+      "The keys left inside an API payload.",
+    ],
+  },
+  wrong: {
+    num: "02",
+    label: "the wrong response",
+    title: "Cloud gateway, hope, and a vendor's list.",
+    body: "Route all agent traffic through a cloud gateway and hope the vendor's list of bad things is good enough. Every call leaves your machine first.",
+    bullets: [
+      "Every call leaves your machine first.",
+      "You trust a deny-list you never see.",
+      "Your agent's traffic is someone else's data.",
+    ],
+  },
+  right: {
+    num: "03",
+    label: "the right response",
+    title: "The guard lives where the agent lives.",
+    body: "On your machine, checking every call before it happens — at the speed of a schema check, not at the speed of a jury.",
+    bullets: [
+      "Local policy, zero cloud routing.",
+      "Schema checks, not LLM judges.",
+      "Under 10ms per call.",
+    ],
+  },
 };
 
 export type FeatureIconName = "lock" | "shield" | "scan" | "list" | "pin" | "cloud";
@@ -130,88 +168,108 @@ export const features: {
 export const cases = {
   eyebrow: "// case studies",
   title: "Where it is being tested",
-  lead: "No live customers yet. These are the two shapes of shop we built it for, with what internal testing showed so far.",
+  lead: "No live customers yet. These are the four shapes of shop we built it for, with what internal testing showed so far.",
+  footnote: "bench notes · july 2026",
   cards: [
     {
+      id: "case 01",
+      file: "agency-mcp",
+      title: "agency mcp",
       role: "Agency running client MCP servers",
-      note: "Internal test",
-      blocks: [
+      status: "internal test",
+      stages: [
         {
-          label: "// problem",
+          label: "the problem",
           text: "One team of agents was the attack surface for a dozen client repos at once. One wrong read, and the client's secrets move with it.",
+          tone: "problem",
         },
         {
-          label: "// what Context Fence did",
-          text: "Per-client policy files on a shared machine, so a denial for one repo does not get overruled by another repo's rules.",
+          label: "what the fence did",
+          text: "Per-client policy files on a shared machine, so a denial for one repo is not overruled by another repo's rules.",
+          tone: "fence",
         },
         {
-          label: "// outcome",
-          text: "Internal testing showed every denied call logged with the rule that fired, and zero changes to how the agents themselves run.",
+          label: "the finding",
+          text: "Every denied call logged with the rule that fired. The agents run exactly as before.",
+          tone: "finding",
         },
       ],
+      signals: ["per-client policies", "every denial logged", "zero agent changes"],
     },
     {
+      id: "case 02",
+      file: "solo-claude",
+      title: "solo claude",
       role: "Solo dev shipping with Claude Code agents",
-      note: "Internal test",
-      blocks: [
+      status: "internal test",
+      stages: [
         {
-          label: "// problem",
-          text: "One person, one machine, an agent with broad tool access and a couple of production keys in env vars that have to stay in env vars.",
+          label: "the problem",
+          text: "One person, one machine, an agent with broad tool access, and production keys in env vars that have to stay in env vars.",
+          tone: "problem",
         },
         {
-          label: "// what Context Fence did",
-          text: "A default-deny policy on the risky calls: git push to non-allowlisted remotes, writes outside the project, reads of env files.",
+          label: "what the fence did",
+          text: "Default-deny on the risky calls: git push to non-allowlisted remotes, writes outside the project, reads of env files.",
+          tone: "fence",
         },
         {
-          label: "// outcome",
-          text: "Internal testing showed the agent tripping the fence in the first hour and the SQLite log making it obvious which rule and which line of output.",
+          label: "the finding",
+          text: "Tripped the fence in the first hour. The SQLite log named the rule and the line of output.",
+          tone: "finding",
         },
       ],
-    },
-  ],
-};
-
-export const reviews = {
-  eyebrow: "// early signal",
-  title: "What testers said",
-  lead: "",
-  items: [
-    {
-      stars: 5,
-      text: "The thing I kept checking was whether it slowed anything down. It did not. 10ms on a call an agent makes a hundred times a minute is nothing.",
-      author: "Backend eng, Series A startup",
+      signals: ["tripped in hour one", "default-deny", "sqlite log"],
     },
     {
-      stars: 4,
-      text: "I do not love another config file on my machine. I do love that the leaked-key story is impossible in the first fifteen minutes of setup.",
-      author: "Platform eng, infra consultancy",
+      id: "case 03",
+      file: "mcp-gateway",
+      title: "mcp gateway",
+      role: "Gateway fronting every MCP endpoint they expose",
+      status: "internal test",
+      stages: [
+        {
+          label: "the problem",
+          text: "A production gateway with MCP endpoints pointed at internal files. One missing allowlist entry read like an open door.",
+          tone: "problem",
+        },
+        {
+          label: "what the fence did",
+          text: "Each tool got a per-session allowlist. Requests outside it were denied before any tool code ran.",
+          tone: "fence",
+        },
+        {
+          label: "the finding",
+          text: "The denied requests showed up in the log as one repeating line: the same probe, four different paths.",
+          tone: "finding",
+        },
+      ],
+      signals: ["per-session allowlists", "denied before tools run", "probes logged"],
     },
     {
-      stars: 5,
-      text: "Watched it strip a DATABASE_URL out of a file read before the model ever saw it. That single screen sold me.",
-      author: "Dev tooling lead, agency",
-    },
-  ],
-};
-
-export const team = {
-  eyebrow: "// founders",
-  title: "The two people who shipped it",
-  lead: "Met May 2026 at IIT(ISM) Dhanbad. Both build the thing they were using when the July 18 incident happened.",
-  members: [
-    {
-      name: "Aditya",
-      role: "Founder & CEO",
-      bio: "Codes the thing and keeps the architecture honest. Decided early that a security product with a cloud dependency is a security product with a second attack surface.",
-      photo: "/placeholders/team-aditya.png",
-      alt: "Aditya, Founder and CEO of Context Fence",
-    },
-    {
-      name: "Saniya",
-      role: "Co-founder",
-      bio: "Owns the implementation stack and the pipeline. The one who points out when a feature would be impressive instead of necessary.",
-      photo: "/placeholders/team-saniya.png",
-      alt: "Saniya, Co-founder of Context Fence",
+      id: "case 04",
+      file: "repl-auth",
+      title: "repl auth",
+      role: "A REPL that could reach the vault",
+      status: "internal test",
+      stages: [
+        {
+          label: "the problem",
+          text: "A REPL with a path into the vault. The first command anyone ran was: try to read the auth file.",
+          tone: "problem",
+        },
+        {
+          label: "what the fence did",
+          text: "Commands outside the session scope were refused. The vault path never reached the model.",
+          tone: "fence",
+        },
+        {
+          label: "the finding",
+          text: "The refusal arrived as plain text in the REPL. No retry, no workaround, no special case.",
+          tone: "finding",
+        },
+      ],
+      signals: ["session-scoped commands", "vault never reached", "plain-text refusal"],
     },
   ],
 };
@@ -389,6 +447,67 @@ export const blog = {
   title: "Blog",
   updated: "No posts yet",
   body: "Nothing here yet. First post will be the July 18 incident breakdown — what the agent did, where the guard should have been, and why schema checks beat vibe checks before they ship.",
+};
+
+export const issue = {
+  eyebrow: "// the current issue",
+  title: "The exposure gap keeps widening",
+  lead: "The SDK now clocks tens of millions of monthly downloads. The number of exposed, unsecured instances climbs right alongside it — adoption without a fence just makes the attack surface bigger.",
+  footnote: "telemetry · nov 2024 → mar 2026",
+  seriesDownloads: "sdk downloads (monthly)",
+  seriesExposed: "exposed unsecured instances",
+  data: [
+    { date: "Nov 2024", downloads: 0, exposed: 0 },
+    { date: "Apr 2025", downloads: 8, exposed: 5 },
+    { date: "Dec 2025", downloads: 10, exposed: 60 },
+    { date: "Mar 2026", downloads: 97, exposed: 200 },
+  ],
+  findings: {
+    title: "share of public servers with vulnerabilities",
+    range: "hasan et al. · 1,899 servers · 2025",
+    note: "8 vulnerability classes found — only 3 overlap traditional software",
+    data: [
+      { name: "general vulnerabilities", value: 7.2 },
+      { name: "tool poisoning", value: 5.5 },
+      { name: "credential exposure", value: 3.6 },
+    ],
+  },
+  press: {
+    eyebrow: "// the evidence",
+    dateline: "four independent studies · 2025",
+    articles: [
+      {
+        kicker: "empirical study · n = 1,899",
+        title: "One in eighteen public MCP servers describes its tools dishonestly",
+        lede: "A first-of-its-kind scan of 1,899 open-source servers finds 5.5% carry poisoned tool descriptions and 3.6% hard-code live credentials — eight vulnerability classes, only three overlapping traditional software.",
+        byline: "hasan et al. · queen's university · acm tosem",
+        href: "https://arxiv.org/abs/2506.13538",
+        featured: true,
+      },
+      {
+        kicker: "agentic audit · live exploits",
+        title: "Auditors coerce flagship LLMs into code execution and credential theft",
+        lede: "A safety audit demonstrates models readily driven to malicious code execution and remote access through ordinary MCP tool calls — then ships an automated scanner to catch it before deployment.",
+        byline: "radosevich & halloran · arxiv 2504.03767",
+        href: "https://arxiv.org/abs/2504.03767",
+      },
+      {
+        kicker: "proof of concept · cross-tool",
+        title: "A 'weather' server walks off with bank account balances",
+        lede: "Two researchers, free web tools, no infrastructure: a disguised server discovers legitimate banking tools and exfiltrates them. Undergraduate-level Python is the whole skill bar.",
+        byline: "croce & south · arxiv 2507.19880",
+        href: "https://arxiv.org/abs/2507.19880",
+      },
+      {
+        kicker: "threat model · taxonomy",
+        title: "The MCP attack surface, mapped end-to-end",
+        lede: "Sixteen distinct security risks across four attacker classes, each confirmed with a working exploit — and a roadmap for the protocol to fix itself.",
+        byline: "hou et al. · huazhong univ. · acm tosem",
+        href: "https://arxiv.org/abs/2503.23278",
+      },
+    ],
+    index: "arxiv index · 2506.13538 · 2504.03767 · 2507.19880 · 2503.23278",
+  },
 };
 
 export const privacy = {
