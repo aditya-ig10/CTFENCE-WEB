@@ -11,6 +11,16 @@ function prefersReduced(): boolean {
   );
 }
 
+type ViewTransition = { finished: Promise<void> };
+
+function startViewTransition(update: () => void): ViewTransition | null {
+  const doc = document as Document & {
+    startViewTransition?: (cb: () => void) => ViewTransition;
+  };
+  if (typeof doc.startViewTransition !== "function") return null;
+  return doc.startViewTransition(update);
+}
+
 export default function ThemeToggle() {
   const [theme, setTheme] = useState<Theme>("dark");
   const boxRef = useRef<HTMLSpanElement>(null);
@@ -24,12 +34,43 @@ export default function ThemeToggle() {
 
   function toggle() {
     const next: Theme = theme === "dark" ? "light" : "dark";
-    setTheme(next);
-    applyTheme(next);
-    setStoredTheme(next);
-
+    const root = document.documentElement;
     const box = boxRef.current;
-    if (prefersReduced() || !box) return;
+
+    // clip-circle reveal originates from the toggle itself; the
+    // vt-reverse class makes the old snapshot collapse away when
+    // going dark -> light (see the vt-* rules in globals.css)
+    const rect = box?.getBoundingClientRect();
+    if (rect) {
+      root.style.setProperty("--vt-x", `${rect.left + rect.width / 2}px`);
+      root.style.setProperty("--vt-y", `${rect.top + rect.height / 2}px`);
+    }
+    root.classList.add("vt-active");
+    if (next === "light") root.classList.add("vt-reverse");
+
+    const swap = () => {
+      setTheme(next);
+      applyTheme(next);
+      setStoredTheme(next);
+    };
+    const finish = () => root.classList.remove("vt-active", "vt-reverse");
+
+    if (prefersReduced()) {
+      swap();
+      finish();
+      return;
+    }
+
+    const vt = startViewTransition(swap);
+    if (vt) {
+      vt.finished.then(finish).catch(finish);
+    } else {
+      swap();
+      finish();
+    }
+
+    // glyph crossfade + spin
+    if (!box) return;
     const sun = box.querySelector("[data-glyph=sun]");
     const moon = box.querySelector("[data-glyph=moon]");
     if (!sun || !moon) return;
@@ -58,10 +99,9 @@ export default function ThemeToggle() {
       aria-label={label}
       title={label}
     >
-      <span ref={boxRef} className="relative inline-flex w-4 h-4">
+      <span ref={boxRef} className="theme-toggle-glyphs">
         <svg
           data-glyph="moon"
-          className="absolute inset-0"
           style={{ opacity: theme === "dark" ? 1 : 0 }}
           width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true"
         >
@@ -69,7 +109,6 @@ export default function ThemeToggle() {
         </svg>
         <svg
           data-glyph="sun"
-          className="absolute inset-0"
           style={{ opacity: theme === "dark" ? 0 : 1 }}
           width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true"
         >
