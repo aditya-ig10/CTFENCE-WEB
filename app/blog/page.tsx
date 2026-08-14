@@ -1,20 +1,13 @@
-import { blog } from "@/content/copy";
+import BlogComingSoon from "@/components/BlogComingSoon";
 import { baseMetadata } from "@/lib/seo";
 
 export const metadata = baseMetadata({
   title: "Blog",
-  description: "Context Fence blog. First post will be the July 18 incident breakdown.",
+  description:
+    "Context Fence press room. Coming soon: the July 18 incident breakdown, schema checks vs. vibe checks, and how the evidence survey was run.",
   path: "/blog",
 });
 
 export default function BlogPage() {
-  return (
-    <main className="prose-page">
-      <h1>{blog.title}</h1>
-      <div className="updated">{blog.updated}</div>
-      <div className="prose-body">
-        <p>{blog.body}</p>
-      </div>
-    </main>
-  );
+  return <BlogComingSoon />;
 }
