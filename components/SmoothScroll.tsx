@@ -59,7 +59,7 @@ export default function SmoothScroll() {
       // section headers + standalone blocks rise in
       gsap.utils
         .toArray<HTMLElement>(
-          ".section-eyebrow, .section-title, .section-lead, .footer, .prose-page h1, .prose-page .updated"
+          ".section-eyebrow, .section-title, .section-lead, .footer, .prose-page h1, .prose-page .updated, .blog-hero, .ticker, .mail-cta"
         )
         .forEach((el) => {
           gsap.fromTo(
@@ -78,7 +78,7 @@ export default function SmoothScroll() {
       // card grids + lists stagger in
       gsap.utils
         .toArray<HTMLElement>(
-          ".cap-grid, .plans, .stats, .faq-list, .signup-form, .prose-body, .thanks-box, .replay-scenes"
+          ".cap-grid, .plans, .stats, .signup-form, .prose-body, .thanks-box, .replay-scenes, .draft-grid, .acc-list"
         )
         .forEach((group) => {
           gsap.fromTo(
