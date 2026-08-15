@@ -3,7 +3,6 @@ import Stats from "@/components/Stats";
 import Problem from "@/components/Problem";
 import Features from "@/components/Features";
 import CaseStudies from "@/components/CaseStudies";
-import IssueChart from "@/components/IssueChart";
 import Pricing from "@/components/Pricing";
 import Faq from "@/components/Faq";
 import SignupForm from "@/components/SignupForm";
@@ -26,7 +25,6 @@ export default function Home() {
       <Problem />
       <Features />
       <CaseStudies />
-      <IssueChart />
       <Pricing />
       <Faq />
       <SignupForm />

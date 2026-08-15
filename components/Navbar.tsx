@@ -20,38 +20,29 @@ const iconProps = {
   "aria-hidden": true,
 };
 
-function ProductIcon() {
-  return (
-    <svg {...iconProps}>
-      <path d="M12 3l9 5v8l-9 5-9-5V8l9-5z" />
-      <path d="M12 13l9-5M12 13L3 8M12 13v8" />
-    </svg>
-  );
-}
-
-function PricingIcon() {
-  return (
-    <svg {...iconProps}>
-      <path d="M20.6 13.4L13.4 20.6a2 2 0 0 1-2.8 0L2 12V2h10l8.6 8.6a2 2 0 0 1 0 2.8z" />
-      <circle cx="7.5" cy="7.5" r="1.5" />
-    </svg>
-  );
-}
-
-function DocsIcon() {
-  return (
-    <svg {...iconProps}>
-      <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20V2H6.5A2.5 2.5 0 0 0 4 4.5v15z" />
-      <path d="M4 19.5A2.5 2.5 0 0 0 6.5 22H20v-5" />
-    </svg>
-  );
-}
-
 function BlogIcon() {
   return (
     <svg {...iconProps}>
       <path d="M12 20h9" />
       <path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z" />
+    </svg>
+  );
+}
+
+function EvidenceIcon() {
+  return (
+    <svg {...iconProps}>
+      <path d="M4 22h16" />
+      <path d="M6 18V8M12 18V4M18 18v-6" />
+    </svg>
+  );
+}
+
+function DownloadsIcon() {
+  return (
+    <svg {...iconProps}>
+      <path d="M12 3v12M6 11l6 6 6-6" />
+      <path d="M4 21h16" />
     </svg>
   );
 }
@@ -86,9 +77,8 @@ export default function Navbar() {
   };
 
   const icons: Record<string, React.ReactNode> = {
-    Product: <ProductIcon />,
-    Pricing: <PricingIcon />,
-    Docs: <DocsIcon />,
+    Evidence: <EvidenceIcon />,
+    Downloads: <DownloadsIcon />,
     Blog: <BlogIcon />,
   };
 
