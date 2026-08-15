@@ -32,7 +32,7 @@ export default function SignupForm() {
         <div className="section-eyebrow">{signup.eyebrow}</div>
         <h2 className="section-title" id="signup-title" style={{ marginBottom: 0 }}>{signup.title}</h2>
         <p className="section-lead">{signup.lead}</p>
-        <form className="signup-form" onSubmit={submit} aria-label="Early access request">
+        <form className="signup-form" onSubmit={submit} aria-label="Newsletter subscription">
           <label htmlFor="early-access-email" className="sr-only">
             Work email
           </label>

@@ -7,6 +7,7 @@ import Breadcrumbs from "@/components/Breadcrumbs";
 import Footer from "@/components/Footer";
 import GaTag from "@/components/GaTag";
 import SmoothScroll from "@/components/SmoothScroll";
+import CookieToast from "@/components/CookieToast";
 import { organizationSchema, siteUrl } from "@/lib/seo";
 import { site } from "@/content/copy";
 
@@ -50,6 +51,7 @@ export default function RootLayout({
         <Navbar />
         <Breadcrumbs />
         <SmoothScroll />
+        <CookieToast />
         {children}
         <Footer />
         <Suspense fallback={null}>
