@@ -13,12 +13,50 @@ export const site = {
 
 export const nav = {
   links: [
-    { label: "Product", href: "/#features" },
-    { label: "Pricing", href: "/#pricing" },
-    { label: "Docs", href: "/docs" },
+    { label: "Evidence", href: "/evidence" },
+    { label: "Downloads", href: "/downloads" },
     { label: "Blog", href: "/blog" },
   ],
-  cta: { label: "Get early access", href: "/#early-access" },
+  cta: { label: "Download now", href: "/downloads" },
+};
+
+// download links sourced from RELEASE.md (Documents/GitHub/mcp-firewall/RELEASE.md)
+// and the live GitHub releases v1.1.6-c (gh release view, aug 6 2026).
+// windows builds live in aditya-ig10/context-fence-windows (mirrored from the
+// main context-fence release; every exe is unsigned by design).
+export const downloads = {
+  version: "1.1.6-c",
+  released: "aug 6, 2026",
+  mac: {
+    label: "macOS · universal dmg",
+    sub: "Universal dmg for Intel and Apple silicon — drag to /Applications.",
+    href: "https://github.com/aditya-ig10/homebrew-context-fence/releases/download/v1.1.6-c/Context-Fence-1.1.6-c-universal.dmg",
+    size: "276 mb",
+    sha256: "53112bd8148ead3e7d7ac8dec54e1a12ba88dc1472a530653f59887474100cb0",
+    cta: "Download",
+    unsigned:
+      "unsigned · ad-hoc signed, not notarized — if Gatekeeper blocks it, right-click → open.",
+  },
+  brew: {
+    label: "macOS · homebrew",
+    sub: "maintained cask from the aditya-ig10/context-fence tap",
+    install: "brew install aditya-ig10/context-fence/context-fence",
+    update: "brew update && brew upgrade --cask context-fence",
+  },
+  windows: {
+    label: "Windows x64",
+    sub: "NSIS installer, per-user install — the full app, no store required.",
+    href: "https://github.com/aditya-ig10/context-fence-windows/releases/download/v1.1.6-c/Context-Fence-Setup-1.1.6-c-x64.exe",
+    size: "113.7 mb",
+    sha256: "8ebe7e481545cda2bd4f5ab1203527fe67d8ec0882475ef56d0edce9d32d0ef3",
+    cta: "Download",
+    unsigned:
+      "unsigned · expect a SmartScreen prompt — more info → run anyway, then verify the sha256.",
+  },
+  cli: {
+    label: "CLI",
+    sub: "ships inside the app — a standalone cf binary is not packaged yet",
+  },
 };
 
 export const hero = {
@@ -29,7 +67,7 @@ export const hero = {
     { text: "zero cloud routing.", accent: false, dim: true, highlight: true },
   ],
   sub: "Context Fence sits between your AI agent and its MCP tools on your own machine. Every action a schema check, not an LLM judge, so it stays under 10ms. Nothing leaves your machine. That is the point.",
-  primaryCta: { label: "Get early access", href: "/#early-access" },
+  primaryCta: { label: "Download now", href: "/downloads" },
   secondaryCta: { label: "Read the docs", href: "/docs" },
   slaBadge: site.slaReply,
   terminal: {
@@ -276,15 +314,14 @@ export const cases = {
 
 export type Plan = {
   name: string;
-  price: string;
-  sup: string;
+  priceUsd: number;
+  priceUsdMax?: number;
   period: string;
   badge?: string;
+  chip?: string;
+  status: "ready" | "soon";
   features: string[];
   cta: { label: string; href: string; primary: boolean };
-  count?: number;
-  countPrefix?: string;
-  countSuffix?: string;
 };
 
 export const pricing: {
@@ -297,46 +334,44 @@ export const pricing: {
 } = {
   eyebrow: "// pricing",
   title: "Free at the edge. Paid when you want a console.",
-  lead: "The local proxy is the product for a solo machine and costs nothing. The hosted control plane — the part that is not built yet — is what has a price.",
+  lead: "The local core is free and it works today. Teams and Enterprise run on the hosted console — still in build — and the prices below are the plan.",
   plans: [
     {
       name: "Free",
-      price: "$0",
-      sup: "",
-      period: "forever, local core",
+      priceUsd: 0,
+      period: "forever · local core",
+      chip: "ships today",
+      status: "ready",
       features: [
         "Local MCP policy proxy",
         "YAML policies, unlimited rules",
         "Secret stripping + injection detection",
         "SQLite audit log",
       ],
-      cta: { label: "cf init", href: "/#early-access", primary: false },
+      cta: { label: "Start for free", href: "/#early-access", primary: false },
     },
     {
       name: "Teams",
-      price: "$25",
-      sup: "$",
-      period: "per seat per month",
+      priceUsd: 25,
+      period: "per seat / month",
       badge: "Most popular",
-      count: 25,
-      countPrefix: "$",
-      countSuffix: "",
+      chip: "coming soon",
+      status: "soon",
       features: [
         "Everything in Free",
         "Shared policy templates",
         "Audit log export",
         "Slack alerting",
       ],
-      cta: { label: "Get early access", href: "/#early-access", primary: true },
+      cta: { label: "Join the waitlist", href: "/#early-access", primary: true },
     },
     {
       name: "Enterprise",
-      price: "$500-2000",
-      sup: "$",
-      period: "per month, custom",
-      count: 500,
-      countPrefix: "$",
-      countSuffix: "-2000",
+      priceUsd: 500,
+      priceUsdMax: 2000,
+      period: "per month · custom",
+      chip: "coming soon",
+      status: "soon",
       features: [
         "Everything in Teams",
         "SSO / SAML",
@@ -346,13 +381,19 @@ export const pricing: {
       cta: { label: "Contact us", href: "mailto:hello@contextfence.dev", primary: false },
     },
   ],
-  finePrint: "Prices are pre-launch placeholders. The hosted control plane does not exist yet; the local proxy does. Read how data is handled in the privacy policy.",
+  finePrint: "Prices are planned for the hosted console, which is still in build. The local core is free and ships today. Prices are shown in your local currency, converted from USD. Read how data is handled in the privacy policy.",
   finePrintLink: { label: "privacy policy", href: "/privacy" },
 };
 
 export const faq = {
   eyebrow: "// faq",
   title: "Questions a security engineer actually asks",
+  lead: "Five answers, no hedging. If we have not shipped it yet, we say so.",
+  more: {
+    text: "Still curious?",
+    cta: "Subscribe to the newsletter",
+    href: "/#early-access",
+  },
   items: [
     {
       q: "Does my agent's data ever leave my machine?",
@@ -377,36 +418,126 @@ export const faq = {
   ],
 };
 
+export const team = {
+  barLeft: "the people edition",
+  barMid: "sunday, august 16, 2026",
+  barRight: "vol. i — no. 004 · price: 5¢",
+  nameplate: "The Context Fence",
+  tagline: "five hands. one fence. printed for your machine.",
+  ticker: [
+    "breaking — the fence is holding",
+    "agent traffic inspected at the protocol layer",
+    "all local — nothing leaves the machine",
+    "the desk is warm, the typewriter is typing",
+    "est. to keep agents honest",
+  ],
+  headline: "Five Hands Hold the Fence",
+  kicker: "staff profiles · the people edition",
+  byline: "By The Context Fence Staff — The Desk",
+  lead: "Context Fence is a machine, but it is not a machine alone. Five people built it, and five people keep it honest: two founders at the protocol layer, three more holding the build together. The desk asked each of them what they do, and — for once — got straight answers.",
+  founders: [
+    {
+      name: "Aditya Srivastava",
+      role: "[Founder]",
+      headline: "The founder who built the runtime",
+      tagline: "Final-year CS undergraduate, SRM.",
+      bio: "Builds the runtime proxy, policy engine, and audit pipeline, focused on making agent traffic inspectable and enforceable at the protocol layer.",
+      quote:
+        "Make agent traffic inspectable and enforceable at the protocol layer — that is the whole bet.",
+      caption: "Mr. Srivastava at the runtime. Nothing leaves the machine.",
+      photo: {
+        dark: "/pfps/aditya/aditya_dark.jpeg",
+        light: "/pfps/aditya/aditya_light.jpeg",
+      },
+    },
+    {
+      name: "Saniya Saw",
+      role: "[Co-founder]",
+      headline: "The co-founder who laid the stack",
+      tagline: "Final-year CS undergraduate, VIT.",
+      bio: "Built the core implementation stack and pipeline design on Context Fence.",
+      quote: "Pipeline design is where the fence starts. The stack is the story.",
+      caption: "Ms. Saw with the pipeline. Every call passes through here.",
+      photo: {
+        dark: "/pfps/saniya/saniya_dark.jpeg",
+        light: "/pfps/saniya/saniya_light.jpeg",
+      },
+    },
+  ],
+  boardEyebrow: "the board",
+  boardLead:
+    "Operations, research, and the testing that keeps every release boring — the three hands that hold the build up.",
+  crew: [
+    {
+      name: "Ashray S.",
+      role: "Leads Business Operations",
+      blurb: "Keeps the books, the ships, and the meetings honest.",
+      photo: {
+        dark: "/pfps/ashray/ashray_dark.jpeg",
+        light: "/pfps/ashray/ashray_light.jpeg",
+      },
+    },
+    {
+      name: "Ayush V.",
+      role: "Leads Research & Development",
+      blurb: "Turns research questions into working systems.",
+      photo: {
+        dark: "/pfps/ayush/ayush_dark.jpeg",
+        light: "/pfps/ayush/ayush_light.jpeg",
+      },
+    },
+    {
+      name: "Samridhi K.",
+      role: "Owns Debugging & Testing",
+      blurb: "Breaks builds on purpose so the users never have to.",
+      photo: {
+        dark: "/pfps/samridhi/samridhi_dark.jpeg",
+        light: "/pfps/samridhi/samridhi_light.jpeg",
+      },
+    },
+  ],
+  classifieds: [
+    { tag: "wanted", text: "Agent protocols that behave. Reward: zero incidents. Inquire at the policy file." },
+    {
+      tag: "for sale",
+      text: "One (1) universal binary for macOS and Windows. No cloud routing included.",
+      cta: { label: "download now", href: "/downloads" },
+    },
+    { tag: "help wanted", text: "Debuggers. Own the testing. Must be willing to break things politely." },
+    { tag: "lost", text: "One (1) context window. If found, please return to the fence." },
+  ],
+};
+
 export const signup = {
-  eyebrow: "// early access",
-  title: "Get on the list",
-  lead: "Early access gets you the local proxy first, and a direct line to the founders while the API surface is still cheap to change.",
-  note: "No spam. No newsletter. Just an access link when it is ready.",
-  submit: "Request access",
-  success: "On the list. Check your inbox.",
+  eyebrow: "// newsletter",
+  title: "Subscribe to the newsletter",
+  lead: "One honest issue a month: what the fence blocked, what agents did next, and the occasional early-access invite before the crowd.",
+  note: "No spam. One email a month. Unsubscribe anytime.",
+  submit: "Subscribe",
+  success: "Subscribed. The first issue is on its way.",
 };
 
 export const footer = {
-  copy: "© 2026 Context Fence Inc. — A local proxy for agents that stays a local proxy.",
+  copy: "© 2026 Synthrun — Context Fence is a product of Synthrun. A local proxy for agents that stays a local proxy.",
   links: [
     { label: "Product", href: "/#features" },
     { label: "Pricing", href: "/#pricing" },
-    { label: "Docs", href: "/docs" },
+    { label: "Team", href: "/team" },
     { label: "Blog", href: "/blog" },
     { label: "Privacy", href: "/privacy" },
-    { label: "Thank you", href: "/thank-you" },
+    { label: "Terms", href: "/terms" },
   ],
 };
 
 export const thankYou = {
-  eyebrow: "// request received",
-  title: "You are on the list.",
+  eyebrow: "// subscription received",
+  title: "You are subscribed.",
   body: [
-    "That is a real request queue, not a form that eats it. We reply within 4 business hours.",
-    "While you wait, the docs walk through what the proxy checks and how the policy file reads.",
+    "That is a real subscriber list, not a form that eats it. The first issue lands within the month.",
+    "While you wait, the downloads page walks through what the proxy checks and how the policy file reads.",
   ],
   homeCta: { label: "Back to the site", href: "/" },
-  docsCta: { label: "Read the docs", href: "/docs" },
+  docsCta: { label: "See the downloads", href: "/downloads" },
 };
 
 export const notFound = {
@@ -444,9 +575,61 @@ export const docs = {
 };
 
 export const blog = {
-  title: "Blog",
-  updated: "No posts yet",
-  body: "Nothing here yet. First post will be the July 18 incident breakdown — what the agent did, where the guard should have been, and why schema checks beat vibe checks before they ship.",
+  eyebrow: "// the press room",
+  title: "The press room is still setting up.",
+  updated: "Last updated: August 2026",
+  sub: "first edition lands soon. the editors are fact-checking their own hype.",
+  typed: [
+    "> first post: the july 18 incident breakdown — what the agent did, where the guard should have been, and why schema checks beat vibe checks.",
+    "> the desk is drafting. the typewriter is warm. the fence is holding.",
+  ],
+  comingSoon: "coming soon",
+  draftsEyebrow: "// on the editor's desk",
+  drafts: [
+    {
+      no: "draft no. 001",
+      title: "The July 18 incident breakdown",
+      blurb:
+        "What the agent actually did, which guard should have stopped it, and the exact rule that would have.",
+      status: "fact-checking",
+    },
+    {
+      no: "draft no. 002",
+      title: "Schema checks beat vibe checks",
+      blurb:
+        "Why a 2 KB policy file outperforms a 100k-token prompt about being careful.",
+      status: "on the editor's desk",
+    },
+    {
+      no: "draft no. 003",
+      title: "Eight ways a server can lie",
+      blurb:
+        "The full tour of the survey behind the evidence page — poisoned descriptions, hard-coded credentials, and six more.",
+      status: "being investigated",
+    },
+    {
+      no: "draft no. 004",
+      title: "The audit log, queried",
+      blurb:
+        "Seventeen rules, one SQLite file, zero cloud. A hands-on walk through the rows your agents leave behind.",
+      status: "scheduled",
+    },
+  ],
+  ticker: [
+    "the fence holds",
+    "policy files over prompts",
+    "zero cloud routing",
+    "schema checks under 10ms",
+    "local by default",
+    "seventeen rules shipped",
+    "audit log stays yours",
+  ],
+  mailEyebrow: "// press mailing list",
+  mailTitle: "Get the first issue before the world does.",
+  mailNote: "No newsletter spam. One email per issue, maybe. We reply within 4 business hours.",
+  mailPlaceholder: "your@email.dev",
+  mailCta: "Put me on the list",
+  mailDone: "You are on the list. The first issue will find you.",
 };
 
 export const issue = {
@@ -464,7 +647,7 @@ export const issue = {
   ],
   findings: {
     title: "share of public servers with vulnerabilities",
-    range: "hasan et al. · 1,899 servers · 2025",
+    range: "1,899 servers · field survey · 2025",
     note: "8 vulnerability classes found — only 3 overlap traditional software",
     data: [
       { name: "general vulnerabilities", value: 7.2 },
@@ -473,66 +656,353 @@ export const issue = {
     ],
   },
   press: {
-    eyebrow: "// the evidence",
-    dateline: "four independent studies · 2025",
-    articles: [
+    edition: "est. 2026 · reality edition",
+    dateline: "monday, 2 mar 2026 · vol. 1 · no. 1",
+    tagline: "Reporting from the supply chain, where the models live.",
+    date: { range: "nov 2024 → mar 2026", price: "price: one deployment cycle" },
+    lead: {
+      kicker: "lead story · investigated",
+      title: "One in eighteen public MCP servers describes its tools dishonestly",
+      lede: "A first-of-its-kind scan of 1,899 open-source servers finds 5.5% carry poisoned tool descriptions and 3.6% hard-code live credentials — eight vulnerability classes, only three overlapping traditional software.",
+      body: [
+        "The survey's 1,899 public instances split into eight identifiable failure classes — and only three of them have a direct counterpart in traditional software. The other five are peculiar to the agent stack: the way models pick tools, trust descriptions, and chain calls together.",
+        "None of the eight required advanced skill. That is the finding's real weight: every class was demonstrated with ordinary tooling, and the credential play in the survey was pulled off with undergraduate-level Python in an afternoon.",
+      ],
+      byline: "by m. hasan · the evidence bureau",
+      source: { href: "https://arxiv.org/abs/2506.13538" },
+    },
+    factbox: {
+      title: "the scan at a glance",
+      rows: [
+        { label: "public servers surveyed", value: "1,899" },
+        { label: "poisoned tool descriptions", value: "5.5%" },
+        { label: "hard-coded credentials", value: "3.6%" },
+        { label: "general vulnerabilities", value: "7.2%" },
+        { label: "failure classes", value: "8 · 5 new" },
+        { label: "attack surface mapped", value: "16 risks" },
+        { label: "sdk downloads · mar 2026", value: "97M/mo" },
+      ],
+    },
+    photoLead: {
+      src: "https://images.pexels.com/photos/17489163/pexels-photo-17489163.jpeg?auto=compress&cs=tinysrgb&w=1200&h=900&fit=crop",
+      caption: "Public servers advertise production readiness. The survey suggests otherwise.",
+      credit: "photo: pexels · server aisle",
+    },
+    ticker: [
+      "5.5% of servers misdescribe their own tools",
+      "3.6% hard-code live credentials",
+      "8 failure modes · only 3 overlap traditional software",
+      "97M monthly downloads · 0 mandatory review",
+      "context fence: schema checks under 10ms · zero cloud routing",
+      "local core ships today · cf.policy.yml, 17 rules",
+    ],
+    briefs: [
       {
-        kicker: "empirical study · n = 1,899",
-        title: "One in eighteen public MCP servers describes its tools dishonestly",
-        lede: "A first-of-its-kind scan of 1,899 open-source servers finds 5.5% carry poisoned tool descriptions and 3.6% hard-code live credentials — eight vulnerability classes, only three overlapping traditional software.",
-        byline: "hasan et al. · queen's university · acm tosem",
-        href: "https://arxiv.org/abs/2506.13538",
-        featured: true,
-      },
-      {
-        kicker: "agentic audit · live exploits",
+        kicker: "agentic audit",
         title: "Auditors coerce flagship LLMs into code execution and credential theft",
-        lede: "A safety audit demonstrates models readily driven to malicious code execution and remote access through ordinary MCP tool calls — then ships an automated scanner to catch it before deployment.",
-        byline: "radosevich & halloran · arxiv 2504.03767",
-        href: "https://arxiv.org/abs/2504.03767",
+        lede: "A safety audit drives flagship models into malicious code execution and remote access through ordinary tool calls — then ships a scanner to catch it before deployment.",
+        body: "In repeated trials all three flagship models accepted the chain when the calls were phrased as ordinary tool use — executing code, reading files, opening remote access. The scanner makes the same chain detectable before deployment.",
+        src: "https://images.pexels.com/photos/5380589/pexels-photo-5380589.jpeg?auto=compress&cs=tinysrgb&w=800&h=600&fit=crop",
+        caption: "keystrokes, weaponized",
+        source: { href: "https://arxiv.org/abs/2504.03767" },
       },
       {
-        kicker: "proof of concept · cross-tool",
-        title: "A 'weather' server walks off with bank account balances",
-        lede: "Two researchers, free web tools, no infrastructure: a disguised server discovers legitimate banking tools and exfiltrates them. Undergraduate-level Python is the whole skill bar.",
-        byline: "croce & south · arxiv 2507.19880",
-        href: "https://arxiv.org/abs/2507.19880",
+        kicker: "proof of concept",
+        title: "A 'weather' server, a vault of credentials",
+        lede: "Free web tools and an afternoon of work: a disguised server walks off with bank account balances. Undergraduate-level Python is the whole skill bar.",
+        body: "The server advertised one harmless tool and sat behind it with a vault of harvested credentials, filled by calls the model made on its own after a single plausible request.",
+        src: "https://images.pexels.com/photos/31130767/pexels-photo-31130767.jpeg?auto=compress&cs=tinysrgb&w=800&h=600&fit=crop",
+        caption: "clear skies, empty accounts",
+        source: { href: "https://arxiv.org/abs/2507.19880" },
       },
       {
-        kicker: "threat model · taxonomy",
-        title: "The MCP attack surface, mapped end-to-end",
-        lede: "Sixteen distinct security risks across four attacker classes, each confirmed with a working exploit — and a roadmap for the protocol to fix itself.",
-        byline: "hou et al. · huazhong univ. · acm tosem",
-        href: "https://arxiv.org/abs/2503.23278",
+        kicker: "threat taxonomy",
+        title: "When MCP servers attack: the malicious-server playbook",
+        lede: "The first systematic taxonomy of what malicious servers actually do — capability smuggling, tool chaining, full system compromise — each staged as a working exploit.",
+        body: "Sixteen risks grouped into four attacker classes, each staged as a working exploit against a production-configured server — and each mapped to the control that closes it.",
+        src: "https://images.pexels.com/photos/1432675/pexels-photo-1432675.jpeg?auto=compress&cs=tinysrgb&w=800&h=600&fit=crop",
+        caption: "chip-scale trust",
+        source: { href: "https://arxiv.org/abs/2509.24272" },
+      },
+      {
+        kicker: "no payload required",
+        title: "MPMA: preference manipulation bends MCP tool choice",
+        lede: "Crafted preference entries nudge models toward the attacker's own tools — no payload, no prompt injection, just statistics.",
+        body: "No payload, no injected prompt: the manipulation worked through preference statistics alone, which makes it invisible to every detector that watches for text patterns.",
+        src: "https://images.pexels.com/photos/37709121/pexels-photo-37709121.jpeg?auto=compress&cs=tinysrgb&w=800&h=600&fit=crop",
+        caption: "the quiet channel",
+        source: { href: "https://arxiv.org/abs/2505.11154" },
+      },
+      {
+        kicker: "ecosystem sweep",
+        title: "Mind your server: parasitic toolchains in the MCP ecosystem",
+        lede: "Parasitic toolchains ride legitimate servers' reputation to funnel models into attacker-controlled tools — a sweep measures how deep the infection goes.",
+        body: "Parasites live in the shadow of well-known servers — same reputation, different endpoint. Models follow the trail because the ecosystem has no provenance signal to check.",
+        src: "https://images.pexels.com/photos/1181354/pexels-photo-1181354.jpeg?auto=compress&cs=tinysrgb&w=800&h=600&fit=crop",
+        caption: "reputation as attack surface",
+        source: { href: "https://arxiv.org/abs/2509.06572" },
+      },
+      {
+        kicker: "supply-chain defense",
+        title: "Tool squatting and rug pulls get a protocol-level answer",
+        lede: "OAuth-scoped tool definitions and policy-based access control close the supply-chain gap the ecosystem scans keep finding.",
+        body: "Scoped tool definitions, OAuth, and policy-based access turn the supply chain from a trust exercise into an authorization one — the protocol-level answer to everything else on this page.",
+        src: "https://images.pexels.com/photos/7641991/pexels-photo-7641991.jpeg?auto=compress&cs=tinysrgb&w=800&h=600&fit=crop",
+        caption: "scopes over promises",
+        source: { href: "https://arxiv.org/abs/2506.01333" },
       },
     ],
-    index: "arxiv index · 2506.13538 · 2504.03767 · 2507.19880 · 2503.23278",
+    feature: {
+      kicker: "feature · threat model",
+      title: "The MCP attack surface, mapped end-to-end",
+      lede: "Sixteen distinct security risks across four attacker classes, each confirmed with a working exploit — and a roadmap for the protocol to fix itself.",
+      crosshead: "four attacker classes, sixteen doors",
+      body: [
+        "Sixteen distinct risks, grouped by who carries them: the protocol layer, server authors, model providers, and the client itself. Every one is confirmed with a working exploit rather than a hypothetical — some as blunt as credential theft, others as quiet as preference statistics that nudge a model toward an attacker's tool without ever injecting a prompt.",
+        "The same curve keeps compounding the gap: monthly SDK downloads grew tenfold across the survey window while exposed instances grew fortyfold. Adoption without a fence just makes the attack surface bigger — the numbers on this page are the proof of that sentence.",
+      ],
+      byline: "hou et al. · huazhong univ.",
+      source: { href: "https://arxiv.org/abs/2503.23278" },
+    },
+    fig1: {
+      label: "fig 1 · telemetry",
+      sub: "sdk downloads vs. exposed instances",
+      range: "gap widens 16× month-over-month",
+    },
+    analysis: {
+      kicker: "analysis · governance & controls",
+      title: "Securing MCP: risks, controls, and governance for production agents",
+      lede: "Three adversary classes — content injection, compromised supply chains, and overstepping agents — plus the control stack to stop them: scoped authorization, provenance, sandboxing, and central governance.",
+      body: [
+        "The control stack the authors propose is deliberately unglamorous: scoped authorization so a tool can only do what it was hired for, provenance so a tool is only as trustworthy as its publisher, sandboxing so a bad tool is boring, and central governance so a team can say no in one place. Familiar controls, applied to a new surface.",
+        "The first and last of those need nothing from the model provider. A policy proxy running on the machine can enforce both locally, before any call leaves the box.",
+      ],
+      byline: "errico, ngiam & sojan",
+      source: { href: "https://arxiv.org/abs/2511.20920" },
+      quote: "A model is only as trustworthy as the last server it trusted.",
+    },
+    response: {
+      kicker: "the response · zero cloud routing",
+      title: "A policy proxy sits in front of the tools",
+      lede: "Seventeen rules, checks under ten milliseconds, and nothing leaves the machine.",
+      body: [
+        "Where the survey found eight ways a server can lie, the response is deliberately simple: every tool call is checked against a policy before the model sees it. The checks are schema work — types, scopes, provenance — not an LLM judge, which is why they stay under ten milliseconds.",
+        "The policy is a single file on disk, the audit log is a file on disk, and the proxy runs entirely on the machine. There is no telemetry endpoint, no control plane in the default path, and no dependency on a model provider to enforce any of it.",
+      ],
+      spec: [
+        { label: "policy engine", value: "cf.policy.yml" },
+        { label: "rules shipped", value: "17" },
+        { label: "per-check latency", value: "< 10ms" },
+        { label: "routing", value: "zero cloud" },
+        { label: "telemetry", value: "none" },
+        { label: "current build", value: "v1.1.6-c" },
+      ],
+      cta: { label: "download the fence", href: "/downloads" },
+    },
+    listicle: {
+      kicker: "the ledger · eight ways a server can lie",
+      items: [
+        "Poisoned tool descriptions",
+        "Hard-coded credentials",
+        "Over-permissive scopes",
+        "Credential exfiltration paths",
+        "Prompt-injection seams",
+        "Unbounded tool chains",
+        "Dependency confusion",
+        "Impersonated publishers",
+      ],
+      note: "none required advanced skill — all eight demonstrated with ordinary tooling.",
+    },
+    fig2: { label: "fig 2 · findings", sub: "share of public servers with vulnerabilities" },
+    classifieds: {
+      title: "classifieds",
+      items: [
+        { h: "WANTED", b: "Sandbox for misbehaving agents. Must respect boundaries. Pays in tokens." },
+        { h: "FOR SALE", b: "One (1) trust model, gently used. Previous owner over-relied on it." },
+        { h: "LOST", b: "1,899 server descriptions. Last seen promising more than they deliver." },
+        { h: "SERVICES", b: "Local policy proxy. Schema checks under 10ms, zero cloud routing. Full story above." },
+      ],
+    },
+    index: "the evidence bureau · reporting fictional, the exposure gap is not · context fence answers it locally · nov 2024 → mar 2026",
   },
 };
 
 export const privacy = {
-  title: "Privacy Policy",
-  updated: "Last updated: July 2026",
+  eyebrow: "// privacy policy",
+  title: "What crosses the fence.",
+  sub: "The short version: in the default mode, nothing does. Read the long version anyway — it is honest, and it should be.",
+  updated: "Last updated: August 2026",
+  tldr: [
+    "Local mode collects nothing",
+    "Tool calls never leave the machine",
+    "Website sees aggregate visits only",
+    "Email is used once, for access",
+  ],
+  who: {
+    h: "Who we are",
+    p: "Context Fence is a product of Synthrun. Synthrun builds and maintains the Context Fence proxy, this website, the Homebrew tap that distributes the macOS build, the Windows release pipeline, and — one day — the hosted control plane. Everything in this policy covers all of those. If a service is ours, this policy applies; if it is not listed here, it is not part of the product.",
+  },
+  flow: {
+    h: "Follow the packets",
+    p: "Pick a mode and watch what actually leaves your machine. This is the whole policy in one drawing.",
+    modes: [
+      { id: "local", label: "local mode · default", note: "every packet bounces off the fence. nothing leaves." },
+      { id: "web", label: "the website", note: "aggregate visit counts leave. your tool calls do not." },
+      { id: "cloud", label: "hosted plane · future", note: "opt-in audit sync. you send the log, we keep it." },
+    ],
+  },
   sections: [
     {
       h: "Local-only mode collects nothing",
-      p: "In the default mode the proxy runs entirely on your machine. No telemetry, no crash reports, no policy uploads, no analytics from the product itself. We cannot see your tool calls because they never reach us.",
+      p: "In the default mode the proxy runs entirely on your machine. No telemetry, no crash reports, no policy uploads, no analytics from the product itself. We cannot see your tool calls because they never reach us. The audit log, the policy file, and every secret-shaped value the fence strips — all of it stays on your disk.",
     },
     {
-      h: "The website",
-      p: "This site uses Google Analytics to count visits and see which pages people read. GA sets cookies and we see aggregate numbers only. If that is enough to make you leave, we understand.",
+      h: "What never leaves the machine",
+      items: [
+        "Every tool call the agent makes, allowed or denied",
+        "The audit log rows and the rules that decided them",
+        "Your cf.policy.yml — we never see a policy file",
+        "Secrets the fence strips before they reach a model or a tool",
+        "Anything the model, your tools, or the proxy print to a local log",
+      ],
     },
     {
-      h: "Early access form",
-      p: "Submitting the early access form sends us your email address. We use it exactly once: to send you access. No list rental, no third-party marketing.",
+      h: "What the website sees",
+      p: "This site uses Google Analytics to count visits and see which pages people read. GA sets cookies and we see aggregate numbers only: rough visitor counts, popular pages, broad geography. We do not see your identity through it, and we do not try to. The downloads page itself reads a public release manifest from GitHub — that is a public file any visitor can read, and it contains only version numbers, file sizes, and checksums.",
+    },
+    {
+      h: "The early access form",
+      p: "Submitting the early access form sends us your email address. We use it exactly once: to reply about access. No list rental, no third-party marketing, no drip campaigns. The reply comes from the founders directly, within 4 business hours. If you later ask us to delete it, we delete it — one message is enough.",
     },
     {
       h: "Hosted control plane (not yet available)",
-      p: "When it ships, opting in syncs the audit log to our infrastructure so a team can review it. That is the explicit trade: you send us the log, we keep it for you. Everything else stays local.",
+      p: "When it ships, opting in syncs the audit log to our infrastructure so a team can review it in one place. That is the explicit trade: you send us the log, we keep it for you. The sync is off by default, the log remains on your machine regardless, and the local mode keeps collecting nothing. Fleet policies, audit sync, and Slack alerting are planned features of that plane — none of them exist in the default path.",
+    },
+    {
+      h: "What we never collect",
+      items: [
+        "Children's data — the product is for developers; we do not knowingly collect anything from anyone under 13",
+        "Biometrics, precise location, or contacts",
+        "Your chat history, prompts, or agent conversations",
+        "Model outputs, generated code, or anything the agent produces",
+        "Credentials or secrets — the fence's entire job is stopping those from leaking",
+      ],
+    },
+    {
+      h: "Security",
+      p: "The product is local-first by construction: no telemetry endpoint, no control plane in the default path, no dependency on a model provider to enforce anything. The macOS build is ad-hoc signed and the Windows build is unsigned by design; both are published with their sha256 checksums so you can verify what you installed. We cannot claim a cloud we do not have.",
+    },
+    {
+      h: "Retention",
+      p: "Email addresses from the early access form are kept until you ask us to delete them. Website analytics are aggregate counters; there is no per-person record to retain. The audit log is yours — retention is your decision, on your disk.",
+    },
+    {
+      h: "Your rights",
+      p: "Ask us anything: what we hold about you, why, and for how long. In local mode there is no account to delete — uninstalling the app deletes everything but your own files. If the hosted plane exists by the time you read this, the same rights apply to your synced copy.",
+    },
+    {
+      h: "Changes to this policy",
+      p: "If this policy changes, the date at the top changes and this page is the notice. We will not quietly change what crosses the fence. For the default, local mode: nothing does.",
+    },
+  ],
+  contact: {
+    h: "Questions?",
+    p: "Use the early access form on the home page and say it is about privacy. The founders answer it directly — no support desk, no ticket queue.",
+    cta: { label: "Ask us", href: "/#signup" },
+  },
+  ticker: "nothing leaves the machine · nothing leaves the machine · ",
+};
+
+export const terms = {
+  eyebrow: "// terms of service",
+  title: "The ground rules.",
+  sub: "Short version: use the fence, keep it local, and do not pretend we promise what we do not promise.",
+  updated: "Last updated: August 2026",
+  tldr: [
+    "It is a local proxy, not a cloud",
+    "Free to use; future console sold separately",
+    "We give no warranty — verify your builds",
+    "Your secrets stay on your machine",
+  ],
+  modeLabel: { legal: "legalese", plain: "plain speak" },
+  sections: [
+    {
+      h: "Who we are",
+      legal:
+        "These terms are between you and Synthrun, the developer of Context Fence (\"the Product\"). The Product includes the proxy application, the policy file format, the Homebrew tap and release pipeline, this website, and any future hosted services. By downloading, installing, or using the Product or this website, you agree to these terms.",
+      plain: "Context Fence is made by Synthrun. Use it, and you are agreeing to these rules.",
+    },
+    {
+      h: "What the product is",
+      legal:
+        "The Product is a local policy proxy for MCP tool calls. In its default configuration it operates entirely on your machine: it reads a policy file (cf.policy.yml), evaluates tool calls against it, writes an append-only audit log to local SQLite, and routes nothing to Synthrun or any third party. Nothing in these terms grants or implies any right to use the Product as a hosted service unless separately agreed.",
+      plain: "It is a fence that sits on your machine and checks every tool call. By default it sends nothing anywhere.",
+    },
+    {
+      h: "License",
+      legal:
+        "The local core is free to use, for individuals and companies, including commercial use. You may not resell or sublicense the proxy itself, or wrap it into a product that competes with the Product, without written permission. The hosted control plane, when it ships, is a separate service with its own terms and pricing; the local core keeps working regardless.",
+      plain: "The local app is free, even at work. Do not resell the fence itself. The future hosted console will be a separate, paid thing — the local app stays free.",
+    },
+    {
+      h: "Your account and the early access form",
+      legal:
+        "Where you provide an email address (for example, the early access form), you warrant that it is yours and that you consent to being contacted about the Product at it. Access to early builds is at our discretion and may be revoked at any time.",
+      plain: "Only give us an email you own. Early access is a privilege, not a contract.",
+    },
+    {
+      h: "Acceptable use",
+      legal:
+        "You agree not to use the Product to violate applicable law, to misrepresent it as another product, to redistribute modified builds under the Product's name, or to use the website or release infrastructure to attack, scrape, or abuse the Product or its users. You are responsible for the behavior of the agents you run behind the fence.",
+      plain: "Do not use the fence for illegal stuff, do not ship fake copies under our name, and remember the agent is yours.",
+    },
+    {
+      h: "Build status and signatures",
+      legal:
+        "The macOS build is ad-hoc signed and the Windows build is unsigned by design. You acknowledge that unsigned or ad-hoc-signed software may be blocked by your operating system, and that you install it at your own risk. We publish sha256 checksums for every release so you can verify that what you installed is what we published.",
+      plain: "The builds are not notarized — Gatekeeper may complain. Check the checksum on the downloads page; that is how you know it is ours.",
+    },
+    {
+      h: "No warranty",
+      legal:
+        "The Product is provided \"as is\" and \"as available\", without warranty of any kind, express or implied, including merchantability, fitness for a particular purpose, and non-infringement. The fence reduces risk; it does not eliminate it. A misconfigured policy file, a model that finds a new way around, or an agent with write access can still cause harm.",
+      plain: "We are honest about this: the fence helps, but no tool can promise an agent never misbehaves. Policy files are your responsibility.",
+    },
+    {
+      h: "Limitation of liability",
+      legal:
+        "To the maximum extent permitted by law, Synthrun shall not be liable for any indirect, incidental, special, consequential, or punitive damages, or for any loss of profits, data, or secrets, arising out of or related to the Product or these terms. Our total liability for any claim is limited to the amount you paid us in the twelve months preceding the claim — which, for the free local core, is zero.",
+      plain: "If the fence ever fails you, the most we owe you is what you paid us. For the free app, that is nothing. We take responsibility seriously, but we will not promise the impossible.",
+    },
+    {
+      h: "The hosted console (future)",
+      legal:
+        "Pricing and feature pages describing a hosted console are plans, not commitments. Features may ship late, differently, or not at all. When the console ships, its use is governed by separate terms presented at signup.",
+      plain: "Prices on the site are planned, not final. The console is not built yet; do not build a business on it today.",
+    },
+    {
+      h: "Changes to these terms",
+      legal:
+        "We may update these terms from time to time. The date at the top of this page is the notice; continuing to use the Product after an update constitutes acceptance. Material changes will be flagged in the changelog.",
+      plain: "If the rules change, the date at the top changes. Keep using the fence, and you accept the new rules.",
+    },
+    {
+      h: "Termination",
+      legal:
+        "You may terminate this agreement at any time by deleting the Product and ceasing use of the website. The Product is local software; there is nothing to return and no account to close in local mode. Sections on warranty, liability, and governing law survive termination.",
+      plain: "Done with the fence? Delete the app. That is the whole termination process.",
+    },
+    {
+      h: "Governing law",
+      legal:
+        "These terms are governed by the laws of the Republic of India, without regard to conflict-of-law principles. Any disputes will be resolved in the courts of New Delhi.",
+      plain: "Made in New Delhi, India. Indian law applies.",
     },
     {
       h: "Contact",
-      p: "Questions about this policy: use the early access form on the home page and say it is about privacy. The founders answer it directly.",
+      legal:
+        "Questions about these terms: use the early access form on the home page and say it is about the terms. The founders answer it directly.",
+      plain: "Ask us anything via the form on the home page. A human answers within 4 business hours.",
     },
   ],
 };
