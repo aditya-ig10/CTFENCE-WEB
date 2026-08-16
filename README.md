@@ -65,6 +65,6 @@ lib/            seo (metadata + JSON-LD), theme, anim gate
 scripts/        gen-placeholders.mjs — regenerates placeholder PNGs
 ```
 
-Routes: `/` home · `/docs` · `/blog` · `/privacy` · `/thank-you` · 404 via
+Routes: `/` home · `/docs` · `/blog` · `/team` · `/privacy` · `/thank-you` · 404 via
 `app/not-found.tsx`. Breadcrumbs render on all non-home, non-error routes
 with a matching BreadcrumbList JSON-LD block.
