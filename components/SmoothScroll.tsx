@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef } from "react";
+import { usePathname } from "next/navigation";
 import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 import Lenis from "lenis";
@@ -13,11 +14,18 @@ gsap.registerPlugin(ScrollTrigger);
 // respects prefers-reduced-motion via lib/anim.
 export default function SmoothScroll() {
   const barRef = useRef<HTMLDivElement>(null);
+  const lenisRef = useRef<Lenis | null>(null);
+  const pathname = usePathname();
+  // pathnames visited this session — distinguishes a fresh page from a
+  // back/forward return, so new pages open at the top while previously
+  // loaded pages keep their scroll position.
+  const visitedRef = useRef<Set<string> | null>(null);
 
   useEffect(() => {
     if (!motionAllowed()) return;
 
     const lenis = new Lenis({ lerp: 0.07, wheelMultiplier: 1.0 });
+    lenisRef.current = lenis;
     lenis.on("scroll", ScrollTrigger.update);
     const raf = (time: number) => lenis.raf(time * 1000);
     gsap.ticker.add(raf);
@@ -113,9 +121,28 @@ export default function SmoothScroll() {
       window.removeEventListener("load", onLoad);
       gsap.ticker.remove(raf);
       ctx.revert();
+      lenisRef.current = null;
       lenis.destroy();
     };
   }, []);
+
+  // scroll policy on route change: fresh pages start at the top; pages the
+  // browser already has scroll state for (back/forward returns) keep it.
+  useEffect(() => {
+    if (!motionAllowed() || typeof window === "undefined") return;
+    if (visitedRef.current === null) {
+      visitedRef.current = new Set([pathname]);
+      return;
+    }
+    if (visitedRef.current.has(pathname)) {
+      requestAnimationFrame(() => {
+        lenisRef.current?.scrollTo(window.scrollY, { immediate: true });
+      });
+    } else {
+      visitedRef.current.add(pathname);
+      lenisRef.current?.scrollTo(0, { immediate: true });
+    }
+  }, [pathname]);
 
   return <div ref={barRef} className="scroll-progress" aria-hidden="true" />;
 }
