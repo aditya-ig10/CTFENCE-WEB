@@ -26,14 +26,23 @@ export default function LoadingOverlay() {
       className={`loading-overlay${phase === "off" ? " loading-overlay--off" : ""}`}
       aria-hidden="true"
     >
-      <div className="loading-fence" aria-hidden="true">
-        <i />
-        <i />
-        <i />
+      <div className="loader">
+        <span>
+          <span />
+          <span />
+          <span />
+          <span />
+        </span>
+        <div className="base">
+          <span />
+          <div className="face" />
+        </div>
       </div>
-      <div className="loading-word">
-        Context Fence
-        <span className="loading-caret" aria-hidden="true" />
+      <div className="longfazers">
+        <span />
+        <span />
+        <span />
+        <span />
       </div>
     </div>
   );

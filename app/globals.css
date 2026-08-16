@@ -5745,17 +5745,11 @@ html.vt-active *::after {
   .mail-form { flex-direction: column; }
   .mail-button { padding: 12px 20px; }
 }
-
 /* ---- initial load overlay ---- */
 .loading-overlay {
   position: fixed;
   inset: 0;
   z-index: 300;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: 20px;
   background: var(--void);
   pointer-events: none;
   transition: opacity 0.5s var(--ease-out);
@@ -5763,60 +5757,171 @@ html.vt-active *::after {
 .loading-overlay--off {
   opacity: 0;
 }
-.loading-fence {
-  position: relative;
-  display: flex;
-  gap: 6px;
-  padding-top: 5px;
+.loading-overlay .loader {
+  position: absolute;
+  top: 50%;
+  margin-left: -50px;
+  left: 50%;
+  animation: ld-speeder 0.4s linear infinite;
 }
-.loading-fence::before {
+.loading-overlay .loader > span {
+  height: 5px;
+  width: 35px;
+  background: var(--accent);
+  position: absolute;
+  top: -19px;
+  left: 60px;
+  border-radius: 2px 10px 1px 0;
+}
+.loading-overlay .base span {
+  position: absolute;
+  width: 0;
+  height: 0;
+  border-top: 6px solid transparent;
+  border-right: 100px solid var(--accent);
+  border-bottom: 6px solid transparent;
+}
+.loading-overlay .base span:before {
+  content: "";
+  height: 22px;
+  width: 22px;
+  border-radius: 50%;
+  background: var(--accent);
+  position: absolute;
+  right: -110px;
+  top: -16px;
+}
+.loading-overlay .base span:after {
   content: "";
   position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  height: 3px;
-  border-radius: 2px;
+  width: 0;
+  height: 0;
+  border-top: 0 solid transparent;
+  border-right: 55px solid var(--accent);
+  border-bottom: 16px solid transparent;
+  top: -16px;
+  right: -98px;
+}
+.loading-overlay .face {
+  position: absolute;
+  height: 12px;
+  width: 20px;
   background: var(--accent);
-  transform-origin: left;
-  animation: loading-rail 0.9s var(--ease-out) both;
+  border-radius: 20px 20px 0 0;
+  transform: rotate(-40deg);
+  right: -125px;
+  top: -15px;
 }
-.loading-fence i {
-  width: 10px;
-  height: 24px;
-  border-radius: 2px;
-  background: var(--text);
-  transform-origin: bottom;
-  animation: loading-post 0.9s var(--ease-out) both;
-}
-.loading-fence i:nth-child(2) { animation-delay: 0.1s; }
-.loading-fence i:nth-child(3) { animation-delay: 0.2s; }
-@keyframes loading-rail {
-  from { transform: scaleX(0); opacity: 0; }
-  to { transform: scaleX(1); opacity: 1; }
-}
-@keyframes loading-post {
-  from { transform: scaleY(0.2); opacity: 0; }
-  to { transform: scaleY(1); opacity: 1; }
-}
-.loading-word {
-  display: flex;
-  align-items: center;
-  font-family: var(--font-space), monospace;
-  font-size: 13px;
-  letter-spacing: 0.3em;
-  text-transform: uppercase;
-  color: var(--text);
-}
-.loading-caret {
-  width: 7px;
-  height: 1.1em;
-  margin-left: 6px;
+.loading-overlay .face:after {
+  content: "";
+  height: 12px;
+  width: 12px;
   background: var(--accent);
-  animation: loading-blink 0.9s steps(2, start) infinite;
+  right: 4px;
+  top: 7px;
+  position: absolute;
+  transform: rotate(40deg);
+  transform-origin: 50% 50%;
+  border-radius: 0 0 0 2px;
 }
-@keyframes loading-blink {
-  50% { opacity: 0; }
+.loading-overlay .loader > span > span:nth-child(1),
+.loading-overlay .loader > span > span:nth-child(2),
+.loading-overlay .loader > span > span:nth-child(3),
+.loading-overlay .loader > span > span:nth-child(4) {
+  width: 30px;
+  height: 1px;
+  background: var(--accent);
+  position: absolute;
+  animation: ld-fazer1 0.2s linear infinite;
+}
+.loading-overlay .loader > span > span:nth-child(2) {
+  top: 3px;
+  animation: ld-fazer2 0.4s linear infinite;
+}
+.loading-overlay .loader > span > span:nth-child(3) {
+  top: 1px;
+  animation: ld-fazer3 0.4s linear infinite;
+  animation-delay: -1s;
+}
+.loading-overlay .loader > span > span:nth-child(4) {
+  top: 4px;
+  animation: ld-fazer4 1s linear infinite;
+  animation-delay: -1s;
+}
+@keyframes ld-fazer1 {
+  0% { left: 0; }
+  100% { left: -80px; opacity: 0; }
+}
+@keyframes ld-fazer2 {
+  0% { left: 0; }
+  100% { left: -100px; opacity: 0; }
+}
+@keyframes ld-fazer3 {
+  0% { left: 0; }
+  100% { left: -50px; opacity: 0; }
+}
+@keyframes ld-fazer4 {
+  0% { left: 0; }
+  100% { left: -150px; opacity: 0; }
+}
+@keyframes ld-speeder {
+  0% { transform: translate(2px, 1px) rotate(0deg); }
+  10% { transform: translate(-1px, -3px) rotate(-1deg); }
+  20% { transform: translate(-2px, 0px) rotate(1deg); }
+  30% { transform: translate(1px, 2px) rotate(0deg); }
+  40% { transform: translate(1px, -1px) rotate(1deg); }
+  50% { transform: translate(-1px, 3px) rotate(-1deg); }
+  60% { transform: translate(-1px, 1px) rotate(0deg); }
+  70% { transform: translate(3px, 1px) rotate(-1deg); }
+  80% { transform: translate(-2px, -1px) rotate(1deg); }
+  90% { transform: translate(2px, 1px) rotate(0deg); }
+  100% { transform: translate(1px, -2px) rotate(-1deg); }
+}
+.loading-overlay .longfazers {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+}
+.loading-overlay .longfazers span {
+  position: absolute;
+  height: 2px;
+  width: 20%;
+  background: var(--accent);
+}
+.loading-overlay .longfazers span:nth-child(1) {
+  top: 20%;
+  animation: ld-lf 0.6s linear infinite;
+  animation-delay: -5s;
+}
+.loading-overlay .longfazers span:nth-child(2) {
+  top: 40%;
+  animation: ld-lf2 0.8s linear infinite;
+  animation-delay: -1s;
+}
+.loading-overlay .longfazers span:nth-child(3) {
+  top: 60%;
+  animation: ld-lf3 0.6s linear infinite;
+}
+.loading-overlay .longfazers span:nth-child(4) {
+  top: 80%;
+  animation: ld-lf4 0.5s linear infinite;
+  animation-delay: -3s;
+}
+@keyframes ld-lf {
+  0% { left: 200%; }
+  100% { left: -200%; opacity: 0; }
+}
+@keyframes ld-lf2 {
+  0% { left: 200%; }
+  100% { left: -200%; opacity: 0; }
+}
+@keyframes ld-lf3 {
+  0% { left: 200%; }
+  100% { left: -100%; opacity: 0; }
+}
+@keyframes ld-lf4 {
+  0% { left: 200%; }
+  100% { left: -100%; opacity: 0; }
 }
 @media (prefers-reduced-motion: reduce) {
   .loading-overlay,
