@@ -1,0 +1,34 @@
+# Context Fence
+
+> Local MCP policy proxy for AI coding agents: schema-based tool call checks under 10ms, secret stripping, append-only audit log, zero cloud routing.
+
+Context Fence is a free, local policy proxy that sits between an AI coding agent and its MCP tools. Every tool call is checked against local YAML rules (cf.policy.yml) before it reaches a tool — no LLM judge, no cloud routing, nothing leaves your machine.
+
+- Free local core, commercial use allowed, runs entirely on your machine.
+- Schema-based checks under 10ms per call; no prompts, no telemetry, no exfiltration channel.
+- Blocks destructive calls, filesystem escape, non-allowlisted connections, secret leakage, and prompt-injection payloads.
+- Append-only audit log in local SQLite.
+- macOS (universal dmg + Homebrew tap) and Windows builds, each release published with sha256 checksums.
+
+## FAQ
+
+- **Does my agent's data ever leave my machine?** No. The proxy runs locally and every policy check happens locally. The only thing that leaves your machine is what your tools send on their own. The hosted control plane, when it ships, is opt-in and syncs the audit log only.
+- **How fast is the policy check?** Under 10ms per call. It is a schema match against local YAML rules, not a prompt to an LLM judge.
+- **What does it actually block?** Destructive tool calls, filesystem escape outside the project, connections to non-allowlisted domains, secret leakage (keys, env vars, JWTs), and prompt-injection payloads hiding in tool output.
+- **How is this different from MintMCP, Lasso, or Kong AI Gateway?** They route your agent traffic through their cloud to inspect it. Context Fence inspects on your machine and routes nothing anywhere.
+- **Is it free?** The local proxy is free and is the core of the product. The hosted control plane is the paid piece, and it is not built yet.
+
+## Company
+
+Context Fence is a product of Synthrun, based in New Delhi, India.
+
+## Links
+
+- [Home](https://contextfence.vercel.app/): product overview, capabilities, pricing, FAQ
+- [Downloads](https://contextfence.vercel.app/downloads): macOS dmg, Homebrew tap, Windows builds, sha256 checksums
+- [Evidence](https://contextfence.vercel.app/evidence): the MCP attack surface, sixteen confirmed risks across four attacker classes
+- [Docs](https://contextfence.vercel.app/docs): the YAML policy file, what the proxy checks, the local SQLite audit log
+- [Blog](https://contextfence.vercel.app/blog): press room — field notes and incident breakdowns (coming soon)
+- [Team](https://contextfence.vercel.app/team): the people behind Context Fence
+- [Privacy](https://contextfence.vercel.app/privacy): privacy policy — The Fine Print
+- [Terms](https://contextfence.vercel.app/terms): terms of service — The Contract Corner

@@ -1,16 +1,23 @@
 import Link from "next/link";
+import WebPageSchema from "@/components/WebPageSchema";
 import { thankYou } from "@/content/copy";
 import { baseMetadata } from "@/lib/seo";
 
 export const metadata = baseMetadata({
   title: "Thank you",
-  description: "Early access request received. We reply within 4 business hours.",
+  description: "Newsletter subscription received. The first issue lands within the month.",
   path: "/thank-you",
+  robots: { index: false, follow: false },
 });
 
 export default function ThankYouPage() {
   return (
     <main className="prose-page">
+      <WebPageSchema
+        name="Thank you"
+        description="Newsletter subscription received."
+        path="/thank-you"
+      />
       <div className="section-eyebrow">{thankYou.eyebrow}</div>
       <h1 style={{ marginBottom: 8 }}>{thankYou.title}</h1>
       <div className="thanks-box">

@@ -26,10 +26,16 @@ yarn-debug.log*
 yarn-error.log*
 
 # local env files
-.env*.local
+.env
+.env.*
+!.env.example
 
 # vercel
 .vercel
+
+# stray local build artifacts (out-of-repo distDir leftovers)
+/var/
+*.tmp.mjs
 
 # typescript
 *.tsbuildinfo

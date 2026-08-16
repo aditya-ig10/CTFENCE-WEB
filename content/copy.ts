@@ -6,7 +6,7 @@
 export const site = {
   name: "Context Fence",
   productLine: "Stops AI agents leaking secrets",
-  domain: "context-fence.dev",
+  domain: "contextfence.vercel.app",
   location: "New Delhi, India",
   slaReply: "We reply within 4 business hours",
 };
@@ -60,7 +60,7 @@ export const downloads = {
 };
 
 export const hero = {
-  tag: "Local MCP policy proxy",
+  tag: "Context Fence — local MCP policy proxy",
   titleLines: [
     { text: "Your agent", accent: false, dim: false, highlight: false },
     { text: "policed locally.", accent: true, dim: false, highlight: false },

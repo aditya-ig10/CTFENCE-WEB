@@ -1,0 +1,94 @@
+# Context Fence — full reference
+
+> Local MCP policy proxy for AI coding agents: schema-based tool call checks under 10ms, secret stripping, append-only audit log, zero cloud routing.
+
+This document is a complete plain-text reference to Context Fence for AI crawlers and search engines. It supplements (and duplicates) the structured data on the site.
+
+## What Context Fence is
+
+Context Fence is a free, open-core local policy proxy for AI coding agents. It sits between an agent (Claude Code, Cursor, or any MCP client) and the agent's MCP tools, running entirely on the user's machine. Every tool call is evaluated against a local YAML policy file (cf.policy.yml) before it reaches the tool. The evaluation is a schema match, not an LLM judgment call, so each check stays under 10 milliseconds.
+
+The core principles:
+
+1. **Local first.** The proxy operates entirely on your machine. Nothing is routed to Context Fence, Synthrun, or any third party.
+2. **No telemetry.** The default configuration sends nothing anywhere.
+3. **Schema checks, not vibe checks.** Policy is deterministic YAML rules against tool call schemas — fast, predictable, auditable.
+4. **An audit trail you own.** Every decision is written to an append-only SQLite log on your machine.
+5. **Free.** The local proxy is free for individuals and companies, including commercial use.
+
+## What it blocks
+
+- Destructive tool calls (deletes, drops, force-pushes)
+- Filesystem escape outside the project directory
+- Connections to domains not on the allowlist
+- Secret leakage — keys, environment variables, JWTs
+- Prompt-injection payloads hiding in tool output
+- Schema mismatches against the policy file
+
+## How it works
+
+1. `cf init` writes `cf.policy.yml` with starter rules.
+2. `cf run --review` inspects the tool schemas of your configured MCP servers.
+3. `cf agent --watch` attaches the proxy: each agent request is checked against policy before the tool call executes.
+4. Denied calls are logged with a reason in the append-only local SQLite audit log.
+
+## Downloads and install
+
+- **macOS**: universal disk image (Intel + Apple silicon) and Homebrew tap
+- **Windows**: builds published with every release
+- Every release ships with sha256 checksums so you can verify what you installed is what was published
+- Latest version: 1.1.6-c (released Aug 6, 2026)
+- macOS builds are ad-hoc signed; Windows builds are unsigned by design
+
+See https://contextfence.vercel.app/downloads for the current release and checksums.
+
+## The evidence base
+
+The MCP attack surface was mapped end-to-end: sixteen distinct security risks across four attacker classes, each confirmed with a working exploit. The full breakdown lives at https://contextfence.vercel.app/evidence.
+
+## FAQ
+
+**Does my agent's data ever leave my machine?**
+No. The proxy runs locally and every policy check happens locally. The only thing that leaves your machine is what your tools send on their own. The hosted control plane, when it ships, is opt-in and syncs the audit log only.
+
+**How fast is the policy check?**
+Under 10ms per call. It is a schema match against local YAML rules, not a prompt to an LLM judge. A hundred calls a minute stays imperceptible.
+
+**What does it actually block?**
+Destructive tool calls, filesystem escape outside the project, connections to non-allowlisted domains, secret leakage — keys, env vars, JWTs — and prompt-injection payloads hiding in tool output.
+
+**How is this different from MintMCP, Lasso, or Kong AI Gateway?**
+They route your agent traffic through their cloud to inspect it. Context Fence does the inspection on your machine and routes nothing anywhere. If your threat model dislikes putting secrets through a third party, that difference is the product.
+
+**Is it free?**
+The local proxy is free and it is the core of the product. The hosted control plane — fleet policies, audit sync, Slack alerting — is the paid piece, and it is not built yet.
+
+**Who makes Context Fence?**
+Synthrun, an independent team based in New Delhi, India. The founders built at the protocol layer; three more hands keep the build honest.
+
+## Pricing
+
+- **Free** — the local proxy, for individuals and companies, including commercial use
+- **Teams** — future hosted control plane: fleet policies, audit sync, Slack alerting (not built yet)
+- **Enterprise** — future: self-hosted control plane, SSO, support (not built yet)
+
+## Company
+
+- **Product**: Context Fence — Stops AI agents leaking secrets
+- **Maker**: Synthrun
+- **Location**: New Delhi, India
+- **GitHub**: https://github.com/aditya-ig10/context-fence
+- **Support**: replies within 4 business hours
+
+## Site index
+
+- https://contextfence.vercel.app/ — Home: product, capabilities, pricing, FAQ, newsletter
+- https://contextfence.vercel.app/downloads — Downloads: releases, checksums, install
+- https://contextfence.vercel.app/evidence — Evidence: MCP attack surface research
+- https://contextfence.vercel.app/docs — Docs: policy file, checks, audit log
+- https://contextfence.vercel.app/blog — Blog press room (coming soon)
+- https://contextfence.vercel.app/team — Team: the people edition
+- https://contextfence.vercel.app/privacy — Privacy policy
+- https://contextfence.vercel.app/terms — Terms of service
+- https://contextfence.vercel.app/robots.txt — Crawler rules
+- https://contextfence.vercel.app/sitemap.xml — Sitemap
