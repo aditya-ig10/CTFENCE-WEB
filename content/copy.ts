@@ -348,7 +348,7 @@ export const pricing: {
         "Secret stripping + injection detection",
         "SQLite audit log",
       ],
-      cta: { label: "Start for free", href: "/#early-access", primary: false },
+      cta: { label: "Start for free", href: "/downloads", primary: false },
     },
     {
       name: "Teams",
