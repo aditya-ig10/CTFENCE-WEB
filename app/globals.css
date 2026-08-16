@@ -5745,3 +5745,82 @@ html.vt-active *::after {
   .mail-form { flex-direction: column; }
   .mail-button { padding: 12px 20px; }
 }
+
+/* ---- initial load overlay ---- */
+.loading-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 300;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 20px;
+  background: var(--void);
+  pointer-events: none;
+  transition: opacity 0.5s var(--ease-out);
+}
+.loading-overlay--off {
+  opacity: 0;
+}
+.loading-fence {
+  position: relative;
+  display: flex;
+  gap: 6px;
+  padding-top: 5px;
+}
+.loading-fence::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 3px;
+  border-radius: 2px;
+  background: var(--accent);
+  transform-origin: left;
+  animation: loading-rail 0.9s var(--ease-out) both;
+}
+.loading-fence i {
+  width: 10px;
+  height: 24px;
+  border-radius: 2px;
+  background: var(--text);
+  transform-origin: bottom;
+  animation: loading-post 0.9s var(--ease-out) both;
+}
+.loading-fence i:nth-child(2) { animation-delay: 0.1s; }
+.loading-fence i:nth-child(3) { animation-delay: 0.2s; }
+@keyframes loading-rail {
+  from { transform: scaleX(0); opacity: 0; }
+  to { transform: scaleX(1); opacity: 1; }
+}
+@keyframes loading-post {
+  from { transform: scaleY(0.2); opacity: 0; }
+  to { transform: scaleY(1); opacity: 1; }
+}
+.loading-word {
+  display: flex;
+  align-items: center;
+  font-family: var(--font-space), monospace;
+  font-size: 13px;
+  letter-spacing: 0.3em;
+  text-transform: uppercase;
+  color: var(--text);
+}
+.loading-caret {
+  width: 7px;
+  height: 1.1em;
+  margin-left: 6px;
+  background: var(--accent);
+  animation: loading-blink 0.9s steps(2, start) infinite;
+}
+@keyframes loading-blink {
+  50% { opacity: 0; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .loading-overlay,
+  .loading-overlay--off {
+    transition: none;
+  }
+}

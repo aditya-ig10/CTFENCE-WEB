@@ -8,6 +8,7 @@ import Footer from "@/components/Footer";
 import GaTag from "@/components/GaTag";
 import SmoothScroll from "@/components/SmoothScroll";
 import CookieToast from "@/components/CookieToast";
+import LoadingOverlay from "@/components/LoadingOverlay";
 import { organizationSchema, siteUrl, webSiteSchema } from "@/lib/seo";
 import { site } from "@/content/copy";
 
@@ -102,6 +103,7 @@ export default function RootLayout({
           dangerouslySetInnerHTML={{ __html: JSON.stringify({ "@context": "https://schema.org", "@graph": graph }) }}
         />
         <Navbar />
+        <LoadingOverlay />
         <Breadcrumbs />
         <SmoothScroll />
         <CookieToast />
