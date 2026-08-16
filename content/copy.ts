@@ -22,8 +22,10 @@ export const nav = {
 
 // download links sourced from RELEASE.md (Documents/GitHub/mcp-firewall/RELEASE.md)
 // and the live GitHub releases v1.1.6-c (gh release view, aug 6 2026).
-// windows builds live in aditya-ig10/context-fence-windows (mirrored from the
-// main context-fence release; every exe is unsigned by design).
+// both dmg and exe are published to the PUBLIC tap repo
+// (aditya-ig10/homebrew-context-fence) so anyone can download directly —
+// the main context-fence repo is private; every exe is unsigned by design.
+// these are fallbacks only — /downloads reads the live release.json first.
 export const downloads = {
   version: "1.1.6-c",
   released: "aug 6, 2026",
@@ -46,7 +48,7 @@ export const downloads = {
   windows: {
     label: "Windows x64",
     sub: "NSIS installer, per-user install — the full app, no store required.",
-    href: "https://github.com/aditya-ig10/context-fence-windows/releases/download/v1.1.6-c/Context-Fence-Setup-1.1.6-c-x64.exe",
+    href: "https://github.com/aditya-ig10/homebrew-context-fence/releases/download/v1.1.6-c/Context-Fence-Setup-1.1.6-c-x64.exe",
     size: "113.7 mb",
     sha256: "8ebe7e481545cda2bd4f5ab1203527fe67d8ec0882475ef56d0edce9d32d0ef3",
     cta: "Download",
