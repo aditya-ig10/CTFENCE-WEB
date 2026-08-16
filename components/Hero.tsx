@@ -91,9 +91,6 @@ export default function Hero() {
           <Link href={hero.primaryCta.href} className="btn-primary">
             {hero.primaryCta.label}
           </Link>
-          <Link href={hero.secondaryCta.href} className="btn-ghost">
-            {hero.secondaryCta.label}
-          </Link>
           <span className="sla-badge">
             <span aria-hidden="true">✓</span>
             {hero.slaBadge}
