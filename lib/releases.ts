@@ -38,7 +38,7 @@ const RELEASE_URL =
   process.env.CTFENCE_RELEASE_URL ??
   "https://raw.githubusercontent.com/aditya-ig10/homebrew-context-fence/main/release.json";
 
-const REVALIDATE_SECONDS = 600;
+const REVALIDATE_SECONDS = 120;
 
 function isManifest(v: unknown): v is ReleaseManifest {
   if (!v || typeof v !== "object") return false;
