@@ -31,12 +31,14 @@ export type DownloadsData = {
 // back to the copy defaults whenever the manifest is unreachable or invalid,
 // so a stale or offline build never breaks the page.
 //
-// The manifest lives in the PUBLIC tap repo (aditya-ig10/homebrew-context-fence):
-// the app repo is private, so raw.githubusercontent.com 404s there. The
-// sync-release-manifest workflow copies release.json over after each release.
+// The manifest lives in the PUBLIC releases repo
+// (aditya-ig10/context-fence-releases) — the single public home for release
+// assets and the manifest since v1.1.8-a; the app repo is private, so
+// raw.githubusercontent.com 404s there. The sync-release-manifest workflow
+// copies release.json over after each release.
 const RELEASE_URL =
   process.env.CTFENCE_RELEASE_URL ??
-  "https://raw.githubusercontent.com/aditya-ig10/homebrew-context-fence/main/release.json";
+  "https://raw.githubusercontent.com/aditya-ig10/context-fence-releases/main/release.json";
 
 const REVALIDATE_SECONDS = 120;
 
