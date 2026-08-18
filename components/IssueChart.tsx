@@ -15,8 +15,10 @@ import {
 } from "recharts";
 import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
+import { animate as animeAnimate } from "animejs";
 import { motionAllowed } from "@/lib/anim";
 import { issue } from "@/content/copy";
+import SplitText from "@/components/SplitText";
 
 gsap.registerPlugin(ScrollTrigger);
 
@@ -144,52 +146,176 @@ export default function IssueChart() {
     return () => io.disconnect();
   }, []);
 
-  // One scrubbed timeline drives the whole section: intro → masthead → figures
-  // → evidence. Reversible, motion-gated; reduced-motion / no-JS stay static.
+  // Per-element scroll reveals + highlights drive the whole section.
+  // GSAP handles structure and highlight draws; anime.js handles the
+  // elastic flourishes. Motion-gated; reduced-motion / no-JS stay static.
   useEffect(() => {
     const section = sectionRef.current;
     if (!section || !motionAllowed()) return;
 
     const ctx = gsap.context(() => {
-      const intro = section.querySelector<HTMLElement>(".issue-card--intro");
-      const mast = section.querySelector<HTMLElement>(".issue-press-mast");
-      const press = section.querySelector<HTMLElement>(".issue-press");
-      const rows = section.querySelectorAll(".issue-press-row, .issue-ticker");
-      if (!intro || !mast || !press) return;
+      const reveal = (
+        el: Element | NodeListOf<Element> | null | undefined,
+        vars: gsap.TweenVars,
+        trigger: Element | null = null
+      ) => {
+        if (!el) return;
+        const trig = trigger ?? (el instanceof Element ? el : el[0]);
+        gsap.fromTo(
+          el,
+          { autoAlpha: 0, ...vars.from },
+          { autoAlpha: 1, ...vars.to, scrollTrigger: { trigger: trig, start: "top 80%", once: true } }
+        );
+      };
 
-      const tl = gsap.timeline({
-        scrollTrigger: {
-          trigger: section,
-          start: "top 72%",
-          end: "top 8%",
-          scrub: 0.5,
+      // intro statement rises — eyebrow + lead; the title animates via SplitText
+      reveal(
+        section.querySelectorAll(
+          ".issue-card--intro .section-eyebrow, .issue-card--intro .cap-statement-lead"
+        ),
+        {
+          from: { y: 24 },
+          to: { y: 0, duration: 0.7, stagger: 0.09, ease: "power3.out" },
         },
+        section.querySelector(".issue-card--intro")
+      );
+
+      // ghost numeral pops in behind the title
+      reveal(section.querySelector(".issue-ghost"), {
+        from: { scale: 1.5, y: -10 },
+        to: { scale: 1, y: 0, duration: 1, ease: "power3.out" },
       });
 
-      tl.fromTo(
-        intro.querySelectorAll(".section-eyebrow, .cap-statement-title"),
-        { y: 28, autoAlpha: 0 },
-        { y: 0, autoAlpha: 1, duration: 0.2, ease: "power2.out", stagger: 0.05 },
-        0
+      // masthead furniture — bars and tagline, title animates via SplitText
+      reveal(section.querySelectorAll(".issue-press-edition, .issue-press-tagline, .issue-press-date"), {
+        from: { y: 14 },
+        to: { y: 0, duration: 0.6, stagger: 0.08, ease: "power3.out" },
+      });
+      reveal(section.querySelector(".issue-press-rule"), {
+        from: { scaleX: 0, transformOrigin: "left center" },
+        to: { scaleX: 1, duration: 0.9, ease: "power3.inOut" },
+      });
+
+      // lead band — article typesets in, photo slides from the right
+      const lead = section.querySelector(".issue-press-leadband");
+      reveal(
+        lead?.querySelectorAll(
+          ".issue-press-tag, .issue-press-headline, .issue-press-lede, .issue-press-body > *, .issue-factbox, .issue-press-byline, .issue-read-more"
+        ),
+        { from: { y: 24 }, to: { y: 0, duration: 0.6, stagger: 0.08, ease: "power3.out" } }
       );
-      tl.fromTo(
-        intro.querySelector(".cap-statement-lead"),
-        { y: 24, autoAlpha: 0 },
-        { y: 0, autoAlpha: 1, duration: 0.18, ease: "power2.out" },
-        0.1
+      reveal(lead?.querySelector(".issue-photo--lead"), {
+        from: { x: 44 },
+        to: { x: 0, duration: 0.85, ease: "power3.out" },
+      });
+      reveal(lead?.querySelectorAll(".issue-factbox-row"), {
+        from: { x: 16 },
+        to: { x: 0, duration: 0.45, stagger: 0.05, ease: "power2.out" },
+      });
+
+      // briefs flip up like loose pages
+      reveal(section.querySelectorAll(".issue-press-brief"), {
+        from: { y: 32 },
+        to: { y: 0, duration: 0.7, stagger: 0.12, ease: "back.out(1.4)" },
+      });
+
+      // feature — article typesets, chart figure rises
+      const feature = section.querySelector(".issue-press-feature");
+      reveal(
+        feature?.querySelectorAll(
+          ".issue-press-tag, .issue-press-headline, .issue-press-lede, .issue-press-body > *, .issue-press-byline, .issue-read-more"
+        ),
+        { from: { y: 24 }, to: { y: 0, duration: 0.6, stagger: 0.08, ease: "power3.out" } }
       );
-      tl.fromTo(
-        mast,
-        { y: 24, autoAlpha: 0 },
-        { y: 0, autoAlpha: 1, duration: 0.2, ease: "power2.out" },
-        0.24
+      reveal(feature?.querySelector(".issue-fig"), {
+        from: { y: 34, scale: 0.97 },
+        to: { y: 0, scale: 1, duration: 0.8, ease: "power3.out" },
+      });
+      reveal(feature?.querySelectorAll(".issue-legend-item"), {
+        from: { x: 14 },
+        to: { x: 0, duration: 0.4, stagger: 0.08, ease: "power2.out" },
+      });
+
+      // opinion — article typesets, pullquote springs in (anime.js)
+      const opinion = section.querySelector(".issue-press-opinion");
+      reveal(
+        opinion?.querySelectorAll(
+          ".issue-press-tag, .issue-press-headline, .issue-press-lede, .issue-press-body > *, .issue-press-byline, .issue-read-more"
+        ),
+        { from: { y: 24 }, to: { y: 0, duration: 0.6, stagger: 0.08, ease: "power3.out" } }
       );
-      tl.fromTo(
-        rows,
-        { y: 24, autoAlpha: 0 },
-        { y: 0, autoAlpha: 1, duration: 0.2, ease: "power2.out", stagger: 0.06 },
-        0.4
+      const quote = opinion?.querySelector(".issue-pullquote");
+      if (quote) {
+        // GSAP only gates visibility; anime owns the transform so the two
+        // libraries never fight over the same property.
+        gsap.set(quote, { opacity: 0, visibility: "hidden" });
+        ScrollTrigger.create({
+          trigger: quote,
+          start: "top 82%",
+          once: true,
+          onEnter: () => {
+            const player = animeAnimate(quote, {
+              opacity: [0, 1],
+              scale: [0.86, 1],
+              rotate: [-2, 0],
+              duration: 900,
+              ease: "outElastic(1.2, 0.55)",
+            });
+            player.then(() => gsap.set(quote, { autoAlpha: 1 }));
+          },
+        });
+      }
+
+      // response — article typesets, spec rows file in from the right
+      const response = section.querySelector(".issue-press-response");
+      reveal(
+        response?.querySelectorAll(
+          ".issue-press-tag, .issue-press-headline, .issue-press-lede, .issue-press-body > *, .issue-read-more"
+        ),
+        { from: { y: 24 }, to: { y: 0, duration: 0.6, stagger: 0.08, ease: "power3.out" } }
       );
+      reveal(response?.querySelectorAll(".issue-spec-row"), {
+        from: { x: 24 },
+        to: { x: 0, duration: 0.5, stagger: 0.07, ease: "power2.out" },
+      });
+
+      // ledger — listicle items walk in
+      reveal(section.querySelectorAll(".issue-listicle-items > li"), {
+        from: { x: -20 },
+        to: { x: 0, duration: 0.55, stagger: 0.07, ease: "power3.out" },
+      });
+      reveal(section.querySelector(".issue-listicle-note"), {
+        from: { y: 12 },
+        to: { y: 0, duration: 0.5, ease: "power2.out" },
+      });
+      reveal(section.querySelector(".issue-findings-figure"), {
+        from: { y: 34, scale: 0.97 },
+        to: { y: 0, scale: 1, duration: 0.8, ease: "power3.out" },
+      });
+
+      // scroll highlight — every headline gets an accent rule drawn beneath
+      section.querySelectorAll<HTMLElement>(".issue-press-headline").forEach((h) => {
+        gsap.fromTo(
+          h,
+          { backgroundSize: "0% 2px" },
+          {
+            backgroundSize: "100% 2px",
+            duration: 0.9,
+            ease: "power3.inOut",
+            scrollTrigger: { trigger: h, start: "top 88%", once: true },
+          }
+        );
+      });
+
+      // footer + footnote sign off
+      reveal(section.querySelector(".issue-press-footer"), {
+        from: { y: 14 },
+        to: { y: 0, duration: 0.6, ease: "power3.out" },
+      });
+      reveal(section.querySelector(".issue-footnote"), {
+        from: { y: 16 },
+        to: { y: 0, duration: 0.7, ease: "power3.out" },
+      });
     }, section);
 
     return () => ctx.revert();
@@ -198,25 +324,47 @@ export default function IssueChart() {
   const animate = inView && motionAllowed();
 
   return (
-    <section className="section issue" id="issue" aria-labelledby="issue-title" ref={sectionRef}>
+    <section className="section issue" id="issue" aria-label={issue.title} ref={sectionRef}>
       <div className="issue-cards">
         <div className="issue-card issue-card--intro">
+          <span className="issue-ghost" aria-hidden="true">
+            01
+          </span>
           <div className="section-eyebrow">{issue.eyebrow}</div>
-          <h2 className="cap-statement-title" id="issue-title">
-            {issue.title}
-          </h2>
+          <SplitText
+            tag="h2"
+            className="cap-statement-title"
+            text={issue.title}
+            delay={28}
+            duration={0.9}
+            ease="power4.out"
+            from={{ opacity: 0, y: 44 }}
+            to={{ opacity: 1, y: 0 }}
+            textAlign="left"
+            threshold={0.2}
+          />
           <p className="cap-statement-lead">{issue.lead}</p>
         </div>
 
-        {/* the evidence — a broadsheet front page: masthead, lead photograph,
-            ticker, briefs, then text → figure → text, and the classifieds */}
+        {/* the evidence — an editorial dossier: masthead, lead photograph,
+            briefs, then text → figure → text, and the ledger */}
         <div className="issue-press">
           <div className="issue-press-mast">
             <div className="issue-press-edition">
               <span>{issue.press.edition}</span>
               <span>{issue.press.dateline}</span>
             </div>
-            <h3 className="issue-press-title">The Evidence</h3>
+            <SplitText
+              tag="h3"
+              className="issue-press-title"
+              text="The Evidence"
+              delay={22}
+              duration={0.7}
+              ease="power4.out"
+              from={{ opacity: 0, y: -28, scale: 0.92 }}
+              to={{ opacity: 1, y: 0, scale: 1 }}
+              threshold={0.2}
+            />
             <p className="issue-press-tagline">{issue.press.tagline}</p>
             <div className="issue-press-date">
               <span>{issue.press.date.range}</span>
@@ -264,14 +412,6 @@ export default function IssueChart() {
                 <span className="issue-photo-credit">{issue.press.photoLead.credit}</span>
               </figcaption>
             </figure>
-          </div>
-
-          <div className="issue-ticker">
-            {issue.press.ticker.map((t, i) => (
-              <span className="issue-ticker-item" key={i}>
-                {t}
-              </span>
-            ))}
           </div>
 
           <div className="issue-press-row issue-press-briefs">
@@ -560,16 +700,6 @@ export default function IssueChart() {
               </div>
               <p className="issue-findings-note">{issue.findings.note}</p>
             </figure>
-
-            <aside className="issue-classifieds">
-              <p className="issue-classifieds-title">{issue.press.classifieds.title}</p>
-              {issue.press.classifieds.items.map((c) => (
-                <div className="issue-classified" key={c.h}>
-                  <p className="issue-classified-h">{c.h}</p>
-                  <p className="issue-classified-b">{c.b}</p>
-                </div>
-              ))}
-            </aside>
           </div>
 
           <footer className="issue-press-footer">

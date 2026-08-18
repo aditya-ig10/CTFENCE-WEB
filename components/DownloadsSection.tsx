@@ -1,13 +1,12 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef } from "react";
 import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
+import { animate } from "animejs";
 import { motionAllowed } from "@/lib/anim";
 import { downloads } from "@/content/copy";
 import type { DownloadsData } from "@/lib/releases";
-import CopyButton from "@/components/CopyButton";
-import DownloadPanel from "@/components/DownloadPanel";
 
 gsap.registerPlugin(ScrollTrigger);
 
@@ -39,11 +38,11 @@ function WindowsIcon() {
   );
 }
 
-function TerminalIcon() {
+function LinuxIcon() {
   return (
     <svg {...iconProps}>
-      <path data-draw d="M4 17l6-5-6-5" />
-      <path data-draw d="M12 19h8" />
+      <rect x="3" y="3.5" width="18" height="17" rx="3" />
+      <path d="M8.5 9.5h7M8.5 13h7M8.5 16.5h4" />
     </svg>
   );
 }
@@ -56,41 +55,48 @@ function ArrowDownIcon() {
   );
 }
 
-type PlatformKey = "mac" | "win" | "brew";
-
 function PlatformCell({
   num,
+  rot,
+  chip,
   icon,
   title,
   sub,
-  version,
-  stats,
+  sticker,
+  meta,
+  sha,
   flag,
   children,
 }: {
   num: string;
+  rot: string;
+  chip: string;
   icon: React.ReactNode;
   title: string;
   sub: string;
-  version: string;
-  stats?: React.ReactNode;
+  sticker: string;
+  meta?: React.ReactNode;
+  sha?: string;
   flag?: string;
   children?: React.ReactNode;
 }) {
   return (
-    <article className="dl-cell">
-      <div className="dl-cell-top">
-        <span className="dl-cell-num" aria-hidden="true">
-          {num}
-        </span>
-        <span className="dl-cell-icon">{icon}</span>
-      </div>
+    <article
+      className="dl-cell"
+      data-num={num}
+      style={{ "--rot": rot } as React.CSSProperties}
+    >
+      <span className="dl-cell-num" aria-hidden="true">
+        {num}
+      </span>
+      <span className={`dl-chip ${chip}`}>{icon}</span>
       <h2 className="dl-cell-title">{title}</h2>
       <p className="dl-cell-sub">{sub}</p>
-      <div className="dl-ver-row">
-        <span className="dl-ver">v{version}</span>
+      <div className="dl-cell-meta">
+        <span className="dl-sticker">{sticker}</span>
+        {meta && <span className="dl-meta">{meta}</span>}
       </div>
-      {stats && <div className="dl-cell-stats">{stats}</div>}
+      {sha && <p className="dl-sha">sha256 {sha}</p>}
       {flag && <p className="dl-cell-flag">{flag}</p>}
       {children && <div className="dl-cell-action">{children}</div>}
     </article>
@@ -100,59 +106,40 @@ function PlatformCell({
 export default function DownloadsSection({ release }: { release?: DownloadsData }) {
   const d = release ?? downloads;
   const rootRef = useRef<HTMLElement>(null);
-  const [panelFor, setPanelFor] = useState<PlatformKey>("mac");
-  const [panelOpen, setPanelOpen] = useState(false);
-
-  const openPanel = (key: PlatformKey) => {
-    setPanelFor(key);
-    setPanelOpen(true);
-  };
-
-  const panelRows = [
-    {
-      key: "mac",
-      icon: <AppleIcon />,
-      label: d.mac.label,
-      meta: `${d.mac.size} · sha256 ${d.mac.sha256.slice(0, 12)}…`,
-      href: d.mac.href,
-    },
-    {
-      key: "win",
-      icon: <WindowsIcon />,
-      label: d.windows.label,
-      meta: `${d.windows.size} · sha256 ${d.windows.sha256.slice(0, 12)}…`,
-      href: d.windows.href,
-    },
-  ];
 
   useEffect(() => {
     const root = rootRef.current;
     if (!root) return;
-    const ctx = gsap.context(() => {
-      // arm the stroke-draw icons before the trigger fires (skip when
-      // reduced-motion — everything renders complete).
-      if (motionAllowed()) {
-        root.querySelectorAll<SVGPathElement>("[data-draw]").forEach((p) => {
-          const len = p.getTotalLength();
-          gsap.set(p, { strokeDasharray: len, strokeDashoffset: len });
-        });
-      }
 
-      if (!motionAllowed()) {
-        return;
-      }
+    // anime.js — idle loops: chips bob, floaters sway
+    const loops: ReturnType<typeof animate>[] = [];
+    if (motionAllowed()) {
+      root.querySelectorAll<HTMLElement>(".dl-chip").forEach((chip, i) => {
+        loops.push(
+          animate(chip, {
+            translateY: [-2, 3],
+            rotate: [-3, 3],
+            duration: 2400 + i * 240,
+            direction: "alternate",
+            loop: true,
+            ease: "inOutQuad",
+            delay: i * 260,
+          })
+        );
+      });
+    }
+
+    // gsap — scroll choreography, bouncy entrance
+    const ctx = gsap.context(() => {
+      if (!motionAllowed()) return;
 
       const tl = gsap.timeline({
-        scrollTrigger: {
-          trigger: root,
-          start: "top 78%",
-          once: true,
-        },
+        scrollTrigger: { trigger: root, start: "top 78%", once: true },
       });
 
       tl.fromTo(
         root.querySelectorAll(".dl-eyebrow, .dl-title, .dl-sub"),
-        { y: 22, autoAlpha: 0 },
+        { y: 24, autoAlpha: 0 },
         { y: 0, autoAlpha: 1, duration: 0.55, ease: "expo.out", stagger: 0.07 },
         0
       );
@@ -164,52 +151,51 @@ export default function DownloadsSection({ release }: { release?: DownloadsData 
           transformOrigin: "left center",
           duration: 0.45,
           ease: "power3.inOut",
-          willChange: "transform",
-          force3D: true,
         },
         0.3
       );
 
-      // the four platforms come in one by one, each icon animating with it.
       const cells = root.querySelectorAll<HTMLElement>(".dl-cell");
       cells.forEach((cell, i) => {
-        const at = 0.42 + i * 0.16;
+        const rot = parseFloat(getComputedStyle(cell).getPropertyValue("--rot")) || 0;
+        const at = 0.42 + i * 0.14;
         tl.fromTo(
           cell,
-          { y: 46, autoAlpha: 0, scale: 0.97 },
-          { y: 0, autoAlpha: 1, scale: 1, duration: 0.65, ease: "expo.out" },
+          { y: 64, autoAlpha: 0, rotation: rot * 2.6 },
+          { y: 0, autoAlpha: 1, rotation: rot, duration: 0.7, ease: "back.out(1.6)" },
           at
         );
-        const svg = cell.querySelector(".dl-cell-icon svg");
-        if (svg) {
-          const drawn = svg.querySelectorAll<SVGPathElement>("[data-draw]");
-          if (drawn.length) {
-            drawn.forEach((p) => {
-              tl.to(
-                p,
-                { strokeDashoffset: 0, duration: 0.75, ease: "power2.inOut" },
-                at + 0.18
-              );
-            });
-          } else {
-            tl.fromTo(
-              svg,
-              { scale: 0.4, autoAlpha: 0 },
-              { scale: 1, autoAlpha: 1, duration: 0.5, ease: "back.out(1.7)" },
-              at + 0.12
-            );
-          }
-        }
+        tl.fromTo(
+          cell.querySelector(".dl-chip"),
+          { scale: 0, rotation: -40 },
+          { scale: 1, rotation: 0, duration: 0.5, ease: "back.out(2.2)" },
+          at + 0.22
+        );
+        tl.fromTo(
+          cell.querySelector(".dl-sticker"),
+          { scale: 0, rotation: 70 },
+          { scale: 1, rotation: 0, duration: 0.45, ease: "back.out(2.6)" },
+          at + 0.3
+        );
+        tl.fromTo(
+          cell.querySelector(".dl-cell-num"),
+          { y: 36, autoAlpha: 0 },
+          { y: 0, autoAlpha: 1, duration: 0.5, ease: "expo.out" },
+          at + 0.34
+        );
+        tl.fromTo(
+          cell.querySelectorAll(".dl-meta, .dl-sha, .dl-cell-flag"),
+          { autoAlpha: 0 },
+          { autoAlpha: 1, duration: 0.4, ease: "power2.out", stagger: 0.05 },
+          at + 0.4
+        );
       });
-
-      tl.fromTo(
-        root.querySelector(".dl-foot"),
-        { autoAlpha: 0 },
-        { autoAlpha: 1, duration: 0.45, ease: "power2.out" },
-        0.42 + cells.length * 0.16 + 0.25
-      );
     }, root);
-    return () => ctx.revert();
+
+    return () => {
+      loops.forEach((a) => a.pause());
+      ctx.revert();
+    };
   }, []);
 
   return (
@@ -227,95 +213,73 @@ export default function DownloadsSection({ release }: { release?: DownloadsData 
           Get the <span className="highlight">fence.</span>
         </h1>
         <p className="dl-sub">
-          One universal binary for macOS and Windows, a homebrew cask, and a
-          sha256 for everything. Nothing leaves your machine — that is the
+          Universal binaries for macOS and Windows, a sha256 for everything —
+          Linux is in the garage. Nothing leaves your machine, that is the
           point.
         </p>
       </div>
 
-      <div className="dl-band">
-        <div className="dl-grid">
-          <PlatformCell
-            num="01"
-            icon={<AppleIcon />}
-            title="macOS"
-            sub={d.mac.sub}
-            flag={d.mac.unsigned}
-            version={d.version}
-            stats={
-              <>
-                <span>{d.mac.size}</span>
-                <span className="dl-stat-sep" aria-hidden="true">·</span>
-                <span className="dl-sha">sha256 {d.mac.sha256}</span>
-              </>
-            }
-          >
-            <button
-              type="button"
-              className="dl-btn"
-              onClick={() => openPanel("mac")}
-              aria-haspopup="dialog"
-            >
-              <span>{d.mac.cta}</span>
-              <span className="dl-btn-arrow" aria-hidden="true">
-                <ArrowDownIcon />
-              </span>
-            </button>
-          </PlatformCell>
+      <div className="dl-grid">
+        <PlatformCell
+          num="01"
+          rot="1.2deg"
+          chip="dl-chip--mac"
+          icon={<AppleIcon />}
+          title="macOS"
+          sub={d.mac.sub}
+          sticker={`v${d.version}`}
+          meta={d.mac.size}
+          sha={d.mac.sha256}
+          flag={d.mac.unsigned}
+        >
+          <a className="dl-btn dl-btn--mac" href={d.mac.href} download>
+            <span>{d.mac.cta}</span>
+            <span className="dl-btn-arrow" aria-hidden="true">
+              <ArrowDownIcon />
+            </span>
+          </a>
+        </PlatformCell>
 
-          <PlatformCell
-            num="02"
-            icon={<WindowsIcon />}
-            title="Windows x64"
-            sub={d.windows.sub}
-            flag={d.windows.unsigned}
-            version={d.version}
-            stats={
-              <>
-                <span>{d.windows.size}</span>
-                <span className="dl-stat-sep" aria-hidden="true">·</span>
-                <span className="dl-sha">sha256 {d.windows.sha256}</span>
-              </>
-            }
-          >
-            <button
-              type="button"
-              className="dl-btn"
-              onClick={() => openPanel("win")}
-              aria-haspopup="dialog"
-            >
-              <span>{d.windows.cta}</span>
-              <span className="dl-btn-arrow" aria-hidden="true">
-                <ArrowDownIcon />
-              </span>
-            </button>
-          </PlatformCell>
+        <PlatformCell
+          num="02"
+          rot="-1.1deg"
+          chip="dl-chip--win"
+          icon={<WindowsIcon />}
+          title="Windows x64"
+          sub={d.windows.sub}
+          sticker={`v${d.version}`}
+          meta={d.windows.size}
+          sha={d.windows.sha256}
+          flag={d.windows.unsigned}
+        >
+          <a className="dl-btn dl-btn--win" href={d.windows.href} download>
+            <span>{d.windows.cta}</span>
+            <span className="dl-btn-arrow" aria-hidden="true">
+              <ArrowDownIcon />
+            </span>
+          </a>
+        </PlatformCell>
 
-          <PlatformCell
-            num="03"
-            icon={<TerminalIcon />}
-            title="Homebrew"
-            sub={d.brew.sub}
-            version={d.version}
-            stats={<span className="dl-cmd-inline">{d.brew.install}</span>}
-          >
-            <CopyButton text={d.brew.install} />
-          </PlatformCell>
-        </div>
-
-        <p className="dl-foot">
-          every release ships with a fresh sha256 · verify before you run it
-        </p>
+        <PlatformCell
+          num="03"
+          rot="0.9deg"
+          chip="dl-chip--linux"
+          icon={<LinuxIcon />}
+          title="Linux"
+          sub="Deb and rpm packages are being built in the garage. Nothing cloud, nothing fancy — just the fence."
+          sticker="coming soon"
+          meta="deb + rpm"
+        >
+          <div className="dl-linux">
+            <span className="dl-btn dl-btn--linux dl-btn--soon" aria-disabled="true">
+              Coming soon
+            </span>
+            <a className="dl-waitlist" href="/#early-access">
+              join the waitlist →
+            </a>
+          </div>
+        </PlatformCell>
       </div>
-
-      <DownloadPanel
-        open={panelOpen}
-        onClose={() => setPanelOpen(false)}
-        rows={panelRows}
-        activeKey={panelFor}
-        version={d.version}
-        released={d.released}
-      />
     </section>
   );
 }

@@ -89,12 +89,6 @@ export const hero = {
   },
 };
 
-export const stats = [
-  { num: "<10", accent: "ms", label: "Policy check, schema-based" },
-  { num: "0", accent: "", label: "Cloud routing, ever" },
-  { num: "YAML", accent: "", label: "Policies, no code" },
-  { num: "100", accent: "%", label: "Local execution" },
-];
 
 export const problem = {
   eyebrow: "// why this exists",
@@ -423,7 +417,7 @@ export const team = {
   barLeft: "the people edition",
   barMid: "sunday, august 16, 2026",
   barRight: "vol. i — no. 004 · price: 5¢",
-  nameplate: "The Context Fence",
+  nameplate: "The Builders",
   tagline: "five hands. one fence. printed for your machine.",
   ticker: [
     "breaking — the fence is holding",
@@ -443,6 +437,7 @@ export const team = {
       headline: "The founder who built the runtime",
       tagline: "Final-year CS undergraduate, SRM.",
       bio: "Builds the runtime proxy, policy engine, and audit pipeline, focused on making agent traffic inspectable and enforceable at the protocol layer.",
+      bioLarge: true,
       quote:
         "Make agent traffic inspectable and enforceable at the protocol layer — that is the whole bet.",
       caption: "Mr. Srivastava at the runtime. Nothing leaves the machine.",
@@ -457,6 +452,7 @@ export const team = {
       headline: "The co-founder who laid the stack",
       tagline: "Final-year CS undergraduate, VIT.",
       bio: "Built the core implementation stack and pipeline design on Context Fence.",
+      bioLarge: true,
       quote: "Pipeline design is where the fence starts. The stack is the story.",
       caption: "Ms. Saw with the pipeline. Every call passes through here.",
       photo: {
@@ -497,23 +493,12 @@ export const team = {
       },
     },
   ],
-  classifieds: [
-    { tag: "wanted", text: "Agent protocols that behave. Reward: zero incidents. Inquire at the policy file." },
-    {
-      tag: "for sale",
-      text: "One (1) universal binary for macOS and Windows. No cloud routing included.",
-      cta: { label: "download now", href: "/downloads" },
-    },
-    { tag: "help wanted", text: "Debuggers. Own the testing. Must be willing to break things politely." },
-    { tag: "lost", text: "One (1) context window. If found, please return to the fence." },
-  ],
 };
 
 export const signup = {
   eyebrow: "// newsletter",
   title: "Subscribe to the newsletter",
   lead: "One honest issue a month: what the fence blocked, what agents did next, and the occasional early-access invite before the crowd.",
-  note: "No spam. One email a month. Unsubscribe anytime.",
   submit: "Subscribe",
   success: "Subscribed. The first issue is on its way.",
 };
@@ -909,7 +894,7 @@ export const privacy = {
   contact: {
     h: "Questions?",
     p: "Use the early access form on the home page and say it is about privacy. The founders answer it directly — no support desk, no ticket queue.",
-    cta: { label: "Ask us", href: "/#signup" },
+    cta: { label: "Ask us", href: "mailto:thecontextfence@gmail.com" },
   },
   ticker: "nothing leaves the machine · nothing leaves the machine · ",
 };

@@ -1,5 +1,5 @@
 import Hero from "@/components/Hero";
-import Stats from "@/components/Stats";
+import TextLoop from "@/components/TextLoop";
 import Problem from "@/components/Problem";
 import Features from "@/components/Features";
 import CaseStudies from "@/components/CaseStudies";
@@ -63,7 +63,25 @@ export default function Home() {
         path="/"
       />
       <Hero />
-      <Stats />
+      <div className="text-loop-band" aria-hidden="true">
+        <TextLoop
+          text="Schema Checks · Secret Stripping · Local Audit Log · Zero Cloud Routing"
+          shape="wave"
+          speed={85}
+          direction="forward"
+          separator="✦"
+          curviness={20}
+          fontSize={26}
+          fontWeight={700}
+          letterSpacing={2.5}
+          uppercase
+          color="#ffffff"
+          ribbon
+          ribbonColor="#ff3144"
+          ribbonWidth={54}
+          pauseOnHover
+        />
+      </div>
       <Problem />
       <Features />
       <CaseStudies />

@@ -164,7 +164,7 @@ export default function TermsEdition() {
   }, []);
 
   return (
-    <section className="paper-page paper-legal" id="terms" ref={rootRef}>
+    <section className="paper-page paper-page--void" id="terms" ref={rootRef}>
       <NewspaperMasthead
         variant="legal"
         barLeft="contract corner"

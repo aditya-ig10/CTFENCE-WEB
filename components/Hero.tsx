@@ -2,6 +2,7 @@
 
 import { useEffect, useRef } from "react";
 import Link from "next/link";
+import { ChevronDown } from "lucide-react";
 import gsap from "gsap";
 import { hero } from "@/content/copy";
 import { motionAllowed } from "@/lib/anim";
@@ -12,18 +13,41 @@ export default function Hero() {
 
   useEffect(() => {
     const root = rootRef.current;
-    if (!root || !motionAllowed()) return;
+    if (!root) return;
+
+    // scroll hint fades out once the user starts scrolling
+    const hint = root.querySelector<HTMLElement>(".hero-scroll-hint");
+    const onScroll = () => {
+      if (!hint) return;
+      const hidden = window.scrollY > 32;
+      if (!motionAllowed()) {
+        hint.style.opacity = hidden ? "0" : "1";
+        return;
+      }
+      gsap.to(hint, {
+        autoAlpha: hidden ? 0 : 1,
+        duration: 0.35,
+        ease: "power2.out",
+        overwrite: true,
+      });
+    };
+    window.addEventListener("scroll", onScroll, { passive: true });
+
+    if (!motionAllowed()) {
+      return () => window.removeEventListener("scroll", onScroll);
+    }
+
     const ctx = gsap.context(() => {
       gsap.set(".hero-reveal", { opacity: 0, y: 18 });
       [
-        { sel: ".hero-sub", at: 3.2 },
-        { sel: ".hero-actions", at: 3.8 },
-        { sel: ".sla-badge", at: 4.4 },
+        { sel: ".hero-sub", at: 0.7 },
+        { sel: ".hero-actions", at: 0.9 },
+        { sel: ".hero-scroll-hint", at: 1.15 },
       ].forEach(({ sel, at }) => {
         gsap.to(sel, {
           opacity: 1,
           y: 0,
-          duration: 0.6,
+          duration: 0.45,
           delay: at,
           ease: "power2.out",
         });
@@ -34,24 +58,23 @@ export default function Hero() {
         {
           scaleX: 1,
           transformOrigin: "left center",
-          duration: 0.4,
-          delay: 1.95,
+          duration: 0.3,
+          delay: 0.55,
           ease: "power3.inOut",
           willChange: "transform",
           force3D: true,
         }
       );
     }, root);
-    return () => ctx.revert();
+    return () => {
+      window.removeEventListener("scroll", onScroll);
+      ctx.revert();
+    };
   }, []);
 
   return (
     <section className="hero" id="hero-top" ref={rootRef}>
       <div className="hero-inner">
-        <div className="hero-tag hero-reveal">
-          <span className="tag-dot" aria-hidden="true" />
-          {hero.tag}
-        </div>
         <h1 className="hero-title">
           {hero.titleLines.map((l, i) => (
             <span key={i}>
@@ -66,7 +89,7 @@ export default function Hero() {
                     ease="power3.out"
                     splitType="chars"
                     textAlign="left"
-                    startDelay={1.95}
+                    startDelay={0.55}
                   />
                 </span>
               ) : (
@@ -79,7 +102,7 @@ export default function Hero() {
                   ease="power3.out"
                   splitType="chars"
                   textAlign="left"
-                  startDelay={i * 0.45 + 0.5}
+                  startDelay={i * 0.18 + 0.15}
                 />
               )}
               {i < hero.titleLines.length - 1 && <br />}
@@ -91,11 +114,12 @@ export default function Hero() {
           <Link href={hero.primaryCta.href} className="btn-primary">
             {hero.primaryCta.label}
           </Link>
-          <span className="sla-badge">
-            <span aria-hidden="true">✓</span>
-            {hero.slaBadge}
-          </span>
         </div>
+      </div>
+      <div className="hero-scroll-hint hero-reveal" aria-hidden="true">
+        <ChevronDown className="hero-scroll-arrow" />
+        <ChevronDown className="hero-scroll-arrow" />
+        <ChevronDown className="hero-scroll-arrow" />
       </div>
     </section>
   );

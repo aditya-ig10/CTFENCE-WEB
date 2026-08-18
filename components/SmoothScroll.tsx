@@ -86,7 +86,7 @@ export default function SmoothScroll() {
       // card grids + lists stagger in
       gsap.utils
         .toArray<HTMLElement>(
-          ".cap-grid, .plans, .stats, .signup-form, .prose-body, .thanks-box, .replay-scenes, .draft-grid, .acc-list"
+          ".cap-grid, .plans, .signup-form, .prose-body, .thanks-box, .replay-scenes, .draft-grid, .acc-list"
         )
         .forEach((group) => {
           gsap.fromTo(

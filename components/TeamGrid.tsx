@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import Link from "next/link";
 import gsap from "gsap";
 import { motionAllowed } from "@/lib/anim";
 import { team } from "@/content/copy";
@@ -158,32 +157,7 @@ export default function TeamGrid() {
         }
       );
 
-      // classifieds — the small print runs in, the sale card keeps the accent
-      gsap.utils.toArray<HTMLElement>(".paper-classified").forEach((card) => {
-        gsap.fromTo(
-          card,
-          { autoAlpha: 0, y: 20 },
-          {
-            autoAlpha: 1,
-            y: 0,
-            duration: 0.6,
-            stagger: 0.1,
-            ease: "power3.out",
-            scrollTrigger: { trigger: ".paper-classifieds-grid", start: "top 88%", once: true },
-          }
-        );
-      });
-      gsap.fromTo(
-        root.querySelectorAll(".paper-classifieds .paper-kicker, .paper-classifieds .paper-section-rule"),
-        { autoAlpha: 0 },
-        {
-          autoAlpha: 1,
-          duration: 0.5,
-          ease: "power3.out",
-          scrollTrigger: { trigger: ".paper-classifieds", start: "top 92%", once: true },
-        }
-      );
-    }, root);
+      }, root);
 
     return () => ctx.revert();
   }, []);
@@ -227,7 +201,7 @@ export default function TeamGrid() {
             <p className="paper-col-meta">
               {f.name} — {f.role} · {f.tagline}
             </p>
-            <p className="paper-col-body">{f.bio}</p>
+            <p className={`paper-col-body${f.bioLarge ? " paper-col-body--large" : ""}`}>{f.bio}</p>
             <blockquote className="paper-quote">
               <span className="paper-quote-mark" aria-hidden="true">
                 “
@@ -256,32 +230,6 @@ export default function TeamGrid() {
               </figcaption>
             </figure>
           ))}
-        </div>
-      </section>
-
-      <section className="paper-classifieds" aria-label="Classifieds">
-        <div className="paper-section-rule" aria-hidden="true" />
-        <div className="paper-kicker">classifieds</div>
-        <div className="paper-classifieds-grid">
-          {team.classifieds.map((c) =>
-            c.cta ? (
-              <Link key={c.tag} href={c.cta.href} className="paper-classified paper-classified--cta">
-                <span className="paper-classified-tag">{c.tag}</span>
-                <span className="paper-classified-text">{c.text}</span>
-                <span className="paper-classified-link">
-                  {c.cta.label}
-                  <svg viewBox="0 0 14 14" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-                    <path d="M3 7h8M8 3.5 11.5 7 8 10.5" />
-                  </svg>
-                </span>
-              </Link>
-            ) : (
-              <div className="paper-classified" key={c.tag}>
-                <span className="paper-classified-tag">{c.tag}</span>
-                <span className="paper-classified-text">{c.text}</span>
-              </div>
-            )
-          )}
         </div>
       </section>
     </section>
