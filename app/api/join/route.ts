@@ -24,6 +24,7 @@ async function sendEmail(templateId: string, params: Record<string, string>) {
       service_id: SERVICE_ID,
       template_id: templateId,
       user_id: publicKey,
+      accessToken: process.env.EMAILJS_PRIVATE_KEY || undefined,
       template_params: params,
     }),
   });
