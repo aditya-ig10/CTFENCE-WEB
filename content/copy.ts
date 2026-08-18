@@ -523,21 +523,9 @@ export const footer = {
 };
 
 export const thankYou = {
-  eyebrow: "// subscription received",
-  title: "You are subscribed.",
-  body: [
-    "That is a real subscriber list, not a form that eats it. The first issue lands within the month.",
-    "While you wait, the downloads page walks through what the proxy checks and how the policy file reads.",
-  ],
+  title: "All set.",
+  line: "You are on the list — the first issue lands within the month.",
   homeCta: { label: "Back to the site", href: "/" },
-  docsCta: { label: "See the downloads", href: "/downloads" },
-};
-
-export const notFound = {
-  prompt: "cf",
-  title: "cf: route not found [404]",
-  body: "That page does not exist, and no amount of agent willpower will make it. Start from the top.",
-  cta: { label: "cd ~", href: "/" },
 };
 
 export const docs = {

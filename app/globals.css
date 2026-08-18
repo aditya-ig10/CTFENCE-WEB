@@ -4343,18 +4343,79 @@ html[data-theme="light"] .dl-panel-overlay {
   padding: 40px 20px;
 }
 
-/* the 404 page — kitty alone, filling the viewport, never scrolling */
-.notfound-page {
+/* the 404 + thank-you pages — kitty centered, shell (navbar, breadcrumbs,
+   footer) stays visible. the page body becomes a flex column so the kitty
+   area takes exactly the leftover viewport: zero scroll, no magic numbers. */
+.notfound-page,
+.thanks-page {
   min-height: 100svh;
   display: grid;
   place-items: center;
-  padding: 24px;
+  padding: 0 24px;
 }
 
-.notfound-kitty {
+.thanks-page {
+  gap: 20px;
+  text-align: center;
+}
+
+.thanks-scene {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  gap: 14px;
+}
+
+.thanks-scene .btn-primary {
+  margin-top: 4px;
+  margin-bottom: 24px;
+}
+
+body:has(main.notfound-page),
+body:has(main.thanks-page) {
+  display: flex;
+  flex-direction: column;
+  min-height: 100svh;
+}
+
+body:has(main.notfound-page) .notfound-page,
+body:has(main.thanks-page) .thanks-page {
+  min-height: 0;
+  flex: 1 0 auto;
+}
+
+.notfound-kitty,
+.thanks-kitty {
   display: block;
-  width: min(90vw, calc(100svh * 1.5));
+  width: min(40vw, calc(100svh / 1.5));
   height: auto;
+}
+
+.thanks-kitty {
+  width: min(34vw, calc(100svh / 2.4));
+}
+
+/* thank-you entrance: hidden only when motion is allowed; reduced-motion
+   users get the scene fully visible, static. */
+@media (prefers-reduced-motion: no-preference) {
+  .thanks-scene .ts-float,
+  .thanks-scene .thanks-title,
+  .thanks-scene .thanks-line,
+  .thanks-scene .btn-primary {
+    opacity: 0;
+  }
+}
+
+.thanks-title {
+  font-size: clamp(24px, 3.5vw, 34px);
+  letter-spacing: -0.02em;
+  color: var(--void);
+}
+
+.thanks-line {
+  color: var(--muted);
+  max-width: 420px;
 }
 
 .sr-only {
@@ -4368,15 +4429,6 @@ html[data-theme="light"] .dl-panel-overlay {
   white-space: nowrap;
   border: 0;
 }
-
-.thanks-box {
-  border: 1px solid var(--border);
-  background: var(--surface);
-  padding: 40px;
-  margin: 32px 0 40px;
-}
-
-.thanks-box .t-prompt { font-size: 13px; }
 
 /* reduced motion */
 @media (prefers-reduced-motion: reduce) {
