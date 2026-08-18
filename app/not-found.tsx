@@ -11,6 +11,11 @@ export const metadata = baseMetadata({
 export default function NotFound() {
   return (
     <main className="terminal-page">
+      <img
+        className="notfound-kitty"
+        src="/404/404kitty.png"
+        alt="404 kitty — the page you wanted is not here"
+      />
       <div className="terminal-wrap">
         <div className="terminal-bar">
           <div className="tbar-dot" />
