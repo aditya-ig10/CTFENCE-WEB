@@ -4475,7 +4475,7 @@ html.vt-active *::after {
   line-height: 1;
   letter-spacing: 0.09em;
   text-transform: uppercase;
-  color: var(--void);
+  color: #ffffff;
   text-decoration: none;
   transition: transform 150ms var(--ease-out), opacity 150ms var(--ease-out);
 }
@@ -4487,7 +4487,7 @@ html.vt-active *::after {
   right: 0;
   bottom: 0;
   height: 2px;
-  background: var(--void);
+  background: #ffffff;
   transform: scaleX(0);
   transform-origin: left;
   transition: transform 180ms var(--ease-out);
@@ -4519,7 +4519,7 @@ html.vt-active *::after {
   justify-content: center;
   gap: 9px;
   padding: 11px 18px;
-  border: 1.5px solid var(--void);
+  border: 1.5px solid #ffffff;
   border-radius: 999px;
   font-family: var(--font-canela);
   font-weight: 700;
@@ -4527,14 +4527,14 @@ html.vt-active *::after {
   line-height: 1;
   letter-spacing: 0.09em;
   text-transform: uppercase;
-  color: var(--void);
+  color: #ffffff;
   text-decoration: none;
   white-space: nowrap;
   transition: background 150ms var(--ease-out), color 150ms var(--ease-out), transform 150ms var(--ease-out);
 }
 
 .topbar-cta:hover {
-  background: var(--void);
+  background: #ffffff;
   color: var(--accent);
   transform: translateY(-1px);
 }
@@ -4548,9 +4548,9 @@ html.vt-active *::after {
   height: 38px;
   padding: 0;
   border-radius: 50%;
-  border: 1.5px solid var(--void);
+  border: 1.5px solid #ffffff;
   background: transparent;
-  color: var(--void);
+  color: #ffffff;
   display: grid;
   place-items: center;
   cursor: pointer;
@@ -4558,7 +4558,7 @@ html.vt-active *::after {
 }
 
 .topbar .theme-toggle:hover {
-  background: var(--void);
+  background: #ffffff;
   color: var(--accent);
   transform: rotate(12deg) scale(1.08);
 }
