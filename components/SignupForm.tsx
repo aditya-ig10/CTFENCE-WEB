@@ -20,7 +20,8 @@ export default function SignupForm() {
     gsap.set(img, { y: -56, opacity: 0, scale: 0.92 });
     const yTo = gsap.quickTo(img, "y", { duration: 0.7, ease: "power2.out" });
     const oTo = gsap.quickTo(img, "opacity", { duration: 0.7, ease: "power2.out" });
-    const sTo = gsap.quickTo(img, "scale", { duration: 0.7, ease: "power2.out" });
+    const sXTo = gsap.quickTo(img, "scaleX", { duration: 0.7, ease: "power2.out" });
+    const sYTo = gsap.quickTo(img, "scaleY", { duration: 0.7, ease: "power2.out" });
     const update = () => {
       const rect = root.getBoundingClientRect();
       const total = rect.height + window.innerHeight;
@@ -29,7 +30,8 @@ export default function SignupForm() {
       const opacity = p < fade ? p / fade : p > 1 - fade ? (1 - p) / fade : 1;
       yTo(gsap.utils.mapRange(0, 1, -56, 56, p));
       oTo(opacity);
-      sTo(gsap.utils.mapRange(0, fade, 0.92, 1, p));
+      sXTo(gsap.utils.mapRange(0, fade, 0.92, 1, p));
+      sYTo(gsap.utils.mapRange(0, fade, 0.92, 1, p));
     };
     update();
     window.addEventListener("scroll", update, { passive: true });
