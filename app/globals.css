@@ -1214,6 +1214,12 @@ html[data-theme="light"] .dl-panel-overlay {
   justify-content: center;
 }
 
+@media (max-width: 767px) {
+  .text-loop-band {
+    height: clamp(100px, 30vw, 150px);
+  }
+}
+
 .text-loop {
   position: relative;
   width: 100%;

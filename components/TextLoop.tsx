@@ -96,10 +96,26 @@ export default function TextLoop({
 
   const [metrics, setMetrics] = useState({ length: 0, reps: 1 });
 
+  const [isMobile, setIsMobile] = useState(false);
+  useEffect(() => {
+    const mq = window.matchMedia("(max-width: 767px)");
+    const onChange = () => setIsMobile(mq.matches);
+    onChange();
+    mq.addEventListener("change", onChange);
+    return () => mq.removeEventListener("change", onChange);
+  }, []);
+
   const rawId = useId();
   const pathId = `text-loop-${rawId.replace(/:/g, "")}`;
 
-  const d = useMemo(() => path || buildPath(shape, curviness, ribbonWidth), [path, shape, curviness, ribbonWidth]);
+  const textScale = isMobile ? 2 : 1;
+  const ribbonScale = isMobile ? 1.5 : 1;
+  const effectiveRibbonWidth = ribbonWidth * ribbonScale;
+  const effectiveCurviness = curviness * textScale;
+  const d = useMemo(
+    () => path || buildPath(shape, effectiveCurviness, effectiveRibbonWidth),
+    [path, shape, effectiveCurviness, effectiveRibbonWidth]
+  );
 
   const unit = useMemo(() => {
     const base = uppercase ? String(text).toUpperCase() : String(text);
@@ -108,8 +124,12 @@ export default function TextLoop({
   }, [text, separator, uppercase]);
 
   const textStyle = useMemo(
-    () => ({ fontSize: `${fontSize}px`, fontWeight, letterSpacing: `${letterSpacing}px` }),
-    [fontSize, fontWeight, letterSpacing]
+    () => ({
+      fontSize: `${fontSize * textScale}px`,
+      fontWeight,
+      letterSpacing: `${letterSpacing * textScale}px`,
+    }),
+    [fontSize, fontWeight, letterSpacing, textScale]
   );
 
   useLayoutEffect(() => {
@@ -143,7 +163,7 @@ export default function TextLoop({
     return () => {
       cancelled = true;
     };
-  }, [d, unit, fontSize, fontWeight, letterSpacing]);
+  }, [d, unit, fontSize, fontWeight, letterSpacing, textScale]);
 
   useEffect(() => {
     const { length } = metrics;
@@ -208,7 +228,7 @@ export default function TextLoop({
           d={d}
           fill="none"
           stroke={ribbon ? ribbonColor : "none"}
-          strokeWidth={ribbon ? ribbonWidth : 0}
+          strokeWidth={ribbon ? effectiveRibbonWidth : 0}
           strokeLinecap="round"
           strokeLinejoin="round"
         />
