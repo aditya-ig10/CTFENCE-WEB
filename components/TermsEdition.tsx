@@ -5,6 +5,8 @@ import gsap from "gsap";
 import { motionAllowed } from "@/lib/anim";
 import { terms } from "@/content/copy";
 import NewspaperMasthead from "@/components/NewspaperMasthead";
+import SignatureDraw from "@/components/SignatureDraw";
+import { adityaSignature, saniyaSignature } from "@/components/signaturePaths";
 
 const ADS = [
   {
@@ -133,31 +135,7 @@ export default function TermsEdition() {
         );
       });
 
-      // the witness block — signature lines draw themselves
-      gsap.fromTo(
-        root.querySelectorAll(".paper-witness > *"),
-        { autoAlpha: 0, y: 14 },
-        {
-          autoAlpha: 1,
-          y: 0,
-          duration: 0.55,
-          stagger: 0.09,
-          ease: "power3.out",
-          scrollTrigger: { trigger: ".paper-witness", start: "top 90%", once: true },
-        }
-      );
-      gsap.fromTo(
-        root.querySelectorAll(".paper-signature-line"),
-        { scaleX: 0 },
-        {
-          scaleX: 1,
-          transformOrigin: "left center",
-          duration: 0.7,
-          stagger: 0.15,
-          ease: "power3.inOut",
-          scrollTrigger: { trigger: ".paper-witness", start: "top 86%", once: true },
-        }
-      );
+      // the witness block stays fully visible — no hidden starting state
     }, root);
 
     return () => ctx.revert();
@@ -165,27 +143,27 @@ export default function TermsEdition() {
 
   return (
     <section className="paper-page paper-page--void" id="terms" ref={rootRef}>
-      <NewspaperMasthead
-        variant="legal"
-        barLeft="contract corner"
-        barRight="august 16, 2026"
-        nameplate="The Contract Corner"
-        tagline={terms.sub}
-      />
+        <NewspaperMasthead
+          variant="legal"
+          barLeft="contract corner"
+          barRight="august 16, 2026"
+          nameplate="The Contract Corner"
+          tagline={terms.sub}
+        />
 
-      <div className="paper-banner" role="presentation">
-        <div className="paper-banner-title">
-          Read the fine print <em>before your agent does.</em>
+        <div className="paper-banner" role="presentation">
+          <div className="paper-banner-title">
+            Read the fine print <em>before your agent does.</em>
+          </div>
+          <div className="paper-banner-sub">
+            local edition · printed at the fence
+            <br />
+            <span className="paper-banner-price">50¢</span> · {terms.sections.length} clauses · 0
+            warranties
+          </div>
         </div>
-        <div className="paper-banner-sub">
-          local edition · printed at the fence
-          <br />
-          <span className="paper-banner-price">50¢</span> · {terms.sections.length} clauses · 0
-          warranties
-        </div>
-      </div>
 
-      <article className="paper-spread">
+        <article className="paper-spread">
         <header className="paper-head paper-head--center">
           <div className="paper-kicker">{terms.eyebrow}</div>
           <h1 className="paper-headline" id="terms-title">
@@ -232,12 +210,22 @@ export default function TermsEdition() {
           </p>
           <div className="paper-signatures">
             <div className="paper-signature">
+              <SignatureDraw
+                label="Aditya"
+                viewBox={adityaSignature.viewBox}
+                paths={adityaSignature.paths}
+              />
               <span className="paper-signature-line" aria-hidden="true" />
-              <span>for Synthrun</span>
+              <span>Aditya — founder</span>
             </div>
             <div className="paper-signature">
+              <SignatureDraw
+                label="Saniya"
+                viewBox={saniyaSignature.viewBox}
+                paths={saniyaSignature.paths}
+              />
               <span className="paper-signature-line" aria-hidden="true" />
-              <span>for the fence</span>
+              <span>Saniya — co-founder</span>
             </div>
           </div>
         </footer>

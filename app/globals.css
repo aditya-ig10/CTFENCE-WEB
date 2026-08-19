@@ -2671,46 +2671,65 @@ html[data-theme="light"] .dl-panel-overlay {
 .paper-ad--solid .paper-ad-cta { color: #ffffff; }
 
 .paper-witness {
-  padding: 34px 0 10px;
+  padding: clamp(36px, 5vw, 56px) 0 24px;
   text-align: center;
 }
 
 .paper-witness-rule {
-  height: 3px;
+  height: 4px;
   background: var(--ink);
-  max-width: 640px;
-  margin: 0 auto 22px;
+  max-width: 58%;
+  margin: 0 auto clamp(28px, 4vw, 44px);
 }
 
 .paper-witness p {
-  font-size: 13px;
-  line-height: 1.8;
+  font-family: var(--font-canela), serif;
+  font-variant: small-caps;
+  text-transform: uppercase;
+  font-size: clamp(13px, 1.4vw, 15px);
+  line-height: 2.15;
+  letter-spacing: 0.03em;
   color: var(--ink-soft);
-  max-width: 640px;
-  margin: 0 auto 30px;
+  max-width: 46ch;
+  margin: 0 auto clamp(44px, 6vw, 72px);
 }
 
+/* blank signature fields — a clean formal line, name and role beneath.
+   the blocks sit wide apart (roughly a third and two-thirds across the
+   sheet) and level with each other on the same row. */
 .paper-signatures {
   display: flex;
-  justify-content: center;
-  gap: clamp(40px, 8vw, 120px);
+  justify-content: space-evenly;
+  align-items: flex-start;
+  gap: clamp(20px, 6vw, 140px);
 }
 
 .paper-signature {
   display: flex;
   flex-direction: column;
-  gap: 10px;
+  align-items: center;
+  width: 230px;
+  flex: none;
   font-family: var(--font-jetbrains), 'JetBrains Mono', monospace;
-  font-size: 10px;
-  letter-spacing: 0.16em;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.22em;
   text-transform: uppercase;
-  color: var(--ink-soft);
+  color: var(--ink-dim);
+}
+
+.paper-signature-svg {
+  width: 200px;
+  height: 110px;
+  display: block;
+  margin-bottom: 10px;
 }
 
 .paper-signature-line {
-  width: 190px;
-  height: 1.5px;
+  width: 230px;
+  height: 2px;
   background: var(--ink);
+  margin-bottom: 13px;
 }
 
 @media (max-width: 900px) {
@@ -2727,8 +2746,6 @@ html[data-theme="light"] .dl-panel-overlay {
   .paper-board-head { flex-direction: column; gap: 10px; }
 
   .paper-notice--cols { column-count: 1; }
-
-  .paper-signatures { flex-direction: column; align-items: center; }
 }
 
 @media (max-width: 560px) {
