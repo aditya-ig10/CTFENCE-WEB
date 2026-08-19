@@ -3,6 +3,7 @@ import WebPageSchema from "@/components/WebPageSchema";
 import { baseMetadata } from "@/lib/seo";
 
 export const metadata = baseMetadata({
+  image: "/og/terms.png",
   title: "Terms of Service",
   description:
     "Context Fence terms of service, a product of Synthrun: the local core is free, builds are unsigned by design, and we make no warranty the fence catches everything.",

@@ -3,6 +3,7 @@ import WebPageSchema from "@/components/WebPageSchema";
 import { baseMetadata } from "@/lib/seo";
 
 export const metadata = baseMetadata({
+  image: "/og/blog.png",
   title: "Blog",
   description:
     "The Context Fence press room. Coming soon: the July 18 incident breakdown, schema checks vs. vibe checks, and how the evidence survey was run.",

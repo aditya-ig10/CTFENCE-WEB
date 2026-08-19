@@ -3,6 +3,7 @@ import WebPageSchema from "@/components/WebPageSchema";
 import { baseMetadata } from "@/lib/seo";
 
 export const metadata = baseMetadata({
+  image: "/og/evidence.png",
   title: "Evidence",
   description:
     "The MCP attack surface, mapped end-to-end: sixteen distinct security risks across four attacker classes, each confirmed with a working exploit.",

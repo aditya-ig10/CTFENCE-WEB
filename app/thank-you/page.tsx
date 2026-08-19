@@ -4,6 +4,7 @@ import { thankYou } from "@/content/copy";
 import { baseMetadata } from "@/lib/seo";
 
 export const metadata = baseMetadata({
+  image: "/og/thank-you.png",
   title: "Thank you",
   description: "Newsletter subscription received. The first issue lands within the month.",
   path: "/thank-you",

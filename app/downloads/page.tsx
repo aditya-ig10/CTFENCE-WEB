@@ -7,7 +7,8 @@ export async function generateMetadata() {
   const manifest = await getLatestRelease();
   const version = manifest?.version ?? "1.1.6-c";
   return baseMetadata({
-    title: "Downloads",
+    image: "/og/downloads.png",
+  title: "Downloads",
     description: `Download Context Fence ${version} — the local MCP policy proxy for AI coding agents. Universal macOS dmg, Homebrew tap, and Windows builds with published sha256 checksums.`,
     keywords: [
       "download context fence",

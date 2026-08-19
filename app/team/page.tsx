@@ -3,6 +3,7 @@ import WebPageSchema from "@/components/WebPageSchema";
 import { baseMetadata } from "@/lib/seo";
 
 export const metadata = baseMetadata({
+  image: "/og/team.png",
   title: "Team",
   description:
     "The people behind Context Fence — the founders at the protocol layer and the three hands keeping the build honest.",

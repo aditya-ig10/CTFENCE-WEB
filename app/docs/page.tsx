@@ -3,6 +3,7 @@ import { docs } from "@/content/copy";
 import { baseMetadata } from "@/lib/seo";
 
 export const metadata = baseMetadata({
+  image: "/og/docs.png",
   title: "Docs",
   description:
     "Context Fence docs: the YAML policy file, what the proxy checks, and the local SQLite audit log.",
