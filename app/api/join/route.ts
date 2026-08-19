@@ -46,16 +46,13 @@ export async function POST(request: Request) {
     email,
     date: new Date().toISOString().slice(0, 16).replace("T", " "),
   };
-  const results = await Promise.all([
-    sendEmail(REPLY_TEMPLATE, { ...common, to_email: email }),
-    OWNER_EMAIL
-      ? sendEmail(NOTIFY_TEMPLATE, { ...common, to_email: OWNER_EMAIL })
-      : Promise.resolve({ ok: true, skipped: true }),
-  ]);
-
-  const failed = results.filter((r) => !r.ok);
-  if (failed.length > 0) {
+  const reply = await sendEmail(REPLY_TEMPLATE, { ...common, to_email: email });
+  if (!reply.ok) {
     return NextResponse.json({ ok: false, error: "email failed" }, { status: 502 });
+  }
+  // the owner-record email must never fail the subscriber's signup
+  if (OWNER_EMAIL) {
+    await sendEmail(NOTIFY_TEMPLATE, { ...common, to_email: OWNER_EMAIL });
   }
   return NextResponse.json({ ok: true }, { status: 200 });
 }
