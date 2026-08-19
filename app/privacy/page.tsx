@@ -6,7 +6,7 @@ export const metadata = baseMetadata({
   image: "/og/privacy.png",
   title: "Privacy Policy",
   description:
-    "Context Fence privacy policy, a product of Synthrun: local-only mode collects nothing, what the website sees, and how the future hosted control plane would handle the audit log.",
+    "Context Fence privacy policy: local-only mode collects nothing, what the website sees, and how the hosted control plane would handle the audit log.",
   keywords: [
     "context fence privacy",
     "local AI proxy privacy",

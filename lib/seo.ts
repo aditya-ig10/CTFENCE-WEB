@@ -30,6 +30,10 @@ export function baseMetadata({
   publishedTime,
   modifiedTime,
   robots,
+  ogTitle,
+  ogDescription,
+  twitterTitle,
+  twitterDescription,
 }: {
   title: string;
   description: string;
@@ -40,14 +44,25 @@ export function baseMetadata({
   publishedTime?: string;
   modifiedTime?: string;
   robots?: Metadata["robots"];
+  ogTitle?: string;
+  ogDescription?: string;
+  twitterTitle?: string;
+  twitterDescription?: string;
 }): Metadata {
   const url = routeUrl(path);
   const ogImage = routeUrl(image);
+  const resolvedOgTitle = ogTitle ?? (title.length < 25 ? `${title} · ${site.name}` : title);
+  const resolvedOgDescription = ogDescription ?? description;
+  const resolvedTwitterTitle = twitterTitle ?? title;
+  const resolvedTwitterDescription = twitterDescription ?? description;
   return {
     title,
     description,
     keywords,
-    alternates: { canonical: url },
+    authors: [{ name: "Synthrun", url: siteUrl }],
+    creator: "Synthrun",
+    publisher: "Synthrun",
+    alternates: { canonical: url, languages: { en: url, "x-default": url } },
     robots: robots ?? {
       index: true,
       follow: true,
@@ -61,8 +76,8 @@ export function baseMetadata({
       },
     },
     openGraph: {
-      title,
-      description,
+      title: resolvedOgTitle,
+      description: resolvedOgDescription,
       url,
       siteName: site.name,
       locale: "en_IN",
@@ -75,8 +90,10 @@ export function baseMetadata({
     },
     twitter: {
       card: "summary_large_image",
-      title,
-      description,
+      site: "@contextfence",
+      creator: "@contextfence",
+      title: resolvedTwitterTitle,
+      description: resolvedTwitterDescription,
       images: [ogImage],
     },
   };

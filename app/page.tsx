@@ -11,8 +11,10 @@ import WebPageSchema from "@/components/WebPageSchema";
 import { site } from "@/content/copy";
 import { baseMetadata, softwareAppSchema } from "@/lib/seo";
 
+const HOME_TITLE = "Context Fence — Local MCP Policy Proxy for AI Coding Agents";
+
 const HOME_DESCRIPTION =
-  "Context Fence is a local MCP policy proxy for AI coding agents: schema-based tool call checks under 10ms, secret stripping, an append-only audit log, and zero cloud routing. Free and open for macOS and Windows.";
+  "Context Fence is a local MCP policy proxy for AI coding agents: schema-based checks under 10ms, secret stripping, append-only audit log, zero cloud routing.";
 
 const HOME_KEYWORDS = [
   "context fence",
@@ -28,10 +30,14 @@ const HOME_KEYWORDS = [
 ];
 
 export const metadata = baseMetadata({
-  title: site.name,
+  title: HOME_TITLE,
   description: HOME_DESCRIPTION,
   path: "/",
   keywords: HOME_KEYWORDS,
+  ogTitle: "Context Fence — MCP Policy Proxy",
+  ogDescription: "Local MCP policy proxy that stops AI agents leaking secrets.",
+  twitterDescription:
+    "Context Fence is a local MCP policy proxy for AI coding agents: schema-based tool call checks under 10ms, secret stripping, append-only audit log, zero cloud routing. Free for macOS and Windows.",
 });
 
 const SOFTWARE_KEYWORDS = [
