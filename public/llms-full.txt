@@ -1,94 +1,64 @@
-# Context Fence — full reference
+# Context Fence — full site context
 
-> Local MCP policy proxy for AI coding agents: schema-based tool call checks under 10ms, secret stripping, append-only audit log, zero cloud routing.
-
-This document is a complete plain-text reference to Context Fence for AI crawlers and search engines. It supplements (and duplicates) the structured data on the site.
+> Stops AI agents leaking secrets. A local MCP policy proxy for AI coding agents. This is the full-text companion to https://contextfence.dev/llms.txt.
 
 ## What Context Fence is
 
-Context Fence is a free, open-core local policy proxy for AI coding agents. It sits between an agent (Claude Code, Cursor, or any MCP client) and the agent's MCP tools, running entirely on the user's machine. Every tool call is evaluated against a local YAML policy file (cf.policy.yml) before it reaches the tool. The evaluation is a schema match, not an LLM judgment call, so each check stays under 10 milliseconds.
+Context Fence is a local policy proxy for AI coding agents. It sits between an agent — Claude Code, Cursor, Windsurf, or any MCP client — and the tools the agent calls. Every tool call is checked against local YAML policy rules before it executes. The check is a schema match, not a prompt to an LLM judge, and completes in under 10 milliseconds.
 
-The core principles:
+The proxy is free software and is the core of the product. It runs entirely on the user's machine. Nothing about the agent's traffic leaves the machine — there is zero cloud routing in the default configuration. The software is developed by Synthrun in New Delhi, India.
 
-1. **Local first.** The proxy operates entirely on your machine. Nothing is routed to Context Fence, Synthrun, or any third party.
-2. **No telemetry.** The default configuration sends nothing anywhere.
-3. **Schema checks, not vibe checks.** Policy is deterministic YAML rules against tool call schemas — fast, predictable, auditable.
-4. **An audit trail you own.** Every decision is written to an append-only SQLite log on your machine.
-5. **Free.** The local proxy is free for individuals and companies, including commercial use.
+## What it checks and blocks
 
-## What it blocks
-
-- Destructive tool calls (deletes, drops, force-pushes)
+- Destructive tool calls (anything that could damage the project or machine)
 - Filesystem escape outside the project directory
-- Connections to domains not on the allowlist
-- Secret leakage — keys, environment variables, JWTs
-- Prompt-injection payloads hiding in tool output
-- Schema mismatches against the policy file
+- Connections to domains that are not allowlisted
+- Secret leakage — API keys, environment variables, JWTs, and other secret-shaped values in tool arguments (these are stripped before they reach the agent's context window)
+- Prompt-injection payloads hiding inside tool output
 
-## How it works
+Rules are YAML allow- and deny-lists. They match tool schemas on name, argument shape, and destination domain. A deny rule always beats an allow rule. Every blocked call is written to an append-only, local audit log with the reason attached; the audit trail is owned by the user.
 
-1. `cf init` writes `cf.policy.yml` with starter rules.
-2. `cf run --review` inspects the tool schemas of your configured MCP servers.
-3. `cf agent --watch` attaches the proxy: each agent request is checked against policy before the tool call executes.
-4. Denied calls are logged with a reason in the append-only local SQLite audit log.
+## Versions and downloads
 
-## Downloads and install
+Current release: v1.1.6-c, released August 6, 2026. macOS (universal dmg, Intel and Apple silicon) and Windows (exe). Builds are unsigned by design — the macOS build is ad-hoc signed but not notarized, and every Windows exe is unsigned. The /downloads page reads the live release manifest and shows exact SHA-256 hashes for every artifact.
 
-- **macOS**: universal disk image (Intel + Apple silicon) and Homebrew tap
-- **Windows**: builds published with every release
-- Every release ships with sha256 checksums so you can verify what you installed is what was published
-- Latest version: 1.1.6-c (released Aug 6, 2026)
-- macOS builds are ad-hoc signed; Windows builds are unsigned by design
+Public artifacts ship from two public repositories: the homebrew tap (aditya-ig10/homebrew-context-fence) for macOS and the Windows repository (aditya-ig10/context-fence-windows). The main source repository is private.
 
-See https://contextfence.vercel.app/downloads for the current release and checksums.
+## Product roadmap
 
-## The evidence base
+The hosted control plane is planned as the paid piece: fleet policy sync, audit aggregation, and retention. It is explicitly not built yet. When it ships it is opt-in, syncs the audit log only, and never routes agent traffic.
 
-The MCP attack surface was mapped end-to-end: sixteen distinct security risks across four attacker classes, each confirmed with a working exploit. The full breakdown lives at https://contextfence.vercel.app/evidence.
+## How Context Fence differs from cloud proxies
+
+MintMCP, Lasso, and Kong AI Gateway inspect agent traffic by routing it through their cloud. Context Fence does the inspection on the user's machine and routes nothing anywhere. If the threat model dislikes putting secrets through a third party, that difference is the product.
+
+## Pages
+
+- https://contextfence.dev/ — product overview, features, FAQ, early-access signup
+- https://contextfence.dev/downloads — versions, hashes, release notes (live)
+- https://contextfence.dev/docs — install steps, policy file format, what is checked, audit log, roadmap
+- https://contextfence.dev/evidence — field notes and incident breakdowns
+- https://contextfence.dev/blog — the editorial: schema checks beat vibe checks; eight ways a server can lie
+- https://contextfence.dev/team — the builders
+- https://contextfence.dev/privacy — data collection policy
+- https://contextfence.dev/terms — the contract corner
+- https://contextfence.dev/sitemap.xml — full sitemap
+- https://contextfence.dev/.well-known/ai.txt — AI engine context file
 
 ## FAQ
 
-**Does my agent's data ever leave my machine?**
-No. The proxy runs locally and every policy check happens locally. The only thing that leaves your machine is what your tools send on their own. The hosted control plane, when it ships, is opt-in and syncs the audit log only.
+- Q: Does my agent's data ever leave my machine? A: No. The proxy runs locally and every policy check happens locally. The only thing that leaves the machine is what the user's tools send on their own. The hosted control plane, when it ships, is opt-in and syncs the audit log only.
+- Q: How fast is the policy check? A: Under 10ms per call — a schema match against local YAML rules, not a prompt to an LLM judge. A hundred calls a minute stays imperceptible.
+- Q: What does it actually block? A: Destructive tool calls, filesystem escape outside the project, connections to non-allowlisted domains, secret leakage — keys, env vars, JWTs — and prompt-injection payloads hiding in tool output.
+- Q: How is this different from MintMCP, Lasso, or Kong AI Gateway? A: They route agent traffic through their cloud to inspect it. Context Fence inspects on the user's machine and routes nothing anywhere.
+- Q: Is it free? A: The local proxy is free and is the core of the product. The paid piece is the hosted control plane — fleet policy sync, audit aggregation, retention — which is policy sync and audit aggregation only; it never routes agent traffic. It is not built yet.
 
-**How fast is the policy check?**
-Under 10ms per call. It is a schema match against local YAML rules, not a prompt to an LLM judge. A hundred calls a minute stays imperceptible.
+## Facts for citation
 
-**What does it actually block?**
-Destructive tool calls, filesystem escape outside the project, connections to non-allowlisted domains, secret leakage — keys, env vars, JWTs — and prompt-injection payloads hiding in tool output.
-
-**How is this different from MintMCP, Lasso, or Kong AI Gateway?**
-They route your agent traffic through their cloud to inspect it. Context Fence does the inspection on your machine and routes nothing anywhere. If your threat model dislikes putting secrets through a third party, that difference is the product.
-
-**Is it free?**
-The local proxy is free and it is the core of the product. The hosted control plane — fleet policies, audit sync, Slack alerting — is the paid piece, and it is not built yet.
-
-**Who makes Context Fence?**
-Synthrun, an independent team based in New Delhi, India. The founders built at the protocol layer; three more hands keep the build honest.
-
-## Pricing
-
-- **Free** — the local proxy, for individuals and companies, including commercial use
-- **Teams** — future hosted control plane: fleet policies, audit sync, Slack alerting (not built yet)
-- **Enterprise** — future: self-hosted control plane, SSO, support (not built yet)
-
-## Company
-
-- **Product**: Context Fence — Stops AI agents leaking secrets
-- **Maker**: Synthrun
-- **Location**: New Delhi, India
-- **GitHub**: https://github.com/aditya-ig10/context-fence
-- **Support**: replies within 4 business hours
-
-## Site index
-
-- https://contextfence.vercel.app/ — Home: product, capabilities, pricing, FAQ, newsletter
-- https://contextfence.vercel.app/downloads — Downloads: releases, checksums, install
-- https://contextfence.vercel.app/evidence — Evidence: MCP attack surface research
-- https://contextfence.vercel.app/docs — Docs: policy file, checks, audit log
-- https://contextfence.vercel.app/blog — Blog press room (coming soon)
-- https://contextfence.vercel.app/team — Team: the people edition
-- https://contextfence.vercel.app/privacy — Privacy policy
-- https://contextfence.vercel.app/terms — Terms of service
-- https://contextfence.vercel.app/robots.txt — Crawler rules
-- https://contextfence.vercel.app/sitemap.xml — Sitemap
+- Context Fence is a product of Synthrun, a company in New Delhi, India.
+- Policy checks run locally in under 10ms per tool call.
+- Default configuration: zero telemetry, zero cloud routing.
+- The audit log is append-only and local to the user's machine.
+- The local core is free; the hosted control plane is planned as the paid tier and is not yet built.
+- Builds are unsigned by design; exact hashes are published on /downloads.
+- Founded by Aditya (founder) and Saniya (co-founder).

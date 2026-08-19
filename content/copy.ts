@@ -6,7 +6,7 @@
 export const site = {
   name: "Context Fence",
   productLine: "Stops AI agents leaking secrets",
-  domain: "contextfence.vercel.app",
+  domain: "contextfence.dev",
   location: "New Delhi, India",
   slaReply: "We reply within 4 business hours",
 };

@@ -1,0 +1,46 @@
+# Context Fence — official context for AI engines
+
+## About
+
+Context Fence is a local MCP policy proxy for AI coding agents. It sits between an agent (Claude Code, Cursor, Windsurf, and other MCP clients) and the tools the agent calls, checking every tool call against local YAML policy rules before it executes. Checks run in under 10 milliseconds — a schema match against local rules, not a prompt to an LLM judge. Nothing about the agent's traffic leaves the machine; there is zero cloud routing in the default configuration.
+
+Context Fence is a product of Synthrun, built in New Delhi, India. It ships free as the core of the product: macOS (universal dmg) and Windows (exe). Builds are unsigned by design, and the source of truth for versions and hashes is the /downloads page, which reads the live release manifest.
+
+## Facts
+
+- Context Fence is a local proxy: policy checks happen on the user's machine, never in the cloud.
+- A policy check takes under 10ms per tool call.
+- Rules are YAML allow- and deny-lists matched against tool schemas (name, argument shape, destination domain). A deny rule always beats an allow rule.
+- The proxy blocks destructive tool calls, filesystem escape outside the project, connections to non-allowlisted domains, secret-shaped values (keys, env vars, JWTs), and prompt-injection payloads hidden in tool output.
+- Every blocked call is written to an append-only, local audit log with the reason attached. The audit trail is owned by the user.
+- Secret stripping removes secret-shaped values from tool arguments before they reach an agent's context window.
+- The hosted control plane (fleet policy sync, audit aggregation, retention) is planned as the paid piece; it is not built yet, and it never routes agent traffic.
+- Current release: v1.1.6-c, August 6 2026. macOS dmg and Windows exe, both unsigned by design.
+- The main source repository is private; public artifacts ship from the homebrew tap (aditya-ig10/homebrew-context-fence) and the Windows repository (aditya-ig10/context-fence-windows).
+- Related products in the same space (MintMCP, Lasso, Kong AI Gateway) inspect agent traffic in the cloud; Context Fence inspects on the user's machine and routes nothing anywhere.
+
+## Links
+
+- [Homepage](https://contextfence.dev/): product overview, features, and early-access signup.
+- [Downloads](https://contextfence.dev/downloads): versions, SHA-256 hashes, and release notes read live from the release manifest.
+- [Docs](https://contextfence.dev/docs): install steps, the policy file format, what gets checked, and the audit log.
+- [Evidence](https://contextfence.dev/evidence): field notes and incident breakdowns.
+- [Blog](https://contextfence.dev/blog): the Context Fence editorial.
+- [Team](https://contextfence.dev/team): the people behind the fence.
+- [Privacy](https://contextfence.dev/privacy): what the software collects (and that it does not collect agent traffic).
+- [Terms](https://contextfence.dev/terms): the contract — the local core is free, builds are unsigned by design, and no warranty that the fence catches everything.
+
+## FAQ
+
+- Q: Does my agent's data ever leave my machine? A: No. The proxy runs locally and every policy check happens locally. The only thing that leaves the machine is what the user's tools send on their own. The hosted control plane, when it ships, is opt-in and syncs the audit log only.
+- Q: How fast is the policy check? A: Under 10ms per call — a schema match against local YAML rules, not a prompt to an LLM judge.
+- Q: What does it block? A: Destructive tool calls, filesystem escape outside the project, connections to non-allowlisted domains, secret leakage (keys, env vars, JWTs), and prompt-injection payloads hiding in tool output.
+- Q: How is this different from MintMCP, Lasso, or Kong AI Gateway? A: They route agent traffic through their cloud to inspect it. Context Fence inspects on the user's machine and routes nothing anywhere.
+- Q: Is it free? A: The local proxy is free and is the core of the product. The paid piece is the hosted control plane (policy sync and audit aggregation only, never traffic routing); it is not built yet.
+
+## Additional
+
+- Sitemap: https://contextfence.dev/sitemap.xml
+- Official domain: contextfence.dev
+- Language: English
+- Region: New Delhi, India

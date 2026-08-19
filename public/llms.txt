@@ -1,34 +1,28 @@
 # Context Fence
 
-> Local MCP policy proxy for AI coding agents: schema-based tool call checks under 10ms, secret stripping, append-only audit log, zero cloud routing.
+> Stops AI agents leaking secrets. A local MCP policy proxy for AI coding agents: schema-based tool call checks under 10ms, secret stripping, and an append-only local audit log. Zero cloud routing. A product of Synthrun.
 
-Context Fence is a free, local policy proxy that sits between an AI coding agent and its MCP tools. Every tool call is checked against local YAML rules (cf.policy.yml) before it reaches a tool — no LLM judge, no cloud routing, nothing leaves your machine.
+Context Fence sits between an AI coding agent and the tools it calls. Every tool call is checked against local YAML policy rules before it executes — destructiveness, filesystem scope, destination domains, secret-shaped values, and prompt-injection payloads in tool output. Blocked calls are logged locally with the reason. The proxy is free, runs fully on the user's machine, and routes nothing anywhere. Current release v1.1.6-c (macOS universal dmg and Windows exe, unsigned by design).
 
-- Free local core, commercial use allowed, runs entirely on your machine.
-- Schema-based checks under 10ms per call; no prompts, no telemetry, no exfiltration channel.
-- Blocks destructive calls, filesystem escape, non-allowlisted connections, secret leakage, and prompt-injection payloads.
-- Append-only audit log in local SQLite.
-- macOS (universal dmg + Homebrew tap) and Windows builds, each release published with sha256 checksums.
+## Pages
+
+- [Homepage](https://contextfence.dev/): product overview, features, FAQ, and early-access signup
+- [Downloads](https://contextfence.dev/downloads): current version, SHA-256 hashes, release notes — read live from the release manifest
+- [Docs](https://contextfence.dev/docs): installation, the policy file format, what gets checked, the audit log, roadmap
+- [Evidence](https://contextfence.dev/evidence): field notes and incident breakdowns from running the fence
+- [Blog](https://contextfence.dev/blog): the Context Fence editorial — schema checks vs vibe checks, how a server can lie
+- [Team](https://contextfence.dev/team): the builders of Context Fence
+- [Privacy](https://contextfence.dev/privacy): data collection policy — no agent traffic leaves the machine
+- [Terms](https://contextfence.dev/terms): free local core, unsigned builds by design, no warranty that the fence catches everything
 
 ## FAQ
 
-- **Does my agent's data ever leave my machine?** No. The proxy runs locally and every policy check happens locally. The only thing that leaves your machine is what your tools send on their own. The hosted control plane, when it ships, is opt-in and syncs the audit log only.
-- **How fast is the policy check?** Under 10ms per call. It is a schema match against local YAML rules, not a prompt to an LLM judge.
-- **What does it actually block?** Destructive tool calls, filesystem escape outside the project, connections to non-allowlisted domains, secret leakage (keys, env vars, JWTs), and prompt-injection payloads hiding in tool output.
-- **How is this different from MintMCP, Lasso, or Kong AI Gateway?** They route your agent traffic through their cloud to inspect it. Context Fence inspects on your machine and routes nothing anywhere.
-- **Is it free?** The local proxy is free and is the core of the product. The hosted control plane is the paid piece, and it is not built yet.
+- Does agent data leave the machine? No — the proxy runs locally and every policy check happens locally.
+- How fast is the policy check? Under 10ms per call — a schema match against local YAML rules, not an LLM judge.
+- What does it block? Destructive calls, filesystem escape, non-allowlisted domains, secret leakage, and prompt-injection payloads.
+- How is it different from MintMCP, Lasso, or Kong AI Gateway? They inspect agent traffic in their cloud; Context Fence inspects on the user's machine and routes nothing.
+- Is it free? The local proxy is free and is the core product. The hosted control plane (policy sync + audit aggregation only) is planned and not built yet.
 
-## Company
+## Full text
 
-Context Fence is a product of Synthrun, based in New Delhi, India.
-
-## Links
-
-- [Home](https://contextfence.vercel.app/): product overview, capabilities, pricing, FAQ
-- [Downloads](https://contextfence.vercel.app/downloads): macOS dmg, Homebrew tap, Windows builds, sha256 checksums
-- [Evidence](https://contextfence.vercel.app/evidence): the MCP attack surface, sixteen confirmed risks across four attacker classes
-- [Docs](https://contextfence.vercel.app/docs): the YAML policy file, what the proxy checks, the local SQLite audit log
-- [Blog](https://contextfence.vercel.app/blog): press room — field notes and incident breakdowns (coming soon)
-- [Team](https://contextfence.vercel.app/team): the people behind Context Fence
-- [Privacy](https://contextfence.vercel.app/privacy): privacy policy — The Fine Print
-- [Terms](https://contextfence.vercel.app/terms): terms of service — The Contract Corner
+Full site context is available at https://contextfence.dev/llms-full.txt
