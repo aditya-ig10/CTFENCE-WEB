@@ -628,6 +628,12 @@ html[data-theme="light"] .dl-btn--mac { background: #14141a; }
   margin-top: auto;
 }
 
+.dl-pkg-links {
+  display: flex;
+  justify-content: center;
+  gap: 22px;
+}
+
 .dl-waitlist {
   align-self: center;
   font-family: var(--font-canela), serif;

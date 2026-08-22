@@ -10,6 +10,10 @@ export type ReleasePlatformPatch = {
   cta?: string;
   install?: string;
   update?: string;
+  // linux-only: the AppImage is the primary href; the package-manager
+  // artifacts ride along on the same release
+  debHref?: string;
+  rpmHref?: string;
 };
 
 export type ReleaseManifest = {
@@ -24,6 +28,7 @@ export type DownloadsData = {
   mac: typeof downloads.mac;
   brew: typeof downloads.brew;
   windows: typeof downloads.windows;
+  linux: typeof downloads.linux;
   cli: typeof downloads.cli;
 };
 
@@ -80,6 +85,7 @@ export function buildDownloads(manifest: ReleaseManifest | null): DownloadsData 
     mac: { ...downloads.mac, ...patch("mac") },
     brew: { ...downloads.brew, ...patch("brew") },
     windows: { ...downloads.windows, ...patch("windows") },
+    linux: { ...downloads.linux, ...patch("linux") },
     cli: { ...downloads.cli, ...patch("cli") },
   };
 }

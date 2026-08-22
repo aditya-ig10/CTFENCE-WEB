@@ -37,7 +37,7 @@ export const metadata = baseMetadata({
   ogTitle: "Context Fence — MCP Policy Proxy",
   ogDescription: "Local MCP policy proxy that stops AI agents leaking secrets.",
   twitterDescription:
-    "Context Fence is a local MCP policy proxy for AI coding agents: schema-based tool call checks under 10ms, secret stripping, append-only audit log, zero cloud routing. Free for macOS and Windows.",
+    "Context Fence is a local MCP policy proxy for AI coding agents: schema-based tool call checks under 10ms, secret stripping, append-only audit log, zero cloud routing. Free for macOS, Windows and Linux.",
 });
 
 const SOFTWARE_KEYWORDS = [

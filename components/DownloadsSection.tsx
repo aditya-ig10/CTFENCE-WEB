@@ -213,9 +213,8 @@ export default function DownloadsSection({ release }: { release?: DownloadsData 
           Get the <span className="highlight">fence.</span>
         </h1>
         <p className="dl-sub">
-          Universal binaries for macOS and Windows, a sha256 for everything —
-          Linux is in the garage. Nothing leaves your machine, that is the
-          point.
+          Native builds for macOS, Windows and Linux — a sha256 for everything.
+          Nothing leaves your machine, that is the point.
         </p>
       </div>
 
@@ -265,19 +264,46 @@ export default function DownloadsSection({ release }: { release?: DownloadsData 
           rot="0.9deg"
           chip="dl-chip--linux"
           icon={<LinuxIcon />}
-          title="Linux"
-          sub="Deb and rpm packages are being built in the garage. Nothing cloud, nothing fancy — just the fence."
-          sticker="coming soon"
-          meta="deb + rpm"
+          title="Linux x64"
+          sub={d.linux.sub}
+          sticker={`v${d.version}`}
+          meta={d.linux.size}
+          sha={d.linux.sha256}
+          flag={d.linux.unsigned}
         >
-          <div className="dl-linux">
-            <span className="dl-btn dl-btn--linux dl-btn--soon" aria-disabled="true">
-              Coming soon
-            </span>
-            <a className="dl-waitlist" href="/#early-access">
-              join the waitlist →
-            </a>
-          </div>
+          {d.linux.href ? (
+            <div className="dl-linux">
+              <a className="dl-btn dl-btn--linux" href={d.linux.href} download>
+                <span>{d.linux.cta}</span>
+                <span className="dl-btn-arrow" aria-hidden="true">
+                  <ArrowDownIcon />
+                </span>
+              </a>
+              {(d.linux.debHref || d.linux.rpmHref) && (
+                <div className="dl-pkg-links">
+                  {d.linux.debHref && (
+                    <a className="dl-waitlist" href={d.linux.debHref} download>
+                      .deb ↓
+                    </a>
+                  )}
+                  {d.linux.rpmHref && (
+                    <a className="dl-waitlist" href={d.linux.rpmHref} download>
+                      .rpm ↓
+                    </a>
+                  )}
+                </div>
+              )}
+            </div>
+          ) : (
+            <div className="dl-linux">
+              <span className="dl-btn dl-btn--linux dl-btn--soon" aria-disabled="true">
+                Coming soon
+              </span>
+              <a className="dl-waitlist" href="/#early-access">
+                join the waitlist →
+              </a>
+            </div>
+          )}
         </PlatformCell>
       </div>
     </section>

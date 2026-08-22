@@ -20,9 +20,9 @@ Rules are YAML allow- and deny-lists. They match tool schemas on name, argument 
 
 ## Versions and downloads
 
-Current release: v1.1.6-c, released August 6, 2026. macOS (universal dmg, Intel and Apple silicon) and Windows (exe). Builds are unsigned by design — the macOS build is ad-hoc signed but not notarized, and every Windows exe is unsigned. The /downloads page reads the live release manifest and shows exact SHA-256 hashes for every artifact.
+Current release: v1.1.9-b, released August 22, 2026. macOS (universal dmg, Intel and Apple silicon), Windows (installer, Authenticode-signed) and Linux (AppImage, deb, rpm — x64). The macOS build is ad-hoc signed but not notarized; the Linux builds are unsigned. The /downloads page reads the live release manifest and shows exact SHA-256 hashes for every artifact.
 
-Public artifacts ship from two public repositories: the homebrew tap (aditya-ig10/homebrew-context-fence) for macOS and the Windows repository (aditya-ig10/context-fence-windows). The main source repository is private.
+Public artifacts ship from one public repository: aditya-ig10/context-fence-releases (all platforms' assets plus the release manifest). The main source repository is private.
 
 ## Product roadmap
 
