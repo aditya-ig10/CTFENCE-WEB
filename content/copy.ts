@@ -324,16 +324,21 @@ export const cases = {
 
 export type Plan = {
   name: string;
-  priceUsd: number;
-  priceUsdMax?: number;
+  // base price in INR (the pricing currency); null → "Contact us"
+  priceInr: number | null;
   period: string;
   badge?: string;
-  chip?: string;
   status: "ready" | "soon";
+  nodes: string;
+  retention: string;
+  overage?: string;
   features: string[];
   cta: { label: string; href: string; primary: boolean };
 };
 
+// pricing v2 — post-council review. primary axis is NODES (enforcement
+// points), not seats; policy count is unlimited everywhere (not a pricing
+// lever). enterprise carries no indicative number until real deals close.
 export const pricing: {
   eyebrow: string;
   title: string;
@@ -343,62 +348,94 @@ export const pricing: {
   finePrintLink: { label: string; href: string };
 } = {
   eyebrow: "// pricing",
-  title: "Free at the edge. Paid when you want a console.",
-  lead: "The local core is free and it works today. Paid plans run on the hosted console — policy sync and audit aggregation only, never your traffic — and the prices below are the plan.",
+  title: "Priced per fence, not per seat.",
+  lead: "One axis: enforcement nodes. Policies are unlimited on every tier — the work is in the checking, not the rule count. The local core is free and ships today; paid tiers run on the hosted console (policy sync and audit aggregation only, never your traffic).",
   plans: [
     {
       name: "Free",
-      priceUsd: 0,
-      period: "₹0 forever · local core",
-      chip: "ships today",
+      priceInr: 0,
+      period: "forever · local core",
       status: "ready",
+      nodes: "1 node · local only",
+      retention: "7-day audit retention",
       features: [
-        "Full engine as-is — local MCP policy proxy, YAML rules, secret stripping + injection detection",
-        "3 enforcement nodes max",
+        "Full local MCP policy proxy — YAML rules, secret stripping, injection detection",
+        "Unlimited policies",
+        "1 enforcement node (local only)",
         "7-day audit retention",
+        "Cross-platform support",
         "Slack alerting",
         "CSV export",
-        "Public template registry",
+        "Public template registry — browse only",
+        "Community support",
       ],
       cta: { label: "Start for free", href: "/downloads", primary: false },
     },
     {
-      name: "Teams",
-      priceUsd: 100,
-      period: "flat · per month · up to 10 nodes",
-      badge: "Most popular",
-      chip: "coming soon",
-      status: "soon",
+      name: "Starter",
+      priceInr: 1500,
+      period: "per month · 3 nodes",
+      status: "ready",
+      nodes: "3 nodes",
+      retention: "30-day audit retention",
       features: [
         "Everything in Free",
-        "Up to 10 enforcement nodes — ₹840 (~$10)/node/month beyond, per node not per seat",
+        "Unlimited policies",
+        "3 enforcement nodes",
+        "30-day audit retention",
+        "Cloud backup",
+        "Agent management",
+        "Template registry — publish, not just browse",
+        "Email support · best-effort",
+      ],
+      cta: { label: "Get Starter", href: "/checkout?plan=starter", primary: false },
+    },
+    {
+      name: "Teams",
+      priceInr: 8400,
+      period: "per month flat · includes 10 nodes",
+      badge: "Most popular",
+      status: "ready",
+      nodes: "10 nodes included",
+      retention: "90-day audit retention",
+      overage: "+ ₹700–840 / node / month beyond 10",
+      features: [
+        "Everything in Starter",
+        "Unlimited policies",
+        "10 enforcement nodes included",
         "90-day audit retention",
-        "SIEM streaming — syslog / Splunk / Datadog / ELK forwarder",
-        "Policy-as-code via git sync with dry-run + drift detection",
+        "Admin agent control",
+        "SIEM streaming — syslog / Splunk / Datadog / ELK",
+        "Policy-as-code via git sync — dry-run + drift detection",
         "Policy change approval workflows",
         "Fleet health dashboard",
+        "Priority email support",
       ],
-      cta: { label: "Join the waitlist", href: "/#early-access", primary: true },
+      cta: { label: "Get Teams", href: "/checkout?plan=teams", primary: true },
     },
     {
       name: "Enterprise",
-      priceUsd: 2500,
-      period: "per month · single clean floor",
-      chip: "coming soon",
+      priceInr: null,
+      period: "annual · custom",
       status: "soon",
+      nodes: "Unlimited nodes",
+      retention: "180-day+ audit retention",
       features: [
         "Everything in Teams",
-        "Unlimited nodes · 1-year+ audit retention",
+        "Unlimited policies and nodes",
+        "180-day+ audit retention — 12-month optional",
         "SSO / SAML + IdP-driven policy assignment, granular RBAC",
-        "Tamper-evident audit log (hash chaining)",
-        "Compliance report generation — SOC 2 / ISO 27001 / EU AI Act evidence packs",
+        "Policy version control + admin user control",
+        "Tamper-evident audit log — hash chaining",
+        "Compliance reports — SOC 2 / ISO 27001 / EU AI Act evidence packs",
+        "Custom sandboxed environment — deploy under your own entity",
         "Incident replay — reconstruct exactly what an agent did",
-        "Support SLA",
+        "Dedicated support SLA",
       ],
-      cta: { label: "Contact us", href: "mailto:hello@contextfence.dev", primary: false },
+      cta: { label: "Contact us", href: "mailto:hello@synthrun.site", primary: false },
     },
   ],
-  finePrint: "Prices are planned for the hosted console, which is still in build. The local core is free and ships today. Prices are shown in your local currency, converted from USD. Read how data is handled in the privacy policy.",
+  finePrint: "Prices scale on enforcement nodes, not seats — policies are unlimited on every tier. Paid tiers run on the hosted console, still in build; the local core is free and ships today. Prices shown in your local currency, converted live from the INR base. Read how data is handled in the privacy policy.",
   finePrintLink: { label: "privacy policy", href: "/privacy" },
 };
 

@@ -5,6 +5,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import gsap from "gsap";
 import ThemeToggle from "@/components/ThemeToggle";
+import LoginButton from "@/components/LoginButton";
 import { nav } from "@/content/copy";
 import { motionAllowed } from "@/lib/anim";
 
@@ -43,14 +44,6 @@ function DownloadsIcon() {
     <svg {...iconProps}>
       <path d="M12 3v12M6 11l6 6 6-6" />
       <path d="M4 21h16" />
-    </svg>
-  );
-}
-
-function ArrowIcon() {
-  return (
-    <svg {...iconProps}>
-      <path d="M5 12h14M13 6l6 6-6 6" />
     </svg>
   );
 }
@@ -96,10 +89,7 @@ export default function Navbar() {
           </nav>
           <div className="topbar-actions">
             <ThemeToggle />
-            <Link href={nav.cta.href} className="topbar-cta">
-              <span>{nav.cta.label}</span>
-              <ArrowIcon />
-            </Link>
+            <LoginButton />
           </div>
         </div>
       </header>

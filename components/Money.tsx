@@ -3,26 +3,30 @@
 import { useEffect, useState } from "react";
 import {
   currencyFromLocale,
+  fetchFxRates,
   formatMoney,
   localeForCurrency,
+  staticRates,
   type CurrencyCode,
+  type FxRates,
 } from "@/lib/currency";
 
+// price display: base is INR; converts to the visitor's currency with live
+// FX rates (fetched once per page load, static snapshot until they arrive).
 export default function Money({
-  usd,
-  usdMax,
+  inr,
   currency,
   locale,
   preferLocale,
 }: {
-  usd: number;
-  usdMax?: number;
+  inr: number;
   currency: CurrencyCode;
   locale: string;
   preferLocale: boolean;
 }) {
   const [cur, setCur] = useState<CurrencyCode>(currency);
   const [loc, setLoc] = useState(locale);
+  const [rates, setRates] = useState<FxRates>(staticRates);
 
   useEffect(() => {
     if (!preferLocale) return;
@@ -33,10 +37,15 @@ export default function Money({
     }
   }, [preferLocale, currency]);
 
-  const text =
-    usdMax !== undefined
-      ? `${formatMoney(usd, cur, loc)}–${formatMoney(usdMax, cur, loc)}`
-      : formatMoney(usd, cur, loc);
+  useEffect(() => {
+    let cancelled = false;
+    fetchFxRates().then((live) => {
+      if (live && !cancelled) setRates(live);
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
-  return <span className="plan-price">{text}</span>;
+  return <span className="plan-price">{formatMoney(inr, cur, loc, rates[cur])}</span>;
 }
