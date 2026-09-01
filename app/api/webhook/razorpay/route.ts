@@ -5,6 +5,7 @@ import {
   encryptBillingAddress,
   logAuditEvent,
 } from "@/lib/paymentEncryption";
+import { setServerSubscription, type PlanId } from "@/lib/entitlements";
 
 // ============================================================================
 // POST /api/webhook/razorpay — Server-to-server Razorpay Webhook Handler
@@ -14,7 +15,10 @@ import {
 //   2. Must reject untrusted or unverified payloads prior to DB access
 //   3. On payment capture: generate D1 CSPRNG, derive E1/E2, hash E2 with bcrypt,
 //      zero D1 from memory, encrypt billing PII with K3.
-//   4. Log all webhook events for audit inspection.
+//   4. Updates single source of truth in `subscriptions/{uid}` doc with version bump.
+//   5. On cancellation/refund/downgrade: immediately writes `free`/`canceled` with version bump,
+//      instantly revoking all client entitlement tokens.
+//   6. Log all webhook events for audit inspection.
 // ============================================================================
 
 export async function POST(request: Request) {
@@ -60,19 +64,29 @@ export async function POST(request: Request) {
   const event = typeof payload.event === "string" ? payload.event : "unknown";
   logAuditEvent("risk_assessment", { event: `webhook_${event}`, timestamp: Date.now() });
 
-  // Handle payment events
+  const paymentEntity = (payload.payload as Record<string, unknown>)?.payment as Record<string, unknown> | undefined;
+  const entity = (paymentEntity?.entity as Record<string, unknown>) || {};
+  const paymentId = (entity.id as string) || "";
+  const orderId = (entity.order_id as string) || "";
+  const notes = (entity.notes as Record<string, unknown>) || {};
+  const email = (entity.email as string) || (notes.email as string) || "";
+  const userId = (notes.userId as string) || (notes.uid as string) || "";
+  const plan = ((notes.plan as string) || "starter") as PlanId;
+  const nodeCount = Number(notes.nodes || notes.nodeCount || 1);
+
+  // Generate transaction crypto (D1 -> E1/E2 -> bcrypt hash, D1 zeroed)
+  const cryptoResult = generateTransactionCrypto();
+
+  // Handle payment success events
   if (event === "payment.captured" || event === "order.paid") {
-    const paymentEntity = (payload.payload as Record<string, unknown>)?.payment as Record<string, unknown> | undefined;
-    const entity = (paymentEntity?.entity as Record<string, unknown>) || {};
-    const paymentId = (entity.id as string) || "";
-    const orderId = (entity.order_id as string) || "";
-    const notes = (entity.notes as Record<string, unknown>) || {};
-    const email = (entity.email as string) || (notes.email as string) || "";
+    // 1. Write server-only source of truth in subscriptions/{uid}
+    if (userId) {
+      await setServerSubscription(userId, plan, "active", nodeCount, cryptoResult.keyVersion).catch((err) => {
+        console.error("Failed to update server subscription via webhook:", err);
+      });
+    }
 
-    // Generate transaction crypto (D1 -> E1/E2 -> bcrypt hash, D1 zeroed)
-    const cryptoResult = generateTransactionCrypto();
-
-    // Field-level PII encryption for customer details
+    // 2. Field-level PII encryption for customer details
     const encryptedBilling = encryptBillingAddress({
       email,
       notes: JSON.stringify(notes),
@@ -82,6 +96,8 @@ export async function POST(request: Request) {
       action: "webhook_payment_encrypted",
       paymentId,
       orderId,
+      userId,
+      plan,
       keyVersion: cryptoResult.keyVersion,
       e2HashSnippet: cryptoResult.e2Hash.slice(0, 10),
       encryptedBillingFieldCount: Object.keys(encryptedBilling).length,
@@ -93,6 +109,35 @@ export async function POST(request: Request) {
       event,
       paymentId,
       keyVersion: cryptoResult.keyVersion,
+    });
+  }
+
+  // Handle cancellation / refund / failure events (Instant token revocation)
+  if (
+    event === "payment.failed" ||
+    event === "refund.created" ||
+    event === "subscription.cancelled" ||
+    event === "subscription.halted"
+  ) {
+    if (userId) {
+      await setServerSubscription(userId, "free", "canceled", 1, cryptoResult.keyVersion).catch((err) => {
+        console.error("Failed to revoke server subscription via webhook:", err);
+      });
+    }
+
+    logAuditEvent("session_verification", {
+      action: "webhook_subscription_revoked",
+      event,
+      userId,
+      paymentId,
+    });
+
+    return NextResponse.json({
+      ok: true,
+      processed: true,
+      event,
+      revoked: true,
+      userId,
     });
   }
 

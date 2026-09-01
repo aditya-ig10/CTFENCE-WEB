@@ -2,7 +2,7 @@
 
 > Stops AI agents leaking secrets. A local MCP policy proxy for AI coding agents: schema-based tool call checks under 10ms, secret stripping, and an append-only local audit log. Zero cloud routing. A product of Synthrun.
 
-Context Fence sits between an AI coding agent and the tools it calls. Every tool call is checked against local YAML policy rules before it executes — destructiveness, filesystem scope, destination domains, secret-shaped values, and prompt-injection payloads in tool output. Blocked calls are logged locally with the reason. The proxy is free, runs fully on the user's machine, and routes nothing anywhere. Current release v1.1.9-b (macOS universal dmg, Windows installer, Linux AppImage/deb/rpm).
+Context Fence sits between an AI coding agent and the tools it calls. Every tool call is checked against local YAML policy rules before it executes — destructiveness, filesystem scope, destination domains, secret-shaped values, and prompt-injection payloads in tool output. Blocked calls are logged locally with the reason. The proxy is free, runs fully on the user's machine, and routes nothing anywhere. Current release v2.0.0 (macOS universal dmg, Windows installer, Linux AppImage/deb/rpm).
 
 ## Pages
 

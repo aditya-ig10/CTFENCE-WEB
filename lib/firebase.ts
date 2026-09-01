@@ -23,7 +23,7 @@ export const firebaseEnabled = Boolean(firebaseConfig.apiKey && firebaseConfig.p
 let app: FirebaseApp | null = null;
 
 export function getFirebaseApp(): FirebaseApp | null {
-  if (!firebaseEnabled || typeof window === "undefined") return null;
+  if (!firebaseConfig.apiKey && !firebaseConfig.projectId) return null;
   if (!app) app = getApps().length ? getApp() : initializeApp(firebaseConfig);
   return app;
 }

@@ -26,14 +26,14 @@ export const nav = {
 // the main context-fence repo is private.
 // these are fallbacks only — /downloads reads the live release.json first.
 export const downloads = {
-  version: "1.1.9-b",
-  released: "aug 22, 2026",
+  version: "2.0.0",
+  released: "sep 1, 2026",
   mac: {
     label: "macOS · universal dmg",
     sub: "Universal dmg for Intel and Apple silicon — drag to /Applications.",
-    href: "https://github.com/aditya-ig10/context-fence-releases/releases/download/v1.1.9-b/Context-Fence-1.1.9-b-universal.dmg",
-    size: "263.8 mb",
-    sha256: "3172c3d31edea10dba6f945e923d6ea72eb2e5ecf07712dca93233c7cd2d5e5e",
+    href: "https://github.com/aditya-ig10/context-fence-releases/releases/download/v2.0.0/Context-Fence-2.0.0-universal.dmg",
+    size: "264.7 mb",
+    sha256: "e823802eb8ea7e370101ad378bc41e6b3d56e3a52b032232f0e9c42f378291f5",
     cta: "Download",
     unsigned:
       "unsigned · ad-hoc signed, not notarized — if Gatekeeper blocks it, right-click → open.",
@@ -47,9 +47,9 @@ export const downloads = {
   windows: {
     label: "Windows x64",
     sub: "NSIS installer, per-user install — the full app, no store required.",
-    href: "https://github.com/aditya-ig10/context-fence-releases/releases/download/v1.1.9-b/Context-Fence-Setup-1.1.9-b-x64.exe",
-    size: "113.8 mb",
-    sha256: "86c6fe60e8050382cc0688047cab9f54e57c83c049eb117aef459721f69fabed",
+    href: "https://github.com/aditya-ig10/context-fence-releases/releases/download/v2.0.0/Context-Fence-Setup-2.0.0-x64.exe",
+    size: "114.4 mb",
+    sha256: "f176ce67bfbd07e9de2c782fdb4a40b913dbd0a9c65d19a98d7606fb68740ccc",
     cta: "Download",
     unsigned:
       "signed · Authenticode — SmartScreen may still prompt until reputation builds.",
@@ -57,18 +57,15 @@ export const downloads = {
   linux: {
     label: "Linux x64",
     sub: "AppImage runs anywhere — chmod +x and launch, no install. Deb for Debian/Ubuntu, rpm for Fedora/RHEL.",
-    // the AppImage is the primary artifact; deb/rpm ride on the same release.
-    // Linux artifact filenames carry the base version (rpm forbids dashes in
-    // Version) — Context-Fence-1.1.9-x64.* while the manifest says 1.1.9-b.
-    href: "https://github.com/aditya-ig10/context-fence-releases/releases/download/v1.1.9-b/Context-Fence-1.1.9-x86_64.AppImage",
-    size: "145.8 mb",
-    sha256: "9c4806a29017ba5fc0cd98545c9719e7cb9974358b08fbec9a7a2c275fe065f9",
+    href: "https://github.com/aditya-ig10/context-fence-releases/releases/download/v2.0.0/Context-Fence-2.0.0-x86_64.AppImage",
+    size: "146.4 mb",
+    sha256: "7675f191a091da55f03c2ded48ee092a959445d1dada47234ae756c41580f575",
     cta: "Download AppImage",
     unsigned: "unsigned · verify the sha256 after download.",
     debHref:
-      "https://github.com/aditya-ig10/context-fence-releases/releases/download/v1.1.9-b/Context-Fence-1.1.9-amd64.deb",
+      "https://github.com/aditya-ig10/context-fence-releases/releases/download/v2.0.0/Context-Fence-2.0.0-amd64.deb",
     rpmHref:
-      "https://github.com/aditya-ig10/context-fence-releases/releases/download/v1.1.9-b/Context-Fence-1.1.9-x86_64.rpm",
+      "https://github.com/aditya-ig10/context-fence-releases/releases/download/v2.0.0/Context-Fence-2.0.0-x86_64.rpm",
   },
   cli: {
     label: "CLI",

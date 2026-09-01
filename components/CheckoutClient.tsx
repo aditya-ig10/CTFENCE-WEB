@@ -290,6 +290,12 @@ export default function CheckoutClient({
     document.head.appendChild(s);
   }, []);
 
+function cleanPlaintext(val: unknown): string {
+  if (typeof val !== "string" || !val) return "";
+  if (/^v\d+:[0-9a-fA-F]+:[0-9a-fA-F]+/.test(val)) return "";
+  return val;
+}
+
   // auto-fill past billing details from Firebase for next purchase (lastBilling or most recent payment)
   useEffect(() => {
     if (!authUser) return;
@@ -303,21 +309,30 @@ export default function CheckoutClient({
         const data = userSnap.data() as Record<string, unknown> | undefined;
         const saved = (data?.lastBilling ?? data?.billing) as Partial<BillingAddress> | undefined;
         if (saved && typeof saved === "object" && Object.keys(saved).length > 2) {
+          const sFirst = cleanPlaintext(saved.firstName);
+          const sLast = cleanPlaintext(saved.lastName);
+          const sPhone = cleanPlaintext(saved.phone);
+          const sAddr1 = cleanPlaintext(saved.address1);
+          const sAddr2 = cleanPlaintext(saved.address2);
+          const sCity = cleanPlaintext(saved.city);
+          const sState = cleanPlaintext(saved.state);
+          const sPostal = cleanPlaintext(saved.postal);
+          const sComp = cleanPlaintext(saved.company);
           setBilling((b) => ({
             ...b,
-            firstName: b.firstName || (saved.firstName as string) || "",
-            lastName: b.lastName || (saved.lastName as string) || "",
-            phone: b.phone || (saved.phone as string) || "",
-            address1: b.address1 || (saved.address1 as string) || "",
-            address2: b.address2 || (saved.address2 as string) || "",
-            city: b.city || (saved.city as string) || "",
-            state: b.state || (saved.state as string) || "",
-            postal: b.postal || (saved.postal as string) || "",
-            company: b.company || (saved.company as string) || "",
+            firstName: b.firstName || sFirst,
+            lastName: b.lastName || sLast,
+            phone: b.phone || sPhone,
+            address1: b.address1 || sAddr1,
+            address2: b.address2 || sAddr2,
+            city: b.city || sCity,
+            state: b.state || sState,
+            postal: b.postal || sPostal,
+            company: b.company || sComp,
           }));
-          if (saved.postal) {
+          if (sPostal) {
             setPinTouched(true);
-            setPinOk(validatePostal(String(saved.country ?? effectiveCountry ?? ""), String(saved.postal)));
+            setPinOk(validatePostal(String(saved.country ?? effectiveCountry ?? ""), sPostal));
           }
           return;
         }
@@ -331,15 +346,15 @@ export default function CheckoutClient({
         if (recent && typeof recent === "object") {
           setBilling((b) => ({
             ...b,
-            firstName: b.firstName || (recent.firstName as string) || "",
-            lastName: b.lastName || (recent.lastName as string) || "",
-            phone: b.phone || (recent.phone as string) || "",
-            address1: b.address1 || (recent.address1 as string) || "",
-            address2: b.address2 || (recent.address2 as string) || "",
-            city: b.city || (recent.city as string) || "",
-            state: b.state || (recent.state as string) || "",
-            postal: b.postal || (recent.postal as string) || "",
-            company: b.company || (recent.company as string) || "",
+            firstName: b.firstName || cleanPlaintext(recent.firstName),
+            lastName: b.lastName || cleanPlaintext(recent.lastName),
+            phone: b.phone || cleanPlaintext(recent.phone),
+            address1: b.address1 || cleanPlaintext(recent.address1),
+            address2: b.address2 || cleanPlaintext(recent.address2),
+            city: b.city || cleanPlaintext(recent.city),
+            state: b.state || cleanPlaintext(recent.state),
+            postal: b.postal || cleanPlaintext(recent.postal),
+            company: b.company || cleanPlaintext(recent.company),
           }));
           if (recent.postal) {
             setPinTouched(true);
@@ -619,30 +634,43 @@ export default function CheckoutClient({
                 const auth = getFirebaseAuth();
                 const db = getFirebaseDb();
                 if (auth?.currentUser && db) {
-                  const expiresAt = Timestamp.fromDate(getExpiryDate(billingCycle));
+                  let expiresAt = Timestamp.fromDate(getExpiryDate(billingCycle));
                   let newTotal = nodes;
+                  let existingPlanPurchasedAt: unknown = null;
                   if (isAddOn) {
                     try {
                       const snap = await getDoc(doc(db, "users", auth.currentUser.uid));
-                      const cur = (snap.data() as Record<string, unknown>)?.nodes as number | undefined;
+                      const data = (snap.data() as Record<string, unknown>) || {};
+                      const cur = data.nodes as number | undefined;
                       const curNodes = typeof cur === "number" ? cur : pricing.minNodes;
                       newTotal = Math.min(curNodes + nodes, pricing.maxNodes);
+                      // Preserve existing static plan expiration and purchase date
+                      if (data.expiresAt) {
+                        expiresAt = data.expiresAt as Timestamp;
+                      }
+                      existingPlanPurchasedAt = data.planPurchasedAt || data.planCreatedAt || data.createdAt || null;
                     } catch {
                       newTotal = Math.min(pricing.minNodes + nodes, pricing.maxNodes);
                     }
                   }
-                  const billingPayload = vdata.encryptedBilling || effectiveBilling;
+                  const userUpdatePayload: Record<string, unknown> = {
+                    plan: planId,
+                    nodes: newTotal,
+                    expiresAt,
+                    lastBilling: effectiveBilling,
+                    updatedAt: serverTimestamp(),
+                    lastPaymentId: response.razorpay_payment_id,
+                    lastPaymentKeyVersion: vdata.keyVersion,
+                  };
+                  if (!isAddOn) {
+                    userUpdatePayload.planPurchasedAt = serverTimestamp();
+                    userUpdatePayload.planCreatedAt = serverTimestamp();
+                  } else if (existingPlanPurchasedAt) {
+                    userUpdatePayload.planPurchasedAt = existingPlanPurchasedAt;
+                  }
                   await setDoc(
                     doc(db, "users", auth.currentUser.uid),
-                    {
-                      plan: planId,
-                      nodes: newTotal,
-                      expiresAt,
-                      lastBilling: billingPayload,
-                      updatedAt: serverTimestamp(),
-                      lastPaymentId: response.razorpay_payment_id,
-                      lastPaymentKeyVersion: vdata.keyVersion,
-                    },
+                    userUpdatePayload,
                     { merge: true }
                   );
                   await addDoc(collection(db, "payments"), {
@@ -655,7 +683,7 @@ export default function CheckoutClient({
                     discountInr: quote.discount,
                     taxInr: quote.taxInr,
                     taxRate: quote.taxRate,
-                    billing: billingPayload,
+                    billing: effectiveBilling,
                     e2Hash: vdata.e2Hash,
                     keyVersion: vdata.keyVersion,
                     iv: vdata.iv,

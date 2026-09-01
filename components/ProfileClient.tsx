@@ -18,7 +18,7 @@ import {
 } from "firebase/firestore";
 import Link from "next/link";
 import { firebaseEnabled, getFirebaseAuth, getFirebaseDb } from "@/lib/firebase";
-import { PLAN_PRICING, type PlanId, type BillingCycle, getExpiryDate } from "@/lib/checkout";
+import { PLAN_PRICING, type PlanId } from "@/lib/checkout";
 
 // checkout-style profile — same visual system as /checkout: clean modern cards,
 // Canela headings, JetBrains labels, INR pricing. Fetches live from Firebase:
@@ -35,6 +35,7 @@ type ProfileFields = {
   plan: string;
   nodes: number | null;
   expiresAt: unknown;
+  planPurchasedAt?: unknown;
 };
 
 const EMPTY: ProfileFields = {
@@ -48,6 +49,7 @@ const EMPTY: ProfileFields = {
   plan: "free",
   nodes: null,
   expiresAt: null,
+  planPurchasedAt: null,
 };
 
 const DIAL_CODES = ["IN +91", "US +1", "GB +44", "AE +971", "SG +65", "AU +61", "DE +49", "OTHER"];
@@ -73,11 +75,13 @@ type Tx = {
 function formatDate(d: Date) {
   return d.toLocaleDateString("en-IN", { day: "2-digit", month: "short", year: "numeric" });
 }
-function formatDateTime(d: Date) {
-  return d.toLocaleString("en-IN", { day: "2-digit", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit" });
-}
 function addDays(d: Date, n: number) {
   return new Date(d.getTime() + n * 864e5);
+}
+function cleanPlaintext(val: unknown): string {
+  if (typeof val !== "string" || !val) return "";
+  if (/^v\d+:[0-9a-fA-F]+:[0-9a-fA-F]+/.test(val)) return "";
+  return val;
 }
 
 async function downloadBill(tx: Tx, userFields: ProfileFields) {
@@ -120,6 +124,7 @@ async function downloadBill(tx: Tx, userFields: ProfileFields) {
   doc.setFont("helvetica", "normal");
   doc.text("Context Fence  •  Synthrun  •  contextfence.dev", headerTextX, 18);
   doc.setTextColor(0, 0, 0);
+
   // invoice meta
   doc.setFontSize(18);
   doc.setFont("helvetica", "bold");
@@ -127,8 +132,8 @@ async function downloadBill(tx: Tx, userFields: ProfileFields) {
   doc.setFontSize(9);
   doc.setFont("helvetica", "normal");
   doc.text(`Invoice #: ${tx.id.slice(0, 12).toUpperCase()}`, 14, 38);
-  doc.text(`Date: ${formatDateTime(createdAt)}`, 14, 43);
-  doc.text(`Expires: ${formatDateTime(expiresAt)}`, 14, 48);
+  doc.text(`Date: ${formatDate(createdAt)}`, 14, 43);
+  doc.text(`Expires: ${formatDate(expiresAt)}`, 14, 48);
   doc.text(`Status: ${tx.status.toUpperCase()}`, 14, 53);
   // bill from
   doc.setFont("helvetica", "bold");
@@ -141,16 +146,30 @@ async function downloadBill(tx: Tx, userFields: ProfileFields) {
   doc.setFont("helvetica", "bold");
   doc.text("Bill to:", 110, 62);
   doc.setFont("helvetica", "normal");
-  const toName = `${userFields.firstName} ${userFields.lastName}`.trim() || billing.firstName ? `${billing.firstName} ${billing.lastName}`.trim() : tx.plan;
-  doc.text(toName || "Customer", 110, 67);
-  doc.text(billing.email as string || userFields.email || "", 110, 72);
-  if (billing.company) doc.text(String(billing.company), 110, 77);
-  const addr = [billing.address1, billing.city, billing.state, billing.postal, billing.country].filter(Boolean).join(", ");
+  const bFirst = cleanPlaintext(billing.firstName);
+  const bLast = cleanPlaintext(billing.lastName);
+  const bName = bFirst || bLast ? `${bFirst} ${bLast}`.trim() : "";
+  const uName = `${cleanPlaintext(userFields.firstName)} ${cleanPlaintext(userFields.lastName)}`.trim();
+  const toName = bName || uName || "Customer";
+  doc.text(toName, 110, 67);
+  const toEmail = cleanPlaintext(billing.email) || cleanPlaintext(userFields.email) || "";
+  if (toEmail) doc.text(toEmail, 110, 72);
+  const comp = cleanPlaintext(billing.company) || cleanPlaintext(userFields.company);
+  if (comp) doc.text(comp, 110, 77);
+  const addr = [
+    cleanPlaintext(billing.address1),
+    cleanPlaintext(billing.address2),
+    cleanPlaintext(billing.city),
+    cleanPlaintext(billing.state),
+    cleanPlaintext(billing.postal),
+    cleanPlaintext(billing.country),
+  ].filter(Boolean).join(", ");
   if (addr) {
     const lines = doc.splitTextToSize(addr, 90);
     doc.text(lines, 110, 82);
   }
-  if (billing.phone) doc.text(`${billing.phoneCode || ""} ${billing.phone}`.trim(), 110, 92);
+  const phone = cleanPlaintext(billing.phone);
+  if (phone) doc.text(`${cleanPlaintext(billing.phoneCode)} ${phone}`.trim(), 110, 92);
   // line
   doc.setDrawColor(200);
   doc.line(14, 98, 196, 98);
@@ -219,7 +238,6 @@ export default function ProfileClient() {
   const [fields, setFields] = useState<ProfileFields>(EMPTY);
   const [state, setState] = useState<"loading" | "ready" | "missing" | "saving" | "saved" | "error">("loading");
   const [txs, setTxs] = useState<Tx[] | null>(null);
-  const [billingCycle, setBillingCycle] = useState<BillingCycle>("monthly");
 
   useEffect(() => {
     if (!firebaseEnabled) {
@@ -250,14 +268,21 @@ export default function ProfileClient() {
         if (cancelled) return;
         if (snap.exists()) {
           const d = snap.data() as Partial<ProfileFields>;
+          const gName = user.displayName ?? "";
+          const [gFirst = "", ...gRest] = gName.split(" ");
           setFields({
             ...EMPTY,
             ...d,
-            email: d.email || user.email || "",
+            firstName: cleanPlaintext(d.firstName) || gFirst,
+            lastName: cleanPlaintext(d.lastName) || gRest.join(" "),
+            company: cleanPlaintext(d.company),
+            phoneNumber: cleanPlaintext(d.phoneNumber),
+            email: cleanPlaintext(d.email) || user.email || "",
             phoneDial: d.phoneDial || "IN +91",
             plan: (d.plan as string) || "free",
             nodes: typeof d.nodes === "number" ? d.nodes : null,
             expiresAt: d.expiresAt ?? null,
+            planPurchasedAt: d.planPurchasedAt || (d as Record<string, unknown>).planCreatedAt || (d as Record<string, unknown>).createdAt || null,
           });
           setState("ready");
         } else {
@@ -392,7 +417,7 @@ export default function ProfileClient() {
     return 1;
   }, [fields.nodes, pricing]);
 
-  const expiryDate = useMemo(() => {
+const expiryDate = useMemo(() => {
     if (!isPaid) return null;
     const raw = fields.expiresAt as { toDate?: () => Date } | string | number | null | undefined;
     if (raw && typeof raw === "object" && "toDate" in raw && typeof (raw as { toDate?: unknown }).toDate === "function") {
@@ -406,13 +431,29 @@ export default function ProfileClient() {
       const d = new Date(raw);
       if (!isNaN(d.getTime())) return d;
     }
-    // default: use getExpiryDate with billingCycle (30 days monthly, 365 days yearly, end-of-day)
-    return getExpiryDate(billingCycle);
-  }, [fields.expiresAt, isPaid, billingCycle]);
+    // default: 30 days from now, end of day
+    return addDays(new Date(), 30);
+  }, [fields.expiresAt, isPaid]);
 
-  const expiryLabel = !isPaid ? "No expiry — free forever" : billingCycle === "yearly"
-    ? `${expiryDate ? formatDateTime(expiryDate) : "—"} (8% off)`
-    : expiryDate ? formatDateTime(expiryDate) : "—";
+  const planPurchasedDate = useMemo(() => {
+    if (!isPaid) return null;
+    const raw = fields.planPurchasedAt as { toDate?: () => Date } | string | number | null | undefined;
+    if (raw && typeof raw === "object" && "toDate" in raw && typeof (raw as { toDate?: unknown }).toDate === "function") {
+      try {
+        return (raw as { toDate: () => Date }).toDate();
+      } catch {
+        return null;
+      }
+    }
+    if (typeof raw === "string" || typeof raw === "number") {
+      const d = new Date(raw);
+      if (!isNaN(d.getTime())) return d;
+    }
+    return null;
+  }, [fields.planPurchasedAt, isPaid]);
+
+  const planPurchasedLabel = planPurchasedDate ? formatDate(planPurchasedDate) : null;
+  const expiryLabel = !isPaid ? "No expiry — free forever" : expiryDate ? formatDate(expiryDate) : "—";
   const planNames: Record<string, string> = { free: "Free plan", starter: "Starter plan", teams: "Teams plan" };
   const planLabel = planNames[fields.plan] ?? `${fields.plan} plan`;
   const perNodeInr = pricing?.perNodeInr ?? 0;
@@ -605,28 +646,6 @@ export default function ProfileClient() {
             <span className="plan-chip" data-plan={fields.plan}>
               {effectiveNodes} nodes
             </span>
-            <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-              <label className="chk-radio">
-                <input
-                  type="radio"
-                  value="monthly"
-                  checked={billingCycle === "monthly"}
-                  onChange={() => setBillingCycle("monthly")}
-                  style={{ accentColor: "var(--accent)" }}
-                />
-                Monthly
-              </label>
-              <label className="chk-radio">
-                <input
-                  type="radio"
-                  value="yearly"
-                  checked={billingCycle === "yearly"}
-                  onChange={() => setBillingCycle("yearly")}
-                  style={{ accentColor: "var(--accent)" }}
-                />
-                Yearly
-              </label>
-            </div>
           </div>
           <div className="chk-hint" style={{ margin: "0 0 14px", lineHeight: 1.6 }}>
             {isPaid ? (
@@ -670,6 +689,12 @@ export default function ProfileClient() {
               <dt>Nodes</dt>
               <dd>{effectiveNodes}</dd>
             </div>
+            {isPaid && planPurchasedLabel && (
+              <div className="chk-bill-row">
+                <dt>Purchased on</dt>
+                <dd>{planPurchasedLabel}</dd>
+              </div>
+            )}
             <div className="chk-bill-row">
               <dt>Expiring on</dt>
               <dd>{expiryLabel}</dd>
@@ -677,7 +702,7 @@ export default function ProfileClient() {
             {isPaid && <div className="chk-bill-row"><dt>Per node</dt><dd>{inr(perNodeInr)}</dd></div>}
             <div className="chk-bill-row">
               <dt>Amount</dt>
-              <dd>{isPaid ? `${inr(subtotalInr)}/${billingCycle}` : "₹0"}</dd>
+              <dd>{isPaid ? `${inr(subtotalInr)}/mo` : "₹0"}</dd>
             </div>
           </div>
 
