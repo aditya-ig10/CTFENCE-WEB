@@ -6,6 +6,7 @@ import gsap from "gsap";
 import { motionAllowed } from "@/lib/anim";
 import { privacy } from "@/content/copy";
 import NewspaperMasthead from "@/components/NewspaperMasthead";
+import AdminSecretPrompt from "@/components/AdminSecretPrompt";
 
 export default function PrivacyEdition() {
   const rootRef = useRef<HTMLElement>(null);
@@ -190,6 +191,8 @@ export default function PrivacyEdition() {
           </p>
         </footer>
       </article>
+
+      <AdminSecretPrompt />
     </section>
   );
 }
