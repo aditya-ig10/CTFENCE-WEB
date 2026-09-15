@@ -9,6 +9,7 @@ import GaTag from "@/components/GaTag";
 import SmoothScroll from "@/components/SmoothScroll";
 import CookieToast from "@/components/CookieToast";
 import LoadingOverlay from "@/components/LoadingOverlay";
+import CascadeWrapper from "@/components/CascadeWrapper";
 import { organizationSchema, siteUrl, webSiteSchema } from "@/lib/seo";
 import { site } from "@/content/copy";
 
@@ -102,13 +103,17 @@ export default function RootLayout({
           type="application/ld+json"
           dangerouslySetInnerHTML={{ __html: JSON.stringify({ "@context": "https://schema.org", "@graph": graph }) }}
         />
-        <Navbar />
-        <LoadingOverlay />
-        <Breadcrumbs />
-        <SmoothScroll />
-        <CookieToast />
-        {children}
-        <Footer />
+        <CascadeWrapper>
+          <div className="site-shell">
+            <Navbar />
+            <LoadingOverlay />
+            <Breadcrumbs />
+            <SmoothScroll />
+            <CookieToast />
+            {children}
+            <Footer />
+          </div>
+        </CascadeWrapper>
         <Suspense fallback={null}>
           <GaTag />
         </Suspense>
