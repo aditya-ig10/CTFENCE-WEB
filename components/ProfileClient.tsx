@@ -723,6 +723,38 @@ const expiryDate = useMemo(() => {
         </div>
       </div>
 
+      {/* device fleet — linked to your plan */}
+      <div className="chk-card" style={{ marginTop: 16 }}>
+        <div style={{ display: "flex", alignItems: "baseline", justifyContent: "space-between", gap: 12, marginBottom: 14 }}>
+          <h2 className="chk-card-title" style={{ margin: 0 }}>Your devices</h2>
+          <span className="chk-hint">{effectiveNodes} slots · {isPaid ? "active" : "free tier"}</span>
+        </div>
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(260px, 1fr))", gap: 12 }}>
+          {[
+            { name: "MacBook Pro", os: "macOS 14.5", last: "2 min ago", status: "online" },
+            { name: "iPhone 15", os: "iOS 18.0", last: "1 hour ago", status: "offline" },
+            { name: "Ubuntu Server", os: "Ubuntu 22.04", last: "3 days ago", status: isPaid ? "online" : "offline" },
+          ].slice(0, effectiveNodes).map((d) => (
+            <div key={d.name} style={{ border: "1px solid var(--rule)", borderRadius: 12, padding: "1rem 1.2rem", background: "var(--off)", display: "flex", flexDirection: "column", gap: 8 }}>
+              <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                <span style={{ width: 8, height: 8, borderRadius: "50%", background: d.status === "online" ? "#10b981" : "var(--ink4)", display: "inline-block" }} />
+                <span style={{ fontFamily: "DM Mono, monospace", fontSize: "0.72rem", fontWeight: 600, color: "var(--ink)" }}>{d.name}</span>
+                <span style={{ marginLeft: "auto", fontFamily: "DM Mono, monospace", fontSize: "0.62rem", color: d.status === "online" ? "#10b981" : "var(--ink4)", background: d.status === "online" ? "rgba(16,185,129,0.12)" : "var(--white)", border: "1px solid var(--rule)", padding: "2px 6px", borderRadius: 999 }}>{d.status}</span>
+              </div>
+              <div style={{ fontFamily: "DM Mono, monospace", fontSize: "0.68rem", color: "var(--ink3)" }}>{d.os} · last seen {d.last}</div>
+              <div style={{ display: "flex", gap: 6, marginTop: 4 }}>
+                <button type="button" className="chk-apply" style={{ padding: "6px 10px", fontSize: "0.62rem" }}>Rename</button>
+                <button type="button" className="chk-apply" style={{ padding: "6px 10px", fontSize: "0.62rem", background: "var(--white)" }}>Revoke</button>
+              </div>
+            </div>
+          ))}
+        </div>
+        <div style={{ display: "flex", gap: 10, marginTop: 14, flexWrap: "wrap" }}>
+          <Link href="/dashboard" className="chk-apply" style={{ textDecoration: "none", display: "inline-flex", alignItems: "center", padding: "10px 18px", background: "var(--ink)", color: "var(--white)", borderColor: "var(--ink)" }}>Open dashboard →</Link>
+          <span className="chk-hint" style={{ alignSelf: "center" }}>Manage all {effectiveNodes} slots in the dashboard</span>
+        </div>
+      </div>
+
       {/* full-width transactions — live from Firebase payments */}
       <div className="chk-card" style={{ marginTop: 16 }}>
         <div style={{ display: "flex", alignItems: "baseline", justifyContent: "space-between", gap: 12, marginBottom: 14 }}>
