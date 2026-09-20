@@ -10,20 +10,22 @@ export type CurrencyCode =
   | "AED"
   | "BRL";
 
-// pricing base is INR. rates are "currency units per 1 INR" — static
-// snapshot is only a fallback; Money() refreshes them live from
-// open.er-api.com (free, no key) on the client.
+// pricing base is USD (headline: Starter $22/mo monthly, $18/mo annual;
+// Teams $105/mo monthly, $90/mo annual). rates below are "currency units
+// per 1 INR" — static snapshot is only a fallback; Money() refreshes them
+// live from open.er-api.com (free, no key) on the client.
+// snapshot: 2026-09-27 — 1 USD = 95.878915 INR (er-api latest/USD).
 const STATIC_RATES: Record<CurrencyCode, { rate: number; locale: string }> = {
   INR: { rate: 1, locale: "en-IN" },
-  USD: { rate: 1 / 84, locale: "en-US" },
-  EUR: { rate: 1 / 91.5, locale: "de-DE" },
-  GBP: { rate: 1 / 106.3, locale: "en-GB" },
-  JPY: { rate: 1.85, locale: "ja-JP" },
-  AUD: { rate: 1 / 55.3, locale: "en-AU" },
-  CAD: { rate: 1 / 61.3, locale: "en-CA" },
-  SGD: { rate: 1 / 62.2, locale: "en-SG" },
-  AED: { rate: 1 / 22.9, locale: "en-AE" },
-  BRL: { rate: 0.0643, locale: "pt-BR" },
+  USD: { rate: 0.01042986, locale: "en-US" },
+  EUR: { rate: 0.00915236, locale: "de-DE" },
+  GBP: { rate: 0.00787546, locale: "en-GB" },
+  JPY: { rate: 1.642223, locale: "ja-JP" },
+  AUD: { rate: 0.0148472, locale: "en-AU" },
+  CAD: { rate: 0.01474488, locale: "en-CA" },
+  SGD: { rate: 0.01332724, locale: "en-SG" },
+  AED: { rate: 0.0383036, locale: "en-AE" },
+  BRL: { rate: 0.054151, locale: "pt-BR" },
 };
 
 const COUNTRY_TO_CURRENCY: Record<string, CurrencyCode> = {
