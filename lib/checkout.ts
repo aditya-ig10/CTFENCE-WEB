@@ -36,18 +36,30 @@ export function isPlanId(v: unknown): v is PlanId {
 
 // plan node pricing. the site scales on enforcement nodes (not seats); policy
 // count is unlimited on every tier. price = perNodeInr × chosen nodes, then
-// tax is applied per the billing country. the INR base mirrors content/copy.ts.
+// tax is applied per the billing country.
+//
+// USD-anchored headline (1 USD = 95.878915 INR, 2026-09-27 snapshot):
+//   Starter: $22/mo monthly · $18/mo billed annually ($216/yr)
+//   Teams:   $105/mo monthly · $90/mo billed annually ($1080/yr)
+// monthly INR totals: Starter 2109 (703×3), Teams 10070 (1007×10).
+// annual = 12 × monthly × (1 − yearlyDiscount):
+//   Starter 18.18% off (2/11), Teams 14.29% off (1/7).
 export type PlanPricing = {
   name: string;
-  perNodeInr: number; // price per enforcement node, in INR
+  perNodeInr: number; // price per enforcement node per month, in INR
   minNodes: number; // included nodes at the plan's headline price
   maxNodes: number; // cap a purchaser can pick on the checkout page
+  yearlyDiscount: number; // fraction off 12×monthly when billed annually
 };
 
 export const PLAN_PRICING: Record<PlanId, PlanPricing> = {
-  starter: { name: "Starter", perNodeInr: 500, minNodes: 3, maxNodes: 10 },
-  teams: { name: "Teams", perNodeInr: 840, minNodes: 10, maxNodes: 50 },
+  starter: { name: "Starter", perNodeInr: 703, minNodes: 3, maxNodes: 10, yearlyDiscount: 2 / 11 },
+  teams: { name: "Teams", perNodeInr: 1007, minNodes: 10, maxNodes: 50, yearlyDiscount: 1 / 7 },
 };
+
+export function yearlyDiscountForPlan(planId: PlanId): number {
+  return PLAN_PRICING[planId].yearlyDiscount;
+}
 
 export type BillingCycle = "monthly" | "yearly";
 
@@ -174,7 +186,7 @@ export function quoteCheckout(
   const nodes = clampNodes(planId, opts?.nodes ?? pricing.minNodes);
   const billingCycle = opts?.billingCycle ?? "monthly";
   const cycleMultiplier = billingCycle === "yearly" ? 12 : 1;
-  const cycleDiscount = billingCycle === "yearly" ? 0.08 : 0;
+  const cycleDiscount = billingCycle === "yearly" ? pricing.yearlyDiscount : 0;
   let baseInr = perNodeInr * nodes * cycleMultiplier;
   if (cycleDiscount > 0) baseInr = Math.round(baseInr * (1 - cycleDiscount));
   const off = referralDiscount(referralCode);
