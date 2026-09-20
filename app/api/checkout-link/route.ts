@@ -53,7 +53,7 @@ export async function POST(request: Request) {
     nodes = addNodes;
     const perNodeInr = PLAN_PRICING[plan].perNodeInr;
     const cycleMul = billingCycle === "yearly" ? 12 : 1;
-    const cycleDisc = billingCycle === "yearly" ? 0.08 : 0;
+    const cycleDisc = billingCycle === "yearly" ? PLAN_PRICING[plan].yearlyDiscount : 0;
     let baseInr = perNodeInr * addNodes * cycleMul;
     if (cycleDisc > 0) baseInr = Math.round(baseInr * (1 - cycleDisc));
     const off = referralDiscount(referralCode);
