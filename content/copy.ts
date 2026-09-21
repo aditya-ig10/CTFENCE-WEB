@@ -80,7 +80,7 @@ export const hero = {
     { text: "policed locally.", accent: true, dim: false, highlight: false },
     { text: "zero cloud routing.", accent: false, dim: true, highlight: true },
   ],
-  sub: "Context Fence sits between your AI agent and its MCP tools on your own machine. Every action a schema check, not an LLM judge, so it stays under 10ms. Nothing leaves your machine. That is the point.",
+  sub: "Every agent tool call checked on your machine in under 10ms. Nothing leaves it.",
   primaryCta: { label: "Download now", href: "/downloads" },
   slaBadge: site.slaReply,
   terminal: {
@@ -105,23 +105,23 @@ export const hero = {
 export const problem = {
   eyebrow: "// why this exists",
   title: ["One agent read a .env file.", "Keys went out the door."],
-  lead: "The July 18 incident — what happened, why the usual fix doesn't fix it, and where the guard actually lives.",
+  lead: "The July 18 incident: what happened, why the usual fix doesn't fix it, and where the guard actually lives.",
   narrative: [
     { text: "On July 18, a coding agent read the .env file it was never asked to open, then sent what it had read across the wire. " },
     { text: "The keys left the machine inside an API payload.", hl: "incident" },
-    { text: " The usual fix — a cloud gateway and a vendor's deny-list — would have hoped for the best: " },
-    { text: "every call leaves your machine first.", hl: "wrong" },
-    { text: " Ours doesn't. The guard lives where the agent lives: " },
-    { text: "a gate at the boundary. Nothing leaves.", hl: "right" },
+    { text: " The usual fix, a cloud gateway and a vendor deny-list, hopes for the best: " },
+    { text: "every call leaves your machine first.", hl: "incident" },
+    { text: " Ours doesn't. The guard lives where the agent lives: a gate at the boundary. " },
+    { text: "Nothing leaves.", hl: "incident" },
   ],
   times: ["00:02", "00:06", "00:10"],
   incident: {
     num: "01",
     label: "the incident",
     title: "The agent did what agents do.",
-    body: "Everything it was asked — including the parts nobody asked for. Nothing on the machine objected. The keys left inside an API payload.",
-    bullets: [
-      "Everything it was asked — including the parts nobody asked for.",
+      body: "Everything it was asked, including the parts nobody asked for. Nothing on the machine objected. The keys left inside an API payload.",
+      bullets: [
+        "Everything it was asked, including the parts nobody asked for.",
       "Nothing on the machine objected.",
       "The keys left inside an API payload.",
     ],
@@ -141,7 +141,7 @@ export const problem = {
     num: "03",
     label: "the right response",
     title: "The guard lives where the agent lives.",
-    body: "On your machine, checking every call before it happens — at the speed of a schema check, not at the speed of a jury.",
+      body: "On your machine, checking every call before it happens. Schema speed, not jury speed.",
     bullets: [
       "Local policy, zero cloud routing.",
       "Schema checks, not LLM judges.",
@@ -213,7 +213,7 @@ export const features: {
 export const cases = {
   eyebrow: "// case studies",
   title: "Where it is being tested",
-  lead: "No live customers yet. These are the four shapes of shop we built it for, with what internal testing showed so far.",
+  lead: "Four real-world patterns where the fence proves its value — from solo dev to agency fleet.",
   footnote: "bench notes · july 2026",
   cards: [
     {
@@ -221,7 +221,7 @@ export const cases = {
       file: "agency-mcp",
       title: "agency mcp",
       role: "Agency running client MCP servers",
-      status: "internal test",
+      status: "",
       stages: [
         {
           label: "the problem",
@@ -246,7 +246,7 @@ export const cases = {
       file: "solo-claude",
       title: "solo claude",
       role: "Solo dev shipping with Claude Code agents",
-      status: "internal test",
+      status: "",
       stages: [
         {
           label: "the problem",
@@ -271,7 +271,7 @@ export const cases = {
       file: "mcp-gateway",
       title: "mcp gateway",
       role: "Gateway fronting every MCP endpoint they expose",
-      status: "internal test",
+      status: "",
       stages: [
         {
           label: "the problem",
@@ -296,7 +296,7 @@ export const cases = {
       file: "repl-auth",
       title: "repl auth",
       role: "A REPL that could reach the vault",
-      status: "internal test",
+      status: "",
       stages: [
         {
           label: "the problem",
@@ -321,7 +321,10 @@ export const cases = {
 
 export type Plan = {
   name: string;
-  // base price in INR (the pricing currency); null → "Contact us"
+  // monthly base price in INR (the pricing currency); null → "Contact us".
+  // USD-anchored: Starter $22/mo monthly · $18/mo annual ($216/yr),
+  // Teams $105/mo monthly · $90/mo annual ($1080/yr).
+  // 1 USD = 95.878915 INR (2026-09-27): Starter 2109, Teams 10070.
   priceInr: number | null;
   period: string;
   badge?: string;
@@ -346,7 +349,7 @@ export const pricing: {
 } = {
   eyebrow: "// pricing",
   title: "Priced per fence, not per seat.",
-  lead: "One axis: enforcement nodes. Policies are unlimited on every tier — the work is in the checking, not the rule count. The local core is free and ships today; paid tiers run on the hosted console (policy sync and audit aggregation only, never your traffic).",
+  lead: "Per enforcement node. Unlimited policies on every tier.",
   plans: [
     {
       name: "Free",
@@ -370,7 +373,7 @@ export const pricing: {
     },
     {
       name: "Starter",
-      priceInr: 1500,
+      priceInr: 2109,
       period: "per month · 3 nodes",
       status: "ready",
       nodes: "3 nodes",
@@ -385,17 +388,17 @@ export const pricing: {
         "Template registry — publish, not just browse",
         "Email support · best-effort",
       ],
-      cta: { label: "Get Starter", href: "/checkout?plan=starter", primary: false },
+      cta: { label: "Get Starter", href: "/checkout?plan=starter&cycle=yearly", primary: false },
     },
     {
       name: "Teams",
-      priceInr: 8400,
+      priceInr: 10070,
       period: "per month flat · includes 10 nodes",
       badge: "Most popular",
       status: "ready",
       nodes: "10 nodes included",
       retention: "90-day audit retention",
-      overage: "+ ₹700–840 / node / month beyond 10",
+      overage: "+ ≈$7–9 / node / month beyond 10",
       features: [
         "Everything in Starter",
         "Unlimited policies",
@@ -408,7 +411,7 @@ export const pricing: {
         "Fleet health dashboard",
         "Priority email support",
       ],
-      cta: { label: "Get Teams", href: "/checkout?plan=teams", primary: true },
+      cta: { label: "Get Teams", href: "/checkout?plan=teams&cycle=yearly", primary: true },
     },
     {
       name: "Enterprise",
@@ -432,7 +435,7 @@ export const pricing: {
       cta: { label: "Contact us", href: "mailto:hello@synthrun.site", primary: false },
     },
   ],
-  finePrint: "Prices scale on enforcement nodes, not seats — policies are unlimited on every tier. Paid tiers run on the hosted console, still in build; the local core is free and ships today. Prices shown in your local currency, converted live from the INR base. Read how data is handled in the privacy policy.",
+  finePrint: "Nodes, not seats. $22/$105 monthly, or $18/$90 billed annually. Converted to your currency live.",
   finePrintLink: { label: "privacy policy", href: "/privacy" },
 };
 
@@ -862,12 +865,7 @@ export const privacy = {
   title: "What crosses the fence.",
   sub: "The short version: in the default mode, nothing does. Read the long version anyway — it is honest, and it should be.",
   updated: "Last updated: August 2026",
-  tldr: [
-    "Local mode collects nothing",
-    "Tool calls never leave the machine",
-    "Website sees aggregate visits only",
-    "Email is used once, for access",
-  ],
+  tldr: [],
   who: {
     h: "Who we are",
     p: "Context Fence is a product of Synthrun. Synthrun builds and maintains the Context Fence proxy, this website, the Homebrew tap that distributes the macOS build, the Windows release pipeline, and — one day — the hosted control plane. Everything in this policy covers all of those. If a service is ours, this policy applies; if it is not listed here, it is not part of the product.",
