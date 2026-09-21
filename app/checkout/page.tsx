@@ -13,7 +13,7 @@ export const metadata = baseMetadata({
 export default function CheckoutPage({
   searchParams,
 }: {
-  searchParams?: { plan?: string; nodes?: string; addNodes?: string };
+  searchParams?: { plan?: string; nodes?: string; addNodes?: string; cycle?: string };
 }) {
   const planParam = searchParams?.plan;
   const planId = isPlanId(planParam) ? planParam : "starter";
@@ -21,6 +21,7 @@ export default function CheckoutPage({
   const initialNodes = Number.isFinite(rawNodes) ? rawNodes : undefined;
   const rawAddNodes = searchParams?.addNodes ? parseInt(searchParams.addNodes, 10) : NaN;
   const initialAddNodes = Number.isFinite(rawAddNodes) && rawAddNodes > 0 ? Math.min(rawAddNodes, 10) : undefined;
+  const initialCycle = searchParams?.cycle === "monthly" ? "monthly" as const : "yearly" as const;
   // country from ip — Vercel populates x-vercel-ip-country (ISO code).
   // accept either that or a full name so local dev + geojs both work.
   const rawCountry =
@@ -47,7 +48,7 @@ export default function CheckoutPage({
       : rawCountry;
   return (
     <main>
-      <CheckoutClient planId={planId} geoCountry={geoCountry} initialNodes={initialNodes} initialAddNodes={initialAddNodes} />
+      <CheckoutClient planId={planId} geoCountry={geoCountry} initialNodes={initialNodes} initialAddNodes={initialAddNodes} initialCycle={initialCycle} />
     </main>
   );
 }

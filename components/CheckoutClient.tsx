@@ -21,7 +21,7 @@ import {
 } from "@/lib/geo";
 import { apiRequest } from "@/lib/apiClient";
 import { firebaseEnabled, getFirebaseAuth, getFirebaseDb } from "@/lib/firebase";
-import { onAuthStateChanged, type User } from "firebase/auth";
+import { GoogleAuthProvider, onAuthStateChanged, signInWithPopup, type User } from "firebase/auth";
 import Script from "next/script";
 import { useRouter } from "next/navigation";
 import { addDoc, collection, doc, getDoc, getDocs, limit, query, serverTimestamp, setDoc, Timestamp, where } from "firebase/firestore";
@@ -101,11 +101,13 @@ export default function CheckoutClient({
   geoCountry,
   initialNodes,
   initialAddNodes,
+  initialCycle = "yearly",
 }: {
   planId: PlanId;
   geoCountry: string | null;
   initialNodes?: number;
   initialAddNodes?: number;
+  initialCycle?: BillingCycle;
 }) {
   const pricing = PLAN_PRICING[planId];
   const isAddOn = typeof initialAddNodes === "number" && Number.isFinite(initialAddNodes) && initialAddNodes > 0;
@@ -119,7 +121,7 @@ export default function CheckoutClient({
     }
     return pricing.minNodes;
   });
-  const [billingCycle] = useState<BillingCycle>("monthly");
+  const [billingCycle, setBillingCycle] = useState<BillingCycle>(initialCycle);
   const [referral, setReferral] = useState("");
   const [applied, setApplied] = useState<string | null>(null);
   // country is locked to the visitor's IP — no selector. geoCountry (from
@@ -162,7 +164,7 @@ export default function CheckoutClient({
     if (isAddOn) {
       const perNodeInr = pricing.perNodeInr;
       const cycleMul = billingCycle === "yearly" ? 12 : 1;
-      const cycleDisc = billingCycle === "yearly" ? 0.08 : 0;
+      const cycleDisc = billingCycle === "yearly" ? pricing.yearlyDiscount : 0;
       let baseInr = perNodeInr * nodes * cycleMul;
       if (cycleDisc > 0) baseInr = Math.round(baseInr * (1 - cycleDisc));
       const off = referralDiscount(applied);
@@ -604,7 +606,7 @@ function cleanPlaintext(val: unknown): string {
         currency: data.currency,
         name: "Context Fence",
         description: `${PLAN_NAMES[planId]} · ${data.nodes} enforcement nodes`,
-        theme: { color: "#ff3144" },
+        theme: { color: "#0e9384" },
         handler: (response: { razorpay_order_id: string; razorpay_payment_id: string; razorpay_signature: string }) => {
           void (async () => {
             try {
@@ -752,7 +754,7 @@ function cleanPlaintext(val: unknown): string {
         <div className="chk-eyebrow">{"// review & pay"}</div>
         <h1 className="chk-title">Review your order</h1>
         <p className="chk-sub">
-          Locked for <strong>{inr(quote.totalInr)}</strong> · paying as <strong>{effectiveBilling.email}</strong> · {effectiveBilling.country}
+          Locked for <strong>{inr(quote.totalInr)}</strong> · {billingCycle === "yearly" ? "annual billing" : "monthly billing"} · paying as <strong>{effectiveBilling.email}</strong> · {effectiveBilling.country}
           {applied ? ` · referral ${applied}` : ""}
         </p>
 
@@ -884,6 +886,68 @@ function cleanPlaintext(val: unknown): string {
           ? `Add ${nodes} extra node${nodes > 1 ? "s" : ""} at ${inr(pricing.perNodeInr)} each — you’ll pay only for the extra nodes.`
           : "Pick your node count, then enter billing details. You’ll review the locked price on the next step and pay directly with Razorpay — same page, no separate email."}
       </p>
+
+      <div className="billing-toggle billing-toggle--left" role="group" aria-label="Billing period" data-cycle={billingCycle}>
+        <span className="billing-toggle-slider" aria-hidden="true" />
+        <button
+          type="button"
+          className={`billing-toggle-btn${billingCycle === "monthly" ? " is-active" : ""}`}
+          aria-pressed={billingCycle === "monthly"}
+          onClick={() => setBillingCycle("monthly")}
+        >
+          Monthly
+        </button>
+        <button
+          type="button"
+          className={`billing-toggle-btn${billingCycle === "yearly" ? " is-active" : ""}`}
+          aria-pressed={billingCycle === "yearly"}
+          onClick={() => setBillingCycle("yearly")}
+        >
+          Annual
+          <span className="billing-toggle-save">
+            {planId === "starter" ? "save 18%" : "save 14%"}
+          </span>
+        </button>
+      </div>
+      <p className="chk-hint" style={{ marginTop: 8 }}>
+        {billingCycle === "yearly"
+          ? planId === "starter"
+            ? "Annual · $18/mo billed annually ($216/yr) + tax"
+            : "Annual · $90/mo billed annually ($1080/yr) + tax"
+          : planId === "starter"
+            ? "Monthly · $22/mo + tax"
+            : "Monthly · $105/mo + tax"}
+      </p>
+
+      {!authUser && firebaseEnabled && (
+        <div className="chk-card" style={{ display: "flex", alignItems: "center", gap: 16, padding: "1.1rem 1.4rem", background: "var(--off)", border: "1px solid var(--rule)", borderRadius: 12, marginBottom: 16 }}>
+          <div style={{ width: 38, height: 38, borderRadius: "50%", background: "white", border: "1px solid var(--rule)", display: "grid", placeItems: "center", flexShrink: 0 }}>
+            <svg width="18" height="18" viewBox="0 0 24 24" aria-hidden="true">
+              <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.2 3.31v2.76h3.57c2.09-1.92 3.3-4.75 3.3-8.08z" />
+              <path fill="#34A853" d="M12 23c2.97 0 5.46-1 7.28-2.69l-3.57-2.76c-.98.66-2.23 1.06-3.71 1.06-2.85 0-5.27-1.92-6.14-4.5H2.18v2.84C3.98 20.53 7.7 23 12 23z" />
+              <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" />
+              <path fill="#EA4335" d="M12 5.38c1.62 0 3.08.56 4.22 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" />
+            </svg>
+          </div>
+          <div style={{ minWidth: 0, flex: 1 }}>
+            <div style={{ fontFamily: "var(--font-canela)", fontWeight: 600, fontSize: "0.95rem", color: "var(--ink)", lineHeight: 1.2 }}>Sign in to purchase</div>
+            <div style={{ fontFamily: "DM Mono, monospace", fontSize: "0.68rem", color: "var(--ink3)", marginTop: 2 }}>Your plan and devices will be tied to your Google account. No password needed.</div>
+          </div>
+          <button
+            type="button"
+            onClick={async () => {
+              const auth = getFirebaseAuth();
+              if (!auth) return;
+              try {
+                await signInWithPopup(auth, new GoogleAuthProvider());
+              } catch {}
+            }}
+            style={{ marginLeft: "auto", background: "var(--ink)", color: "var(--white)", border: "1px solid var(--ink)", padding: "0.6rem 1.2rem", borderRadius: 999, fontFamily: "DM Mono, monospace", fontSize: "0.68rem", fontWeight: 600, letterSpacing: "0.04em", cursor: "pointer", whiteSpace: "nowrap" }}
+          >
+            Continue with Google →
+          </button>
+        </div>
+      )}
 
       <div className="chk-grid">
         {/* left — billing form */}
@@ -1146,27 +1210,37 @@ function cleanPlaintext(val: unknown): string {
                     : `${min} included + ${nodes - min} extra node${nodes - min > 1 ? "s" : ""}`}
               </span>
               <span className="chk-nodes-rate">
-                · {inr(pricing.perNodeInr)} per node · cap {max} {isAddOn ? "extra" : ""}
+                · {inr(pricing.perNodeInr)} per node / month · cap {max} {isAddOn ? "extra" : ""} · {billingCycle === "yearly" ? "billed annually" : "billed monthly"}
               </span>
             </div>
+          </div>
+
+          <div style={{ display: "flex", alignItems: "center", gap: 8, padding: "0.7rem 0.9rem", background: "var(--off)", border: "1px solid var(--rule)", borderRadius: 8, fontFamily: "DM Mono, monospace", fontSize: "0.68rem", color: "var(--ink3)" }}>
+            <span style={{ width: 6, height: 6, borderRadius: "50%", background: "#10b981", flexShrink: 0 }} />
+            <span>{nodes} device{nodes !== 1 ? "s" : ""} included · {isAddOn ? "adding" : "covering"} your fleet</span>
+            <a href="/dashboard" style={{ marginLeft: "auto", color: "var(--ink)", textDecoration: "none", fontWeight: 600, whiteSpace: "nowrap" }}>Manage →</a>
           </div>
 
           <div className="chk-order-divider" />
           {isAddOn ? (
             <div className="chk-order-row">
-              <span>Add {nodes} node{nodes > 1 ? "s" : ""}</span>
+              <span>
+                Add {nodes} node{nodes > 1 ? "s" : ""} · {billingCycle === "yearly" ? "annual" : "monthly"}
+              </span>
               <span>{inr(quote.subtotalInr)}</span>
             </div>
           ) : (
             <>
               <div className="chk-order-row">
-                <span>{min} nodes (included)</span>
-                <span>{inr(quote.subtotalInr - (nodes - min) * pricing.perNodeInr)}</span>
+                <span>
+                  {min} nodes (included) · {billingCycle === "yearly" ? "annual" : "monthly"}
+                </span>
+                <span>{inr(Math.round((quote.subtotalInr * min) / Math.max(nodes, 1)))}</span>
               </div>
               {nodes > min && (
                 <div className="chk-order-row">
                   <span>{nodes - min} extra node{nodes - min > 1 ? "s" : ""}</span>
-                  <span>+ {inr((nodes - min) * pricing.perNodeInr)}</span>
+                  <span>+ {inr(quote.subtotalInr - Math.round((quote.subtotalInr * min) / Math.max(nodes, 1)))}</span>
                 </div>
               )}
             </>
@@ -1184,7 +1258,7 @@ function cleanPlaintext(val: unknown): string {
             </div>
           )}
           <div className="chk-order-total">
-            <span>Total</span>
+            <span>Total{billingCycle === "yearly" ? " / year" : " / month"}</span>
             <span>{inr(quote.totalInr)}</span>
           </div>
           <ul className="chk-order-list">
