@@ -11,18 +11,21 @@ import {
   type FxRates,
 } from "@/lib/currency";
 
-// price display: base is INR; converts to the visitor's currency with live
-// FX rates (fetched once per page load, static snapshot until they arrive).
+// price display: monthly INR base; converts to the visitor's currency with
+// live FX rates (fetched once per page load, static snapshot until they
+// arrive). plain renders without the plan-price class for inline use.
 export default function Money({
   inr,
   currency,
   locale,
   preferLocale,
+  plain = false,
 }: {
   inr: number;
   currency: CurrencyCode;
   locale: string;
   preferLocale: boolean;
+  plain?: boolean;
 }) {
   const [cur, setCur] = useState<CurrencyCode>(currency);
   const [loc, setLoc] = useState(locale);
@@ -47,5 +50,9 @@ export default function Money({
     };
   }, []);
 
-  return <span className="plan-price">{formatMoney(inr, cur, loc, rates[cur])}</span>;
+  return plain ? (
+    <span>{formatMoney(inr, cur, loc, rates[cur])}</span>
+  ) : (
+    <span className="plan-price">{formatMoney(inr, cur, loc, rates[cur])}</span>
+  );
 }
