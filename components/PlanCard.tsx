@@ -4,20 +4,32 @@ import { useState } from "react";
 import Link from "next/link";
 import CheckIcon from "@/components/CheckIcon";
 import Money from "@/components/Money";
+import { PLAN_PRICING, type PlanId } from "@/lib/checkout";
 import type { CurrencyCode } from "@/lib/currency";
 import type { Plan } from "@/content/copy";
 
 // one pricing card — client component so each card can expand/collapse its
 // own feature list ("read more"). collapsed shows the first COLLAPSE_AT
 // features; "everything in X" plans keep their lead item visible.
+//
+// billing: monthly shows the flat monthly price; yearly (default) shows the
+// discounted monthly-equivalent ($18 Starter / $90 Teams) plus the billed
+// annual total underneath.
 const COLLAPSE_AT = 5;
+
+function planIdForName(name: string): PlanId | null {
+  const n = name.toLowerCase();
+  if (n === "starter") return "starter";
+  if (n === "teams") return "teams";
+  return null;
+}
 
 export default function PlanCard({
   plan,
   currency,
   locale,
   preferLocale,
-  billingCycle = "monthly",
+  billingCycle = "yearly",
 }: {
   plan: Plan;
   currency: CurrencyCode;
@@ -31,10 +43,26 @@ export default function PlanCard({
   const visible = expanded ? plan.features : plan.features.slice(0, COLLAPSE_AT);
 
   const priceInr = plan.priceInr ?? 0;
-  const cycleMultiplier = billingCycle === "yearly" ? 12 : 1;
-  const cycleDiscount = billingCycle === "yearly" ? 0.08 : 0;
-  const displayPrice = Math.round(priceInr * cycleMultiplier * (1 - cycleDiscount));
-  const displayPeriod = billingCycle === "yearly" ? " per year" : plan.period;
+  const pid = planIdForName(plan.name);
+  const discount = billingCycle === "yearly" && pid ? PLAN_PRICING[pid].yearlyDiscount : 0;
+  // yearly shows the discounted monthly-equivalent (e.g. $18), not 12× lump
+  const displayPrice = Math.round(priceInr * (1 - discount));
+  const annualTotalInr = Math.round(priceInr * 12 * (1 - discount));
+  const displayPeriod =
+    plan.priceInr === null || plan.priceInr === 0
+      ? plan.period
+      : billingCycle === "yearly"
+        ? "per month · billed annually"
+        : plan.period;
+
+  // keep the CTA cycle in sync with the toggle (paid plans only)
+  const ctaHref =
+    pid && !plan.cta.href.startsWith("mailto")
+      ? `/checkout?plan=${pid}&cycle=${billingCycle}`
+      : plan.cta.href;
+
+  // annual mode: strike off the monthly price, then show the annual rate
+  const showStrike = billingCycle === "yearly" && pid !== null && priceInr > 0;
 
   return (
     <article
@@ -47,9 +75,21 @@ export default function PlanCard({
       {plan.priceInr === null ? (
         <span className="plan-price">Contact us</span>
       ) : (
-        <Money inr={displayPrice} currency={currency} locale={locale} preferLocale={preferLocale} />
+        <span className="plan-price-swap" key={billingCycle}>
+          {showStrike && (
+            <span className="plan-strike">
+              <Money inr={priceInr} currency={currency} locale={locale} preferLocale={preferLocale} plain />
+            </span>
+          )}
+          <Money inr={displayPrice} currency={currency} locale={locale} preferLocale={preferLocale} />
+        </span>
       )}
       <div className="plan-period">{displayPeriod}</div>
+      {billingCycle === "yearly" && pid && plan.priceInr != null && plan.priceInr > 0 && (
+        <div className="plan-annual-total">
+          <Money inr={annualTotalInr} currency={currency} locale={locale} preferLocale={preferLocale} plain /> / year
+        </div>
+      )}
       <div className="plan-meta">
         <span>{plan.nodes}</span>
         <span>{plan.retention}</span>
@@ -71,7 +111,13 @@ export default function PlanCard({
           aria-expanded={expanded}
           onClick={() => setExpanded((v) => !v)}
         >
-          {expanded ? "show less" : `read more · ${hidden} more`}
+          {expanded ? (
+            "show less"
+          ) : (
+            <>
+              read more <span className="plan-readmore-count">· {hidden} more</span>
+            </>
+          )}
           <svg viewBox="0 0 12 12" fill="none" aria-hidden="true">
             <path d="M3 4.5l3 3 3-3" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round" />
           </svg>
@@ -83,7 +129,7 @@ export default function PlanCard({
           {plan.cta.label}
         </a>
       ) : (
-        <Link href={plan.cta.href} className={`plan-btn${plan.cta.primary ? " primary" : ""}`}>
+        <Link href={ctaHref} className={`plan-btn${plan.cta.primary ? " primary" : ""}`}>
           {plan.cta.label}
         </Link>
       )}
