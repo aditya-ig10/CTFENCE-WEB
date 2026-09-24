@@ -1,4 +1,5 @@
 import SplitText from "@/components/SplitText";
+import RevealOnScroll from "@/app/components/RevealOnScroll";
 import { FeatureIcon } from "@/components/FeatureIcon";
 import { features } from "@/content/copy";
 
