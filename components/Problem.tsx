@@ -3,166 +3,61 @@
 import { useEffect, useRef } from "react";
 import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
-import SplitText from "@/components/SplitText";
 import ScrollReveal from "@/components/ScrollReveal";
 import { problem } from "@/content/copy";
 import { motionAllowed } from "@/lib/anim";
 
 gsap.registerPlugin(ScrollTrigger);
 
-const ACT_COUNT = 3;
-
-function KeyGlyph() {
-  return (
-    <svg
-      width="26"
-      height="26"
-      viewBox="0 0 24 24"
-      fill="none"
-      xmlns="http://www.w3.org/2000/svg"
-      aria-hidden="true"
-    >
-      <circle cx="8" cy="12" r="4" stroke="currentColor" strokeWidth="1.6" />
-      <path d="M11 12h8M16 12v3M19 12v2" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" />
-    </svg>
-  );
-}
-
-function LockGlyph() {
-  return (
-    <svg
-      width="14"
-      height="14"
-      viewBox="0 0 24 24"
-      fill="none"
-      xmlns="http://www.w3.org/2000/svg"
-      aria-hidden="true"
-    >
-      <rect x="5" y="11" width="14" height="9" rx="2" stroke="currentColor" strokeWidth="1.6" />
-      <path d="M8 11V8a4 4 0 0 1 8 0v3" stroke="currentColor" strokeWidth="1.6" />
-    </svg>
-  );
-}
-
-function SceneCard({
-  num,
-  label,
-  title,
-  body,
-  time,
-  tone,
-}: {
-  num: string;
-  label: string;
-  title: string;
-  body: string;
-  time: string;
-  tone: "incident" | "wrong" | "right";
-}) {
-  return (
-    <article className={`replay-scene ${tone}`}>
-      <div className="replay-scene-meta">
-        <span className="replay-scene-time">{time}</span>
-        <span className="replay-scene-num">{num}</span>
-        <span className="replay-scene-label">{label}</span>
-      </div>
-      <h3 className="replay-scene-title">{title}</h3>
-      <p className="replay-scene-body">{body}</p>
-    </article>
-  );
-}
-
 export default function Problem() {
-  const narrativeRef = useRef<HTMLDivElement>(null);
+  const rootRef = useRef<HTMLElement>(null);
 
   useEffect(() => {
     if (!motionAllowed()) return;
-    const narrative = narrativeRef.current;
-    if (!narrative) return;
-
+    const root = rootRef.current;
+    if (!root) return;
     const ctx = gsap.context(() => {
-      ScrollTrigger.create({
-        trigger: narrative,
-        start: "top 72%",
-        end: "bottom 50%",
-        scrub: 0.6,
-        onUpdate: (self) => {
-          const p = self.progress;
-          document.querySelectorAll<HTMLElement>(".replay-scene").forEach((card, i) => {
-            const start = i / ACT_COUNT;
-            const end = (i + 1) / ACT_COUNT;
-            const last = i === ACT_COUNT - 1;
-            card.classList.toggle("is-active", last ? p >= start : p >= start && p < end);
-          });
-        },
+      gsap.from(".problem-left h2 .word", {
+        y: "110%",
+        duration: 0.8,
+        stagger: 0.05,
+        ease: "expo.out",
+        scrollTrigger: { trigger: ".problem-left", start: "top 82%", once: true },
       });
-    }, narrative);
-
+    }, root);
     return () => ctx.revert();
   }, []);
 
   return (
-    <section className="section tight" id="why" aria-labelledby="why-title">
-      <div className="why-replay">
-        <div className="section-eyebrow">{problem.eyebrow}</div>
-        <h2 className="why-replay-title" id="why-title">
-          <span>{problem.title[0]}</span>
-          <br />
-          <SplitText
-            tag="span"
-            text={problem.title[1]}
-            className="why-replay-accent"
-            delay={24}
-            duration={0.7}
-            ease="power3.out"
-            splitType="chars"
-            textAlign="center"
-          />
-        </h2>
-        <p className="why-replay-lead">{problem.lead}</p>
-
-        <div className="why-narrative" ref={narrativeRef}>
-          <div className="why-doodle why-doodle-key" aria-hidden="true">
-            <KeyGlyph />
-          </div>
-          <ScrollReveal
-            enableBlur
-            baseOpacity={0.12}
-            baseRotation={2.5}
-            blurStrength={8}
-            containerClassName="why-narrative-reveal"
-            textClassName="why-narrative-text"
-            rotationEnd="top 60%"
-            wordAnimationEnd="bottom 55%"
-          >
-            {problem.narrative.map((seg) => ({
-              text: seg.text,
-              className: seg.hl ? `hl hl--${seg.hl}` : undefined,
-            }))}
-          </ScrollReveal>
-          <div className="why-doodle why-doodle-trail" aria-hidden="true">
-            <span className="trail-dot" />
-            <span className="trail-dot" />
-            <span className="trail-dot" />
-            <span className="trail-dot" />
-            <span className="trail-dot" />
-            <span className="trail-lock">
-              <LockGlyph />
-            </span>
-          </div>
+    <section ref={rootRef} id="why" aria-labelledby="why-title" style={{ maxWidth: 1140, margin: "0 auto", padding: "0 2rem 4rem" }}>
+      <div style={{ display: "grid", gridTemplateColumns: "minmax(0, 5fr) minmax(0, 7fr)", gap: "clamp(48px, 8vw, 120px)", alignItems: "start", paddingTop: "clamp(40px, 6vw, 88px)", borderTop: "1px solid var(--rule)" }} className="problem-grid">
+        {/* Left sticky — match // capabilities column */}
+        <div className="problem-left" style={{ position: "sticky", top: "120px", paddingRight: "1rem" }}>
+          <div style={{ fontFamily: "DM Mono, monospace", fontSize: "0.58rem", letterSpacing: "0.14em", textTransform: "uppercase", color: "#ef4444", marginBottom: "14px", fontWeight: 600 }}>Why this exists</div>
+          <h2 id="why-title" style={{ fontFamily: "Fraunces, serif", fontWeight: 200, fontSize: "clamp(2rem, 4vw, 2.8rem)", lineHeight: 1.05, letterSpacing: "-0.03em", color: "var(--ink)", margin: 0, textAlign: "left" }}>
+            Your agent doesn&apos;t ask — <span style={{ color: "#ef4444", fontStyle: "italic" }}>it just reads.</span>
+          </h2>
+          <p style={{ fontFamily: "DM Mono, monospace", fontWeight: 300, fontSize: "0.72rem", lineHeight: 1.7, color: "var(--ink3)", marginTop: "0.8rem", maxWidth: 360 }}>
+            An agent will open the file you never wanted it to touch. We put a local check in that gap — every call validated before it runs, at schema speed.
+          </p>
         </div>
-        <p className="replay-hint">keep scrolling — the words come in</p>
 
-        <div className="replay-scenes">
-          {[
-            { ...problem.incident, tone: "incident" as const, time: problem.times[0] },
-            { ...problem.wrong, tone: "wrong" as const, time: problem.times[1] },
-            { ...problem.right, tone: "right" as const, time: problem.times[2] },
-          ].map((s) => (
-            <SceneCard key={s.num} {...s} />
-          ))}
+        {/* Right scroll — single narrative text, only red highlights */}
+        <div style={{ display: "flex", flexDirection: "column", gap: "2rem" }}>
+          <ScrollReveal baseOpacity={0.12} baseRotation={2.5} containerClassName="why-narrative-reveal" textClassName="why-narrative-text" rotationEnd="top 60%" wordAnimationEnd="bottom 55%">
+            {[
+              ...problem.narrative.map((seg) => ({ text: seg.text, className: seg.hl ? "hl hl--incident" : undefined })),
+              { text: "The agent did what agents do. Everything it was asked, including the parts nobody asked for. Nothing on the machine objected. " },
+              { text: "The keys left inside an API payload.", className: "hl hl--incident" },
+              { text: " The wrong response: cloud gateway, hope, and a vendor list. Route all agent traffic through a cloud gateway and hope the vendor list of bad things is good enough. " },
+              { text: "Every call leaves your machine first.", className: "hl hl--incident" },
+              { text: " The right response: the guard lives where the agent lives. On your machine, checking every call before it happens. " },
+              { text: "Schema speed, not jury speed.", className: "hl hl--incident" },
+            ]}
+          </ScrollReveal>
         </div>
       </div>
+      <style>{`@media (max-width: 860px) { .problem-grid { grid-template-columns: 1fr !important; } .problem-left { position: relative !important; top: 0 !important; } }`}</style>
     </section>
   );
 }
