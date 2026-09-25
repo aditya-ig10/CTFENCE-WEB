@@ -109,13 +109,12 @@ export default function Faq() {
     const ctx = gsap.context(() => {
       const items = gsap.utils.toArray<HTMLElement>(".faq-item", list);
 
-      // rows set in off the press, numerals + rules following behind
+      // rows set in off the press — rise only, no fade. numerals follow.
       gsap.fromTo(
         items,
-        { y: 34, autoAlpha: 0 },
+        { y: 34 },
         {
           y: 0,
-          autoAlpha: 1,
           duration: 0.75,
           stagger: 0.09,
           ease: "power3.out",
@@ -124,9 +123,8 @@ export default function Faq() {
       );
       gsap.fromTo(
         gsap.utils.toArray<HTMLElement>(".faq-idx", list),
-        { autoAlpha: 0, x: -10 },
+        { x: -10 },
         {
-          autoAlpha: 1,
           x: 0,
           duration: 0.5,
           stagger: 0.09,
