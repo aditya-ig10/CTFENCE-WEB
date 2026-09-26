@@ -161,10 +161,11 @@ export default function IssueChart() {
       ) => {
         if (!el) return;
         const trig = trigger ?? (el instanceof Element ? el : el[0]);
+        // rise/slide only — no opacity fade.
         gsap.fromTo(
           el,
-          { autoAlpha: 0, ...vars.from },
-          { autoAlpha: 1, ...vars.to, scrollTrigger: { trigger: trig, start: "top 80%", once: true } }
+          { ...vars.from },
+          { ...vars.to, scrollTrigger: { trigger: trig, start: "top 80%", once: true } }
         );
       };
 
@@ -338,8 +339,8 @@ export default function IssueChart() {
             delay={28}
             duration={0.9}
             ease="power4.out"
-            from={{ opacity: 0, y: 44 }}
-            to={{ opacity: 1, y: 0 }}
+            from={{ y: 44 }}
+            to={{ y: 0 }}
             textAlign="left"
             threshold={0.2}
           />
@@ -361,8 +362,8 @@ export default function IssueChart() {
               delay={22}
               duration={0.7}
               ease="power4.out"
-              from={{ opacity: 0, y: -28, scale: 0.92 }}
-              to={{ opacity: 1, y: 0, scale: 1 }}
+              from={{ y: -28, scale: 0.92 }}
+              to={{ y: 0, scale: 1 }}
               threshold={0.2}
             />
             <p className="issue-press-tagline">{issue.press.tagline}</p>
