@@ -75,6 +75,9 @@ export default function ScrollReveal({
         : window;
 
     const ctx = gsap.context(() => {
+      // all three scrub tweens are one-shot: once the words are fully
+      // revealed the trigger kills itself and the text stays rendered —
+      // scrolling back up never dims it again.
       gsap.fromTo(
         el,
         { transformOrigin: "0% 50%", rotate: baseRotation },
@@ -87,6 +90,7 @@ export default function ScrollReveal({
             start: "top bottom",
             end: rotationEnd,
             scrub: true,
+            once: true,
           },
         }
       );
@@ -106,6 +110,7 @@ export default function ScrollReveal({
             start: "top bottom-=20%",
             end: wordAnimationEnd,
             scrub: true,
+            once: true,
           },
         }
       );
@@ -124,6 +129,7 @@ export default function ScrollReveal({
               start: "top bottom-=20%",
               end: wordAnimationEnd,
               scrub: true,
+              once: true,
             },
           }
         );

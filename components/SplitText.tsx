@@ -35,8 +35,9 @@ export default function SplitText({
   duration = 1.25,
   ease = "power3.out",
   splitType = "chars",
-  from = { opacity: 0, y: 40 },
-  to = { opacity: 1, y: 0 },
+  // rise-only by default — no opacity fade, the mask slide carries it.
+  from = { y: 40 },
+  to = { y: 0 },
   threshold = 0.1,
   rootMargin = "-100px",
   textAlign = "center",
