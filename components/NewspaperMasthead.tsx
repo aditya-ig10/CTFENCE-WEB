@@ -34,9 +34,8 @@ export default function NewspaperMasthead({
     const ctx = gsap.context(() => {
       gsap.fromTo(
         root.querySelectorAll(".paper-bar > *"),
-        { autoAlpha: 0, y: 6 },
+        { y: 6 },
         {
-          autoAlpha: 1,
           y: 0,
           duration: 0.5,
           stagger: 0.08,
@@ -46,9 +45,8 @@ export default function NewspaperMasthead({
       );
       gsap.fromTo(
         root.querySelectorAll(".paper-nameplate, .paper-tagline"),
-        { autoAlpha: 0, y: 18, clipPath: "inset(0 0 100% 0)" },
+        { y: 18, clipPath: "inset(0 0 100% 0)" },
         {
-          autoAlpha: 1,
           y: 0,
           clipPath: "inset(0 0 0% 0)",
           duration: 0.9,
