@@ -31,8 +31,14 @@ type Tx = {
   plan: string;
   nodes: number;
   amountInr: number;
+  subtotalInr: number;
+  discountInr: number;
+  taxInr: number;
+  taxRate: number;
   status: string;
   razorpayPaymentId: string;
+  razorpayOrderId: string;
+  email: string;
 };
 
 type FleetDevice = {
@@ -97,6 +103,8 @@ export default function DashboardClient() {
   const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
   const [rowBusy, setRowBusy] = useState<string | null>(null);
   const [rowError, setRowError] = useState<string | null>(null);
+  // receipt modal — printable, window.print() exports the PDF
+  const [receiptTx, setReceiptTx] = useState<Tx | null>(null);
 
   useEffect(() => {
     if (!firebaseEnabled) {
@@ -147,8 +155,14 @@ export default function DashboardClient() {
               plan: typeof d.plan === "string" ? d.plan : "—",
               nodes: typeof d.nodes === "number" ? d.nodes : 0,
               amountInr: Number(d.amountInr ?? d.amount ?? 0),
+              subtotalInr: Number(d.subtotalInr ?? d.amountInr ?? d.amount ?? 0),
+              discountInr: Number(d.discountInr ?? 0),
+              taxInr: Number(d.taxInr ?? 0),
+              taxRate: Number(d.taxRate ?? 0),
               status: typeof d.status === "string" ? d.status : "paid",
               razorpayPaymentId: typeof d.razorpayPaymentId === "string" ? d.razorpayPaymentId : "",
+              razorpayOrderId: typeof d.razorpayOrderId === "string" ? d.razorpayOrderId : "",
+              email: typeof d.email === "string" ? d.email : "",
             };
           })
           .sort((a, b) => b.dt.getTime() - a.dt.getTime());
@@ -536,6 +550,13 @@ export default function DashboardClient() {
                 </div>
                 <span className="dash-tx-amount">{inr(t.amountInr)}</span>
                 <span className={`dash-status ${statusClass(t.status)}`}>{t.status}</span>
+                <button
+                  type="button"
+                  className="co-btn-ghost co-btn-xs"
+                  onClick={() => setReceiptTx(t)}
+                >
+                  Receipt
+                </button>
               </li>
             ))}
           </ul>
@@ -560,6 +581,69 @@ export default function DashboardClient() {
           Sign out
         </button>
       </div>
+
+      {receiptTx && (
+        <div className="receipt-overlay" role="dialog" aria-modal="true" aria-label="Payment receipt">
+          <div className="receipt-print">
+            <div className="receipt-head">
+              <div>
+                <div className="receipt-brand">Context Fence · Synthrun</div>
+                <div className="receipt-title">Payment receipt</div>
+              </div>
+              <div className="receipt-meta">
+                <span>No. {receiptTx.id.slice(0, 8).toUpperCase()}</span>
+                <span>{receiptTx.date}</span>
+              </div>
+            </div>
+            <div className="receipt-row">
+              <span>Billed to</span>
+              <span>{receiptTx.email || user?.email || "—"}</span>
+            </div>
+            <div className="receipt-row">
+              <span>Plan</span>
+              <span style={{ textTransform: "capitalize" }}>
+                {receiptTx.plan}{receiptTx.nodes ? ` · ${receiptTx.nodes} nodes` : ""}
+              </span>
+            </div>
+            <div className="receipt-row">
+              <span>Subtotal</span>
+              <span>{inr(receiptTx.subtotalInr)}</span>
+            </div>
+            {receiptTx.discountInr > 0 && (
+              <div className="receipt-row">
+                <span>Discount</span>
+                <span>− {inr(receiptTx.discountInr)}</span>
+              </div>
+            )}
+            <div className="receipt-row">
+              <span>Tax{receiptTx.taxRate ? ` (${Math.round(receiptTx.taxRate * 100)}%)` : ""}</span>
+              <span>{inr(receiptTx.taxInr)}</span>
+            </div>
+            <div className="receipt-row receipt-total">
+              <span>Total paid</span>
+              <span>{inr(receiptTx.amountInr)}</span>
+            </div>
+            <div className="receipt-row">
+              <span>Status</span>
+              <span style={{ textTransform: "capitalize" }}>{receiptTx.status}</span>
+            </div>
+            {receiptTx.razorpayPaymentId && (
+              <div className="receipt-row">
+                <span>Payment ID</span>
+                <span className="dash-mac">{receiptTx.razorpayPaymentId}</span>
+              </div>
+            )}
+            <div className="receipt-actions receipt-no-print">
+              <button type="button" className="co-btn" onClick={() => window.print()}>
+                Print / Save PDF
+              </button>
+              <button type="button" className="co-btn-ghost" onClick={() => setReceiptTx(null)}>
+                Close
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

@@ -47,7 +47,6 @@ export default function PlanCard({
   const discount = billingCycle === "yearly" && pid ? PLAN_PRICING[pid].yearlyDiscount : 0;
   // yearly shows the discounted monthly-equivalent (e.g. $18), not 12× lump
   const displayPrice = Math.round(priceInr * (1 - discount));
-  const annualTotalInr = Math.round(priceInr * 12 * (1 - discount));
   const displayPeriod =
     plan.priceInr === null || plan.priceInr === 0
       ? plan.period
@@ -75,21 +74,16 @@ export default function PlanCard({
       {plan.priceInr === null ? (
         <span className="plan-price">Contact us</span>
       ) : (
-        <span className="plan-price-swap" key={billingCycle}>
+        <span className="plan-price-swap">
+          <Money inr={displayPrice} currency={currency} locale={locale} preferLocale={preferLocale} animated />
           {showStrike && (
             <span className="plan-strike">
               <Money inr={priceInr} currency={currency} locale={locale} preferLocale={preferLocale} plain />
             </span>
           )}
-          <Money inr={displayPrice} currency={currency} locale={locale} preferLocale={preferLocale} />
         </span>
       )}
       <div className="plan-period">{displayPeriod}</div>
-      {billingCycle === "yearly" && pid && plan.priceInr != null && plan.priceInr > 0 && (
-        <div className="plan-annual-total">
-          <Money inr={annualTotalInr} currency={currency} locale={locale} preferLocale={preferLocale} plain /> / year
-        </div>
-      )}
       <div className="plan-meta">
         <span>{plan.nodes}</span>
         <span>{plan.retention}</span>

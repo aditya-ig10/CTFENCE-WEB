@@ -4071,15 +4071,6 @@ html.dark .pc-inner, html[data-theme="dark"] .pc-inner { color: var(--ink); }
 
 .plan-period { font-size: 12px; color: var(--muted); margin-bottom: 4px; }
 
-.plan-annual-total {
-  font-family: var(--font-jetbrains), 'JetBrains Mono', monospace;
-  font-size: 11px;
-  color: var(--accent);
-  letter-spacing: 0.02em;
-  margin-bottom: 14px;
-  font-variant-numeric: tabular-nums;
-}
-
 /* billing cycle toggle — annual default, monthly optional.
    sliding pill tracks data-cycle so the switch glides either way. */
 .billing-toggle {
@@ -4151,30 +4142,78 @@ html.dark .pc-inner, html[data-theme="dark"] .pc-inner { color: var(--ink); }
 .billing-toggle-btn:not(.is-active) .billing-toggle-save { opacity: 0.9; }
 .billing-toggle--left { margin: 18px 0 0; }
 
-/* struck monthly price shown above the annual rate */
-.plan-strike {
-  display: block;
-  font-family: var(--font-jetbrains), 'JetBrains Mono', monospace;
-  font-size: 14px;
-  color: var(--muted);
-  text-decoration: line-through;
-  text-decoration-thickness: 1.5px;
-  margin-bottom: 2px;
-  font-variant-numeric: tabular-nums;
+/* pricing motion — spring thumb toggle + odometer prices (motion lib).
+   same footprint as .billing-toggle so both read as one system. */
+.pm-toggle-wrap {
+  position: relative;
+  width: fit-content;
+  margin: clamp(28px, 3vw, 40px) auto 0;
 }
-
-/* price swap — short rise/fade each time the cycle flips */
-.plan-price-swap {
-  display: block;
-  animation: price-swap-in 320ms cubic-bezier(0.32, 0.72, 0, 1);
+.pm-toggle { margin: 0; }
+.pm-toggle .billing-toggle-btn { position: relative; }
+.pm-thumb {
+  position: absolute;
+  inset: 0;
+  border-radius: 999px;
+  background: var(--bright);
 }
-@keyframes price-swap-in {
-  from { opacity: 0; transform: translateY(10px); }
-  to { opacity: 1; transform: translateY(0); }
+.pm-label { position: relative; z-index: 1; }
+.pm-toggle .billing-toggle-save { position: relative; z-index: 1; }
+.pm-roll { display: inline-flex; align-items: baseline; line-height: 1; font-variant-numeric: tabular-nums; transform: translateY(0.1em); }
+.pm-digit {
+  position: relative;
+  display: inline-block;
+  height: 1em;
+  overflow: hidden;
+  transition: width 400ms cubic-bezier(0.23, 1, 0.32, 1), opacity 400ms cubic-bezier(0.23, 1, 0.32, 1), filter 400ms cubic-bezier(0.23, 1, 0.32, 1);
+  mask-image: linear-gradient(transparent, black 12%, black 88%, transparent);
+  -webkit-mask-image: linear-gradient(transparent, black 12%, black 88%, transparent);
+}
+.pm-digit.is-present { width: 1ch; opacity: 1; filter: blur(0); }
+.pm-digit.is-gone { width: 0; opacity: 0; filter: blur(2px); }
+@keyframes pm-grow { from { width: 0; opacity: 0; filter: blur(2px); } }
+.pm-digit--grow.is-present { animation: pm-grow 400ms cubic-bezier(0.23, 1, 0.32, 1); }
+.pm-reel { position: absolute; inset-inline: 0; top: 0; display: flex; flex-direction: column; }
+.pm-glyph { display: block; height: 1em; line-height: 1em; text-align: center; }
+.pm-sep { line-height: 1; }
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
 }
 @media (prefers-reduced-motion: reduce) {
+  .pm-digit { transition: opacity 400ms cubic-bezier(0.23, 1, 0.32, 1); }
+}
+
+/* price row — big rate with the struck monthly price inline to its right,
+   same serif, struck and faded */
+.plan-price-swap {
+  display: flex;
+  align-items: baseline;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+.plan-strike {
+  font-family: var(--font-canela), serif;
+  font-size: clamp(22px, 2.2vw, 28px);
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  color: var(--muted);
+  opacity: 0.75;
+  text-decoration: line-through;
+  text-decoration-thickness: 2px;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+@media (prefers-reduced-motion: reduce) {
   .billing-toggle-slider { transition: none; }
-  .plan-price-swap { animation: none; }
 }
 
 .plan-meta {
@@ -6334,6 +6373,64 @@ html.vt-active *::after {
   .dash-stats { grid-template-columns: 1fr; }
   .dash-add-grid { grid-template-columns: 1fr; }
   .dash-device, .dash-tx { flex-wrap: wrap; }
+}
+
+/* receipt — screen modal, print isolates it for PDF export */
+.receipt-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 200;
+  display: grid;
+  place-items: center;
+  padding: 24px;
+  background: rgba(0, 0, 0, 0.5);
+}
+.receipt-print {
+  width: min(560px, 100%);
+  max-height: 90vh;
+  overflow: auto;
+  background: #fff;
+  color: #111110;
+  border-radius: 16px;
+  padding: 36px 38px;
+}
+.receipt-head {
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+  padding-bottom: 18px;
+  border-bottom: 2px solid #111110;
+  margin-bottom: 6px;
+}
+.receipt-brand { font-family: var(--font-canela), serif; font-weight: 700; font-size: 17px; }
+.receipt-title { font-family: var(--font-sans); font-size: 12px; letter-spacing: 0.1em; text-transform: uppercase; color: #6b6b66; margin-top: 4px; }
+.receipt-meta { display: flex; flex-direction: column; gap: 4px; text-align: right; font-family: var(--font-sans); font-size: 12px; color: #6b6b66; }
+.receipt-row {
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 10px 0;
+  border-bottom: 1px solid #e8e7e2;
+  font-family: var(--font-sans);
+  font-size: 13.5px;
+}
+.receipt-row > span:first-child { color: #6b6b66; }
+.receipt-row > span:last-child { font-weight: 600; text-align: right; }
+.receipt-total { border-bottom: none; padding-top: 14px; }
+.receipt-total > span:last-child { font-family: var(--font-canela), serif; font-size: 24px; font-weight: 700; }
+.receipt-actions { display: flex; gap: 10px; margin-top: 22px; }
+.receipt-actions .co-btn { background: #111110; border-color: #111110; color: #fff; }
+@media print {
+  body * { visibility: hidden; }
+  .receipt-print, .receipt-print * { visibility: visible; }
+  .receipt-print {
+    position: absolute;
+    inset: 0 auto auto 0;
+    width: 100%;
+    max-height: none;
+    border-radius: 0;
+  }
+  .receipt-no-print { display: none !important; }
 }
 .chk-center { text-align: center; display: flex; flex-direction: column; align-items: center; gap: 14px; }
 .chk-eyebrow {

@@ -2,14 +2,13 @@
 
 import { useState } from "react";
 import PlanCard from "@/components/PlanCard";
+import { BillingToggle, type Billing as BillingCycleOption } from "@/components/PricingMotion";
 import type { Plan } from "@/content/copy";
 import type { CurrencyCode } from "@/lib/currency";
 
-export type BillingCycleOption = "monthly" | "yearly";
-
 // interactive pricing grid — annual is the default (Starter $18/mo,
 // Teams $90/mo billed annually); toggle switches to monthly
-// ($22 / $105 per month).
+// ($22 / $105 per month). thumb + digits animate via the motion lib.
 export default function PricingPlans({
   plans,
   currency,
@@ -25,26 +24,7 @@ export default function PricingPlans({
 
   return (
     <>
-      <div className="billing-toggle" role="group" aria-label="Billing period" data-cycle={cycle}>
-        <span className="billing-toggle-slider" aria-hidden="true" />
-        <button
-          type="button"
-          className={`billing-toggle-btn${cycle === "monthly" ? " is-active" : ""}`}
-          aria-pressed={cycle === "monthly"}
-          onClick={() => setCycle("monthly")}
-        >
-          Monthly
-        </button>
-        <button
-          type="button"
-          className={`billing-toggle-btn${cycle === "yearly" ? " is-active" : ""}`}
-          aria-pressed={cycle === "yearly"}
-          onClick={() => setCycle("yearly")}
-        >
-          Annual
-          <span className="billing-toggle-save">save ~18%</span>
-        </button>
-      </div>
+      <BillingToggle value={cycle} onChange={setCycle} saving="save ~18%" />
       <div className="plans">
         {plans.map((p) => (
           <PlanCard
