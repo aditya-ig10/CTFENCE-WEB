@@ -64,7 +64,8 @@ export default function SmoothScroll() {
         );
       }
 
-      // section headers + standalone blocks rise in
+      // section headers + standalone blocks rise in — motion only, no
+      // opacity fade. strictly one-shot: once revealed they stay rendered.
       gsap.utils
         .toArray<HTMLElement>(
           ".section-eyebrow, .section-title, .section-lead, .footer, .prose-page h1, .prose-page .updated, .blog-hero, .ticker, .mail-cta"
@@ -72,18 +73,18 @@ export default function SmoothScroll() {
         .forEach((el) => {
           gsap.fromTo(
             el,
-            { y: 28, opacity: 0 },
+            { y: 28 },
             {
               y: 0,
-              opacity: 1,
               duration: 0.8,
               ease: "power3.out",
-              scrollTrigger: { trigger: el, start: "top 88%" },
+              clearProps: "transform",
+              scrollTrigger: { trigger: el, start: "top 88%", once: true },
             }
           );
         });
 
-      // card grids + lists stagger in
+      // card grids + lists stagger in — rise only, same guarantee.
       gsap.utils
         .toArray<HTMLElement>(
           ".cap-grid, .plans, .signup-form, .prose-body, .thanks-box, .replay-scenes, .draft-grid, .acc-list"
@@ -91,14 +92,14 @@ export default function SmoothScroll() {
         .forEach((group) => {
           gsap.fromTo(
             group.children,
-            { y: 44, opacity: 0 },
+            { y: 44 },
             {
               y: 0,
-              opacity: 1,
               duration: 0.7,
               stagger: 0.09,
               ease: "power3.out",
-              scrollTrigger: { trigger: group, start: "top 85%" },
+              clearProps: "transform",
+              scrollTrigger: { trigger: group, start: "top 85%", once: true },
             }
           );
         });
