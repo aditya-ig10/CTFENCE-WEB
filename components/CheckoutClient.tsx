@@ -109,7 +109,15 @@ export default function CheckoutClient({
   initialAddNodes?: number;
   initialCycle?: BillingCycle;
 }) {
-  const pricing = PLAN_PRICING[planId];
+  // the visitor can switch plans mid-checkout (except in add-on mode).
+  // nodes reset to the new plan's included count; referral carries over.
+  const [plan, setPlan] = useState<PlanId>(planId);
+  const pricing = PLAN_PRICING[plan];
+  function switchPlan(next: PlanId) {
+    if (next === plan) return;
+    setPlan(next);
+    setNodes(PLAN_PRICING[next].minNodes);
+  }
   const isAddOn = typeof initialAddNodes === "number" && Number.isFinite(initialAddNodes) && initialAddNodes > 0;
   const [nodes, setNodes] = useState(() => {
     if (isAddOn) {
@@ -175,7 +183,7 @@ export default function CheckoutClient({
       const taxInr = Math.round(taxable * taxRate);
       const totalInr = taxable + taxInr;
       return {
-        planId,
+        planId: plan,
         currency: "INR" as const,
         baseInr,
         base: baseInr,
@@ -192,8 +200,8 @@ export default function CheckoutClient({
         billingCycle,
       };
     }
-    return quoteCheckout(planId, "INR", applied, { nodes, country: effectiveCountry, billingCycle });
-  }, [planId, applied, nodes, effectiveCountry, pricing, isAddOn, billingCycle]);
+    return quoteCheckout(plan, "INR", applied, { nodes, country: effectiveCountry, billingCycle });
+  }, [plan, applied, nodes, effectiveCountry, pricing, isAddOn, billingCycle]);
 
   // resolve country from IP when the server didn't supply one (localhost / dev)
   useEffect(() => {
@@ -514,7 +522,7 @@ function cleanPlaintext(val: unknown): string {
       const result = await apiRequest<{ ok: boolean; token: string }>("/api/checkout-link", {
         method: "POST",
         body: JSON.stringify({
-          plan: planId,
+          plan: plan,
           ...(isAddOn ? { addNodes: nodes } : { nodes }),
           billingCycle,
           referralCode: applied,
@@ -605,7 +613,7 @@ function cleanPlaintext(val: unknown): string {
         amount: data.amount,
         currency: data.currency,
         name: "Context Fence",
-        description: `${PLAN_NAMES[planId]} · ${data.nodes} enforcement nodes`,
+        description: `${PLAN_NAMES[plan]} · ${data.nodes} enforcement nodes`,
         theme: { color: "#0e9384" },
         handler: (response: { razorpay_order_id: string; razorpay_payment_id: string; razorpay_signature: string }) => {
           void (async () => {
@@ -656,7 +664,7 @@ function cleanPlaintext(val: unknown): string {
                     }
                   }
                   const userUpdatePayload: Record<string, unknown> = {
-                    plan: planId,
+                    plan: plan,
                     nodes: newTotal,
                     expiresAt,
                     lastBilling: effectiveBilling,
@@ -678,7 +686,7 @@ function cleanPlaintext(val: unknown): string {
                   await addDoc(collection(db, "payments"), {
                     userId: auth.currentUser.uid,
                     email: effectiveBilling.email,
-                    plan: planId,
+                    plan: plan,
                     nodes: nodes,
                     amountInr: quote.totalInr,
                     subtotalInr: quote.subtotalInr,
@@ -731,9 +739,9 @@ function cleanPlaintext(val: unknown): string {
   useEffect(() => {
     if (!motionAllowed()) return;
     const ctx = gsap.context(() => {
-      gsap.from(".chk-card", { y: 18, opacity: 0, duration: 0.6, ease: "power3.out", stagger: 0.08, clearProps: "all" });
-      gsap.from(".chk-title, .chk-eyebrow", { y: 12, opacity: 0, duration: 0.5, ease: "power3.out", stagger: 0.06, clearProps: "all" });
-      gsap.from(".chk-bill-row, .chk-order-row", { x: -8, opacity: 0, duration: 0.4, ease: "power3.out", stagger: 0.04, clearProps: "all" });
+      gsap.from(".co-card", { y: 18, opacity: 0, duration: 0.6, ease: "power3.out", stagger: 0.08, clearProps: "all" });
+      gsap.from(".co-title, .co-eyebrow", { y: 12, opacity: 0, duration: 0.5, ease: "power3.out", stagger: 0.06, clearProps: "all" });
+      gsap.from(".co-line, .co-field", { x: -8, opacity: 0, duration: 0.4, ease: "power3.out", stagger: 0.04, clearProps: "all" });
     });
     return () => ctx.revert();
   }, [phase]);
@@ -748,17 +756,20 @@ function cleanPlaintext(val: unknown): string {
   } as BillingAddress;
 
   if (phase === "review" || phase === "ordering" || phase === "verifying" || phase === "done") {
+    const busy = phase === "ordering" || phase === "verifying";
     return (
-      <div className="chk-page">
+      <div className="co-page">
         <Script src="https://checkout.razorpay.com/v1/checkout.js" strategy="afterInteractive" onLoad={() => setRzpReady(true)} />
-        <div className="chk-eyebrow">{"// review & pay"}</div>
-        <h1 className="chk-title">Review your order</h1>
-        <p className="chk-sub">
-          Locked for <strong>{inr(quote.totalInr)}</strong> · {billingCycle === "yearly" ? "annual billing" : "monthly billing"} · paying as <strong>{effectiveBilling.email}</strong> · {effectiveBilling.country}
-          {applied ? ` · referral ${applied}` : ""}
-        </p>
+        <div className="co-eyebrow">checkout</div>
+        <h1 className="co-title">Review and pay.</h1>
+        <ol className="co-steps" aria-label="Checkout progress">
+          <li className="co-step is-done"><span className="co-step-n">✓</span> Plan</li>
+          <li className="co-step is-done"><span className="co-step-n">✓</span> Details</li>
+          <li className="co-step is-now" aria-current="step"><span className="co-step-n">3</span> Review</li>
+          <li className="co-step"><span className="co-step-n">4</span> Pay</li>
+        </ol>
 
-        {(phase === "ordering" || phase === "verifying") && (
+        {busy && (
           <div className="loading-overlay" aria-hidden="true" style={{ position: "fixed", inset: 0, zIndex: 500 }}>
             <div className="loader">
               <span>
@@ -781,70 +792,82 @@ function cleanPlaintext(val: unknown): string {
           </div>
         )}
 
-        <div className="chk-grid">
-          <div className="chk-card">
-            <h2 className="chk-card-title">Billing details</h2>
-            <dl className="chk-bill chk-bill--canela">
-              <div className="chk-bill-row">
-                <dt>Name</dt>
-                <dd>{[effectiveBilling.firstName, effectiveBilling.lastName].filter(Boolean).join(" ") || "—"}</dd>
+        <div className="co-grid">
+          <div className="co-card">
+            <div className="co-card-head">
+              <h2 className="co-card-title">Order summary</h2>
+              <button type="button" className="co-link" onClick={() => setPhase("idle")}>
+                ← Edit details
+              </button>
+            </div>
+            <dl className="co-lines">
+              <div className="co-line">
+                <dt>{PLAN_NAMES[plan]} · {billingCycle === "yearly" ? "annual" : "monthly"}</dt>
+                <dd>{nodes} node{nodes !== 1 ? "s" : ""}</dd>
               </div>
-              <div className="chk-bill-row">
-                <dt>Email</dt>
-                <dd>{effectiveBilling.email}</dd>
-              </div>
-              <div className="chk-bill-row">
-                <dt>Phone</dt>
-                <dd>{[effectiveBilling.phoneCode, effectiveBilling.phone].filter(Boolean).join(" ") || "—"}</dd>
-              </div>
-              <div className="chk-bill-row">
-                <dt>Address</dt>
-                <dd>{[effectiveBilling.address1, effectiveBilling.address2, effectiveBilling.city, effectiveBilling.state, effectiveBilling.postal, effectiveBilling.country].filter(Boolean).join(", ") || "—"}</dd>
-              </div>
-              <div className="chk-bill-row">
-                <dt>Nodes</dt>
-                <dd>
-                  {nodes} × {inr(quote.perNodeInr)} {nodes !== 1 ? "nodes" : "node"}
-                </dd>
-              </div>
-            </dl>
-            <button type="button" className="chk-apply" onClick={() => setPhase("idle")} style={{ marginTop: 14 }}>
-              ← Edit details
-            </button>
-          </div>
-
-          <aside className="chk-card chk-aside">
-            <h2 className="chk-card-title">Amount due</h2>
-            <div className="chk-bill chk-bill--canela">
-              <div className="chk-bill-row">
-                <dt>{isAddOn ? `Add ${nodes} node${nodes > 1 ? "s" : ""} to ${PLAN_NAMES[planId]}` : `${PLAN_NAMES[planId]} · ${nodes} nodes`}</dt>
+              <div className="co-line">
+                <dt>Plan subtotal</dt>
                 <dd>{inr(quote.subtotalInr)}</dd>
               </div>
+              {billingCycle === "yearly" && (
+                <div className="co-line">
+                  <dt>Monthly equivalent</dt>
+                  <dd>{inr(Math.round(quote.totalInr / 12))} / mo</dd>
+                </div>
+              )}
               {applied && (
-                <div className="chk-bill-row" style={{ color: "var(--ok, #28c840)" }}>
-                  <dt>referral {applied}</dt>
+                <div className="co-line is-good">
+                  <dt>Referral {applied}</dt>
                   <dd>− {inr(quote.discount)}</dd>
                 </div>
               )}
-              <div className="chk-bill-row">
+              <div className="co-line">
                 <dt>Tax ({Math.round(quote.taxRate * 100)}%)</dt>
                 <dd>+ {inr(quote.taxInr)}</dd>
               </div>
-              <div className="chk-bill-row" style={{ fontWeight: 700, borderTop: "1px solid var(--border)", paddingTop: 10, marginTop: 10 }}>
-                <dt>Total</dt>
-                <dd>{inr(quote.totalInr)}</dd>
+            </dl>
+            <div className="co-sep" />
+            <dl className="co-lines">
+              <div className="co-line">
+                <dt>Paying as</dt>
+                <dd>{effectiveBilling.email}</dd>
               </div>
+              <div className="co-line">
+                <dt>Billing to</dt>
+                <dd>{[effectiveBilling.address1, effectiveBilling.city, effectiveBilling.state, effectiveBilling.postal, effectiveBilling.country].filter(Boolean).join(", ") || "—"}</dd>
+              </div>
+            </dl>
+          </div>
+
+          <aside className="co-card co-aside">
+            <div className="co-card-head">
+              <h2 className="co-card-title">Payment</h2>
+              <span className="co-lock">Secured by Razorpay</span>
             </div>
-            <button type="button" className="chk-pay" onClick={payNow} disabled={phase !== "review"} style={{ marginTop: 16 }}>
+            <div className="co-total">
+              <span className="co-total-label">Due today</span>
+              <span className="co-total-amount">{inr(quote.totalInr)}</span>
+              <span className="co-total-note">
+                {billingCycle === "yearly" ? "billed annually" : "billed monthly"} · inclusive of tax
+              </span>
+            </div>
+            <button type="button" className="co-pay" onClick={payNow} disabled={phase !== "review"}>
+              {busy ? (
+                <span className="co-spinner" aria-hidden="true" />
+              ) : null}
               {phase === "ordering" ? "Preparing…" : phase === "verifying" ? "Verifying…" : phase === "done" ? "Paid ✓" : `Pay ${inr(quote.totalInr)}`}
             </button>
-            {!rzpReady && phase === "review" && <p className="chk-hint" style={{ marginTop: 8 }}>Loading payment gateway… please wait</p>}
+            {!rzpReady && phase === "review" && <p className="co-hint">Loading payment gateway… please wait</p>}
             {error && (
-              <p className="chk-error" role="alert" style={{ marginTop: 10 }}>
+              <p className="co-error" role="alert">
                 {error}
               </p>
             )}
-            <p className="chk-note">Secured by Razorpay — no card stored with us.</p>
+            <ul className="co-assure">
+              <li>UPI, cards &amp; netbanking via Razorpay</li>
+              <li>No card details touch our servers</li>
+              <li>Amount locked — what you see is what pays</li>
+            </ul>
           </aside>
         </div>
       </div>
@@ -855,7 +878,7 @@ function cleanPlaintext(val: unknown): string {
   const canDecrease = nodes > min;
 
   return (
-    <div className="chk-page">
+    <div className="co-page">
       <Script src="https://checkout.razorpay.com/v1/checkout.js" strategy="afterInteractive" onLoad={() => setRzpReady(true)} />
       {phase === "creating" && (
         <div className="loading-overlay" aria-hidden="true" style={{ position: "fixed", inset: 0, zIndex: 500 }}>
@@ -879,62 +902,104 @@ function cleanPlaintext(val: unknown): string {
           </div>
         </div>
       )}
-      <div className="chk-eyebrow">{"// checkout"}</div>
-      <h1 className="chk-title">{isAddOn ? `Add nodes to your ${PLAN_NAMES[planId]} plan` : "Finish your purchase."}</h1>
-      <p className="chk-sub">
-        {isAddOn
-          ? `Add ${nodes} extra node${nodes > 1 ? "s" : ""} at ${inr(pricing.perNodeInr)} each — you’ll pay only for the extra nodes.`
-          : "Pick your node count, then enter billing details. You’ll review the locked price on the next step and pay directly with Razorpay — same page, no separate email."}
-      </p>
+      <div className="co-eyebrow">checkout</div>
+      <h1 className="co-title">
+        {isAddOn ? `Add nodes to ${PLAN_NAMES[plan]}` : `Get ${PLAN_NAMES[plan]}.`}
+      </h1>
+      <ol className="co-steps" aria-label="Checkout progress">
+        <li className="co-step is-done"><span className="co-step-n">✓</span> Plan</li>
+        <li className="co-step is-now" aria-current="step"><span className="co-step-n">2</span> Details</li>
+        <li className="co-step"><span className="co-step-n">3</span> Review</li>
+        <li className="co-step"><span className="co-step-n">4</span> Pay</li>
+      </ol>
 
-      <div className="billing-toggle billing-toggle--left" role="group" aria-label="Billing period" data-cycle={billingCycle}>
-        <span className="billing-toggle-slider" aria-hidden="true" />
-        <button
-          type="button"
-          className={`billing-toggle-btn${billingCycle === "monthly" ? " is-active" : ""}`}
-          aria-pressed={billingCycle === "monthly"}
-          onClick={() => setBillingCycle("monthly")}
-        >
-          Monthly
-        </button>
-        <button
-          type="button"
-          className={`billing-toggle-btn${billingCycle === "yearly" ? " is-active" : ""}`}
-          aria-pressed={billingCycle === "yearly"}
-          onClick={() => setBillingCycle("yearly")}
-        >
-          Annual
-          <span className="billing-toggle-save">
-            {planId === "starter" ? "save 18%" : "save 14%"}
-          </span>
-        </button>
+      {/* plan bar — plan, cycle + nodes live here, totals follow in the summary */}
+      <div className="co-card co-planbar">
+        <div className="co-planbar-plan">
+          {!isAddOn ? (
+            <div className="co-planswitch" role="group" aria-label="Choose plan">
+              {(["starter", "teams"] as PlanId[]).map((p) => (
+                <button
+                  key={p}
+                  type="button"
+                  className={`co-planswitch-btn${plan === p ? " is-active" : ""}`}
+                  aria-pressed={plan === p}
+                  onClick={() => switchPlan(p)}
+                >
+                  {PLAN_NAMES[p]}
+                </button>
+              ))}
+            </div>
+          ) : (
+            <span className="co-planbar-name">{PLAN_NAMES[plan]}</span>
+          )}
+        </div>
+        <span className="co-planbar-sep" aria-hidden="true" />
+        <div className="co-stepper" role="group" aria-label="Choose enforcement nodes">
+          <button
+            type="button"
+            className="co-stepper-btn"
+            onClick={() => step(-1)}
+            disabled={!canDecrease}
+            aria-label="fewer nodes"
+          >
+            −
+          </button>
+          <span className="co-stepper-count" aria-live="polite">{nodes}</span>
+          <button
+            type="button"
+            className="co-stepper-btn"
+            onClick={() => step(1)}
+            disabled={!canIncrease}
+            aria-label="more nodes"
+          >
+            +
+          </button>
+        </div>
+        <span className="co-planbar-sep" aria-hidden="true" />
+        <div className="co-planbar-cycle">
+          <div className="billing-toggle" role="group" aria-label="Billing period" data-cycle={billingCycle}>
+            <span className="billing-toggle-slider" aria-hidden="true" />
+            <button
+              type="button"
+              className={`billing-toggle-btn${billingCycle === "monthly" ? " is-active" : ""}`}
+              aria-pressed={billingCycle === "monthly"}
+              onClick={() => setBillingCycle("monthly")}
+            >
+              Monthly
+            </button>
+            <button
+              type="button"
+              className={`billing-toggle-btn${billingCycle === "yearly" ? " is-active" : ""}`}
+              aria-pressed={billingCycle === "yearly"}
+              onClick={() => setBillingCycle("yearly")}
+            >
+              Annual
+              <span className="billing-toggle-save">
+                {plan === "starter" ? "save 18%" : "save 14%"}
+              </span>
+            </button>
+          </div>
+        </div>
       </div>
-      <p className="chk-hint" style={{ marginTop: 8 }}>
-        {billingCycle === "yearly"
-          ? planId === "starter"
-            ? "Annual · $18/mo billed annually ($216/yr) + tax"
-            : "Annual · $90/mo billed annually ($1080/yr) + tax"
-          : planId === "starter"
-            ? "Monthly · $22/mo + tax"
-            : "Monthly · $105/mo + tax"}
-      </p>
 
       {!authUser && firebaseEnabled && (
-        <div className="chk-card" style={{ display: "flex", alignItems: "center", gap: 16, padding: "1.1rem 1.4rem", background: "var(--off)", border: "1px solid var(--rule)", borderRadius: 12, marginBottom: 16 }}>
-          <div style={{ width: 38, height: 38, borderRadius: "50%", background: "white", border: "1px solid var(--rule)", display: "grid", placeItems: "center", flexShrink: 0 }}>
+        <div className="co-card co-account">
+          <span className="co-g" aria-hidden="true">
             <svg width="18" height="18" viewBox="0 0 24 24" aria-hidden="true">
               <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.2 3.31v2.76h3.57c2.09-1.92 3.3-4.75 3.3-8.08z" />
               <path fill="#34A853" d="M12 23c2.97 0 5.46-1 7.28-2.69l-3.57-2.76c-.98.66-2.23 1.06-3.71 1.06-2.85 0-5.27-1.92-6.14-4.5H2.18v2.84C3.98 20.53 7.7 23 12 23z" />
               <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" />
               <path fill="#EA4335" d="M12 5.38c1.62 0 3.08.56 4.22 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" />
             </svg>
-          </div>
-          <div style={{ minWidth: 0, flex: 1 }}>
-            <div style={{ fontFamily: "var(--font-canela)", fontWeight: 600, fontSize: "0.95rem", color: "var(--ink)", lineHeight: 1.2 }}>Sign in to purchase</div>
-            <div style={{ fontFamily: "DM Mono, monospace", fontSize: "0.68rem", color: "var(--ink3)", marginTop: 2 }}>Your plan and devices will be tied to your Google account. No password needed.</div>
+          </span>
+          <div className="co-account-text">
+            <span className="co-account-title">Sign in to purchase</span>
+            <span className="co-account-sub">One tap with Google — no password needed.</span>
           </div>
           <button
             type="button"
+            className="co-btn"
             onClick={async () => {
               const auth = getFirebaseAuth();
               if (!auth) return;
@@ -942,330 +1007,293 @@ function cleanPlaintext(val: unknown): string {
                 await signInWithPopup(auth, new GoogleAuthProvider());
               } catch {}
             }}
-            style={{ marginLeft: "auto", background: "var(--ink)", color: "var(--white)", border: "1px solid var(--ink)", padding: "0.6rem 1.2rem", borderRadius: 999, fontFamily: "DM Mono, monospace", fontSize: "0.68rem", fontWeight: 600, letterSpacing: "0.04em", cursor: "pointer", whiteSpace: "nowrap" }}
           >
             Continue with Google →
           </button>
         </div>
       )}
 
-      <div className="chk-grid">
-        {/* left — billing form */}
-        <form className="chk-card" onSubmit={submit}>
-          <h2 className="chk-card-title">Billing address</h2>
-
-          <label className="chk-field chk-field--span">
-            <span className="chk-label">Email address</span>
-            <input
-              type="email"
-              value={billing.email}
-              onChange={(e) => setField("email", e.target.value)}
-              required
-              readOnly={!!authUser?.email}
-              placeholder={authUser?.email ? authUser.email : "you@example.com"}
-              style={authUser?.email ? { background: "var(--surface)", cursor: "not-allowed", color: "var(--muted)" } : undefined}
-            />
-            {authUser?.email ? <span className="chk-hint">Using your logged-in email — not editable</span> : null}
-          </label>
-
-          <div className="chk-fields">
-            <label className="chk-field">
-              <span className="chk-label">First name</span>
-              <input
-                type="text"
-                value={billing.firstName}
-                onChange={(e) => setField("firstName", e.target.value)}
-                required
-                placeholder="Jane"
-              />
-            </label>
-            <label className="chk-field">
-              <span className="chk-label">Last name</span>
-              <input
-                type="text"
-                value={billing.lastName}
-                onChange={(e) => setField("lastName", e.target.value)}
-                required
-                placeholder="Doe"
-              />
-            </label>
-
-            <label className="chk-field chk-field--span">
-              <span className="chk-label">Phone</span>
-              <div className="chk-phone chk-phone--wide">
-                <div
-                  className="chk-phone-fixed"
-                  aria-label={`Country code ${billing.phoneCode} for ${effectiveCountry}`}
-                  title={`${effectiveCountry} · ${billing.phoneCode}`}
-                >
-                  <span aria-hidden="true">{COUNTRY_FLAGS[effectiveCountry] ?? "🌐"}</span>
-                  <span>{billing.phoneCode}</span>
+      <div className="co-grid">
+        <div className="co-main">
+          <form className="co-card" id="co-billing-form" onSubmit={submit}>
+            <h2 className="co-card-title">Contact</h2>
+            <div className="co-fields">
+              <label className="co-field co-field--full">
+                <span className="co-label">Email address</span>
+                <input
+                  type="email"
+                  value={billing.email}
+                  onChange={(e) => setField("email", e.target.value)}
+                  required
+                  readOnly={!!authUser?.email}
+                  placeholder={authUser?.email ? authUser.email : "you@example.com"}
+                  className={authUser?.email ? "is-locked" : undefined}
+                />
+                {authUser?.email ? <span className="co-hint">Using your logged-in email — not editable</span> : null}
+              </label>
+              <label className="co-field">
+                <span className="co-label">First name</span>
+                <input
+                  type="text"
+                  value={billing.firstName}
+                  onChange={(e) => setField("firstName", e.target.value)}
+                  required
+                  placeholder="Jane"
+                />
+              </label>
+              <label className="co-field">
+                <span className="co-label">Last name</span>
+                <input
+                  type="text"
+                  value={billing.lastName}
+                  onChange={(e) => setField("lastName", e.target.value)}
+                  required
+                  placeholder="Doe"
+                />
+              </label>
+              <label className="co-field co-field--full">
+                <span className="co-label">Phone</span>
+                <div className="co-phone">
+                  <span
+                    className="co-phone-code"
+                    aria-label={`Country code ${billing.phoneCode} for ${effectiveCountry}`}
+                    title={`${effectiveCountry} · ${billing.phoneCode}`}
+                  >
+                    <span aria-hidden="true">{COUNTRY_FLAGS[effectiveCountry] ?? "🌐"}</span>
+                    <span>{billing.phoneCode}</span>
+                  </span>
+                  <input
+                    type="tel"
+                    value={billing.phone}
+                    onChange={(e) => setField("phone", e.target.value)}
+                    placeholder={billing.phoneCode === "+91" ? "98765 43210" : "555 0100"}
+                    autoComplete="tel"
+                  />
                 </div>
-                <input
-                  type="tel"
-                  value={billing.phone}
-                  onChange={(e) => setField("phone", e.target.value)}
-                  placeholder={billing.phoneCode === "+91" ? "98765 43210" : "555 0100"}
-                  autoComplete="tel"
-                />
-              </div>
-            </label>
-            <label className="chk-field chk-field--span">
-              <span className="chk-label">Company (optional)</span>
-              <input
-                type="text"
-                value={billing.company}
-                onChange={(e) => setField("company", e.target.value)}
-                placeholder="Acme Inc."
-              />
-            </label>
+              </label>
+            </div>
 
-            <label className="chk-field chk-field--span">
-              <span className="chk-label">Address line 1</span>
-              <input
-                type="text"
-                value={billing.address1}
-                onChange={(e) => setField("address1", e.target.value)}
-                required
-                placeholder="123, main street"
-              />
-            </label>
-            <label className="chk-field">
-              <span className="chk-label">Address line 2 (optional)</span>
-              <input
-                type="text"
-                value={billing.address2}
-                onChange={(e) => setField("address2", e.target.value)}
-                placeholder="Apt, floor, landmark"
-              />
-            </label>
-            <label className="chk-field">
-              <span className="chk-label">City</span>
-              <input
-                type="text"
-                value={billing.city}
-                onChange={(e) => setField("city", e.target.value)}
-                required
-                placeholder={CITY_PLACEHOLDER[effectiveCountry] ?? "City"}
-              />
-            </label>
-            <label className="chk-field">
-              <span className="chk-label">
-                {effectiveCountry === "India"
-                  ? "State / UT"
-                  : STATE_LABELS[effectiveCountry] ?? "State / Province"}
-              </span>
-              {effectiveCountry === "India" ? (
-                <select
-                  value={billing.state}
-                  onChange={(e) => setField("state", e.target.value)}
-                  required
-                >
-                  <option value="">Select a state</option>
-                  {IN_STATES.map((s) => (
-                    <option key={s} value={s}>
-                      {s}
-                    </option>
-                  ))}
-                </select>
-              ) : statesLoading ? (
-                <span className="chk-states-loading">loading…</span>
-              ) : states?.length ? (
-                <select
-                  value={billing.state}
-                  onChange={(e) => setField("state", e.target.value)}
-                  required
-                >
-                  <option value="">Select a state / region</option>
-                  {states.map((s) => (
-                    <option key={s} value={s}>
-                      {s}
-                    </option>
-                  ))}
-                </select>
-              ) : (
+            <h2 className="co-card-title co-card-title--gap">Billing address</h2>
+            <div className="co-fields">
+              <label className="co-field co-field--full">
+                <span className="co-label">Company <span className="co-opt">(optional)</span></span>
                 <input
                   type="text"
-                  value={billing.state}
-                  onChange={(e) => setField("state", e.target.value)}
-                  required
-                  placeholder="State / Province"
+                  value={billing.company}
+                  onChange={(e) => setField("company", e.target.value)}
+                  placeholder="Acme Inc."
                 />
-              )}
-            </label>
-            <label className="chk-field">
-              <span className="chk-label">Country</span>
-              <div className="chk-country-fixed" aria-live="polite">
-                <span aria-hidden="true">{COUNTRY_FLAGS[effectiveCountry] ?? "🌐"}</span>
-                <span>{effectiveCountry ?? "Detecting…"}</span>
-                <span className="chk-country-lock" aria-hidden="true" title="Locked to your IP">
-                  <svg viewBox="0 0 12 12" fill="none" stroke="currentColor" strokeWidth="1.3">
-                    <rect x="3" y="5" width="6" height="5" rx="1" />
-                    <path d="M4.5 5V3.7a1.5 1.5 0 0 1 3 0V5" />
-                  </svg>
+              </label>
+              <label className="co-field co-field--full">
+                <span className="co-label">Address line 1</span>
+                <input
+                  type="text"
+                  value={billing.address1}
+                  onChange={(e) => setField("address1", e.target.value)}
+                  required
+                  placeholder="123, main street"
+                />
+              </label>
+              <label className="co-field">
+                <span className="co-label">Address line 2 <span className="co-opt">(optional)</span></span>
+                <input
+                  type="text"
+                  value={billing.address2}
+                  onChange={(e) => setField("address2", e.target.value)}
+                  placeholder="Apt, floor, landmark"
+                />
+              </label>
+              <label className="co-field">
+                <span className="co-label">City</span>
+                <input
+                  type="text"
+                  value={billing.city}
+                  onChange={(e) => setField("city", e.target.value)}
+                  required
+                  placeholder={CITY_PLACEHOLDER[effectiveCountry] ?? "City"}
+                />
+              </label>
+              <label className="co-field">
+                <span className="co-label">
+                  {effectiveCountry === "India"
+                    ? "State / UT"
+                    : STATE_LABELS[effectiveCountry] ?? "State / Province"}
                 </span>
-              </div>
-            </label>
-            <label className="chk-field chk-field--pin">
-              <span className="chk-label">PIN / ZIP</span>
-              <div className="chk-pin-row">
-                <input
-                  type="text"
-                  value={billing.postal}
-                  onChange={(e) => {
-                    setField("postal", e.target.value);
-                    // keep live feedback after the first validation attempt
-                    if (pinTouched && pinOk !== null) setPinOk(null);
-                    // if already marked invalid for format, re-evaluate live after first touch
-                    if (pinTouched && !pinBusy) {
-                      // don't set invalid instantly while typing — let format check run,
-                      // but clear a previous India-specific failure so a corrected PIN can re-verify
-                      if (effectiveCountry === "India" && pinOk === false) setPinOk(null);
-                    }
-                  }}
-                  onBlur={() => void verifyPin()}
-                  required
-                  aria-invalid={postalInvalid}
-                  className={postalInvalid ? "is-invalid" : undefined}
-                  placeholder={POSTAL_PLACEHOLDER[effectiveCountry] ?? "Postal code"}
-                />
-                {pinBusy && <span className="chk-pin-status">verifying…</span>}
-                {!pinBusy && pinOk === true && !postalInvalid && (
-                  <span className="chk-pin-status chk-pin-ok">✓ valid</span>
+                {effectiveCountry === "India" ? (
+                  <select
+                    value={billing.state}
+                    onChange={(e) => setField("state", e.target.value)}
+                    required
+                  >
+                    <option value="">Select a state</option>
+                    {IN_STATES.map((s) => (
+                      <option key={s} value={s}>
+                        {s}
+                      </option>
+                    ))}
+                  </select>
+                ) : statesLoading ? (
+                  <span className="co-states-loading">loading…</span>
+                ) : states?.length ? (
+                  <select
+                    value={billing.state}
+                    onChange={(e) => setField("state", e.target.value)}
+                    required
+                  >
+                    <option value="">Select a state / region</option>
+                    {states.map((s) => (
+                      <option key={s} value={s}>
+                        {s}
+                      </option>
+                    ))}
+                  </select>
+                ) : (
+                  <input
+                    type="text"
+                    value={billing.state}
+                    onChange={(e) => setField("state", e.target.value)}
+                    required
+                    placeholder="State / Province"
+                  />
                 )}
-                {!pinBusy && postalInvalid && (
-                  <span className="chk-pin-status chk-pin-bad">invalid</span>
+              </label>
+              <label className="co-field">
+                <span className="co-label">PIN / ZIP</span>
+                <div className="co-pin-row">
+                  <input
+                    type="text"
+                    value={billing.postal}
+                    onChange={(e) => {
+                      setField("postal", e.target.value);
+                      if (pinTouched && pinOk !== null) setPinOk(null);
+                      if (pinTouched && !pinBusy) {
+                        if (effectiveCountry === "India" && pinOk === false) setPinOk(null);
+                      }
+                    }}
+                    onBlur={() => void verifyPin()}
+                    required
+                    aria-invalid={postalInvalid}
+                    className={postalInvalid ? "is-invalid" : undefined}
+                    placeholder={POSTAL_PLACEHOLDER[effectiveCountry] ?? "Postal code"}
+                  />
+                  {pinBusy && <span className="co-pin-status">verifying…</span>}
+                  {!pinBusy && pinOk === true && !postalInvalid && (
+                    <span className="co-pin-status is-ok">✓ valid</span>
+                  )}
+                  {!pinBusy && postalInvalid && (
+                    <span className="co-pin-status is-bad">invalid</span>
+                  )}
+                </div>
+                {postalInvalid && (
+                  <span className="co-hint is-error">Invalid postal code for {effectiveCountry}</span>
                 )}
+              </label>
+              <div className="co-field co-field--full">
+                <span className="co-label">Country</span>
+                <div className="co-country" aria-live="polite">
+                  <span aria-hidden="true">{COUNTRY_FLAGS[effectiveCountry] ?? "🌐"}</span>
+                  <span>{effectiveCountry ?? "Detecting…"}</span>
+                  <span className="co-country-lock" aria-hidden="true" title="Locked to your IP">
+                    <svg viewBox="0 0 12 12" fill="none" stroke="currentColor" strokeWidth="1.3">
+                      <rect x="3" y="5" width="6" height="5" rx="1" />
+                      <path d="M4.5 5V3.7a1.5 1.5 0 0 1 3 0V5" />
+                    </svg>
+                  </span>
+                </div>
               </div>
-              {postalInvalid && (
-                <span className="chk-hint chk-hint--error">Invalid postal code for {effectiveCountry}</span>
-              )}
-            </label>
+            </div>
+
+            {error && (
+              <p className="co-error" role="alert">
+                {error}
+              </p>
+            )}
+          </form>
+        </div>
+
+        {/* right — sticky order summary */}
+        <aside className="co-card co-aside" aria-label="Order summary">
+          <h2 className="co-card-title">
+            {isAddOn ? `Add to ${PLAN_NAMES[plan]}` : `${PLAN_NAMES[plan]} · ${billingCycle === "yearly" ? "annual" : "monthly"}`}
+          </h2>
+          <div className="co-fleet">
+            <span className="co-dot" aria-hidden="true" />
+            <span>{nodes} device{nodes !== 1 ? "s" : ""} {isAddOn ? "adding" : "covered"}</span>
+            <a href="/dashboard">Manage →</a>
+          </div>
+          <dl className="co-lines">
+            {isAddOn ? (
+              <div className="co-line">
+                <dt>Add {nodes} node{nodes > 1 ? "s" : ""}</dt>
+                <dd>{inr(quote.subtotalInr)}</dd>
+              </div>
+            ) : (
+              <>
+                <div className="co-line">
+                  <dt>{min} nodes included</dt>
+                  <dd>{inr(Math.round((quote.subtotalInr * min) / Math.max(nodes, 1)))}</dd>
+                </div>
+                {nodes > min && (
+                  <div className="co-line">
+                    <dt>{nodes - min} extra node{nodes - min > 1 ? "s" : ""}</dt>
+                    <dd>+ {inr(quote.subtotalInr - Math.round((quote.subtotalInr * min) / Math.max(nodes, 1)))}</dd>
+                  </div>
+                )}
+              </>
+            )}
+            {billingCycle === "yearly" && (
+              <div className="co-line">
+                <dt>Monthly equivalent</dt>
+                <dd>{inr(Math.round(quote.totalInr / 12))} / mo</dd>
+              </div>
+            )}
+            {applied && (
+              <div className="co-line is-good">
+                <dt>Referral {applied}</dt>
+                <dd>− {inr(quote.discount)}</dd>
+              </div>
+            )}
+            {!!quote.taxInr && (
+              <div className="co-line">
+                <dt>Tax ({Math.round(quote.taxRate * 100)}% · {effectiveCountry})</dt>
+                <dd>+ {inr(quote.taxInr)}</dd>
+              </div>
+            )}
+          </dl>
+          <div className="co-total">
+            <span className="co-total-label">Total{billingCycle === "yearly" ? " / year" : " / month"}</span>
+            <span className="co-total-amount">{inr(quote.totalInr)}</span>
           </div>
 
-          {/* referral — extra space/padding above */}
-          <label className="chk-field chk-referral-row">
-            <span className="chk-label">Referral code (optional)</span>
-            <div className="chk-referral">
+          <div className="co-referral">
+            <label className="co-label" htmlFor="co-referral-input">Referral code <span className="co-opt">(optional)</span></label>
+            <div className="co-referral-row">
               <input
+                id="co-referral-input"
                 type="text"
                 value={referral}
                 onChange={(e) => setReferral(e.target.value)}
                 placeholder="e.g. FENCE10"
               />
-              <button type="button" className="chk-apply" onClick={applyReferral}>
+              <button type="button" className="co-btn-ghost" onClick={applyReferral}>
                 Apply
               </button>
             </div>
             {applied && (
-              <span className="chk-hint chk-hint--ok">
+              <span className="co-hint is-ok">
                 {applied} applied — {Math.round((quote.discount / quote.subtotalInr) * 100)}% off
               </span>
             )}
-          </label>
+          </div>
 
-          {error && (
-            <p className="chk-error" role="alert">
-              {error}
-            </p>
-          )}
-          <button type="submit" className="chk-pay" disabled={phase === "creating"}>
-            {phase === "creating" ? "Preparing review…" : `Continue to review · ${inr(quote.totalInr)}`}
+          <button type="submit" form="co-billing-form" className="co-pay" disabled={phase === "creating"}>
+            {phase === "creating" ? (
+              <><span className="co-spinner" aria-hidden="true" /> Preparing…</>
+            ) : (
+              <>Continue · {inr(quote.totalInr)}</>
+            )}
           </button>
-          <p className="chk-note">You’ll pay on the next step via Razorpay — no card stored with us.</p>
-        </form>
-
-        {/* right — order summary + node picker */}
-        <aside className="chk-card chk-aside">
-          <h2 className="chk-card-title">{isAddOn ? `Add to ${PLAN_NAMES[planId]}` : `${PLAN_NAMES[planId]} plan`}</h2>
-
-          <div className="chk-nodes">
-            <div className="chk-stepper" role="group" aria-label="Choose enforcement nodes">
-              <button
-                type="button"
-                className="chk-stepper-btn"
-                onClick={() => step(-1)}
-                disabled={!canDecrease}
-                aria-label="fewer nodes"
-              >
-                −
-              </button>
-              <span className="chk-stepper-count">{nodes}</span>
-              <button
-                type="button"
-                className="chk-stepper-btn"
-                onClick={() => step(1)}
-                disabled={!canIncrease}
-                aria-label="more nodes"
-              >
-                +
-              </button>
-            </div>
-            <div className="chk-nodes-caption">
-              <span>
-                {isAddOn
-                  ? `${nodes} extra node${nodes > 1 ? "s" : ""} to add`
-                  : nodes === min
-                    ? `${nodes} nodes included`
-                    : `${min} included + ${nodes - min} extra node${nodes - min > 1 ? "s" : ""}`}
-              </span>
-              <span className="chk-nodes-rate">
-                · {inr(pricing.perNodeInr)} per node / month · cap {max} {isAddOn ? "extra" : ""} · {billingCycle === "yearly" ? "billed annually" : "billed monthly"}
-              </span>
-            </div>
-          </div>
-
-          <div style={{ display: "flex", alignItems: "center", gap: 8, padding: "0.7rem 0.9rem", background: "var(--off)", border: "1px solid var(--rule)", borderRadius: 8, fontFamily: "DM Mono, monospace", fontSize: "0.68rem", color: "var(--ink3)" }}>
-            <span style={{ width: 6, height: 6, borderRadius: "50%", background: "#10b981", flexShrink: 0 }} />
-            <span>{nodes} device{nodes !== 1 ? "s" : ""} included · {isAddOn ? "adding" : "covering"} your fleet</span>
-            <a href="/dashboard" style={{ marginLeft: "auto", color: "var(--ink)", textDecoration: "none", fontWeight: 600, whiteSpace: "nowrap" }}>Manage →</a>
-          </div>
-
-          <div className="chk-order-divider" />
-          {isAddOn ? (
-            <div className="chk-order-row">
-              <span>
-                Add {nodes} node{nodes > 1 ? "s" : ""} · {billingCycle === "yearly" ? "annual" : "monthly"}
-              </span>
-              <span>{inr(quote.subtotalInr)}</span>
-            </div>
-          ) : (
-            <>
-              <div className="chk-order-row">
-                <span>
-                  {min} nodes (included) · {billingCycle === "yearly" ? "annual" : "monthly"}
-                </span>
-                <span>{inr(Math.round((quote.subtotalInr * min) / Math.max(nodes, 1)))}</span>
-              </div>
-              {nodes > min && (
-                <div className="chk-order-row">
-                  <span>{nodes - min} extra node{nodes - min > 1 ? "s" : ""}</span>
-                  <span>+ {inr(quote.subtotalInr - Math.round((quote.subtotalInr * min) / Math.max(nodes, 1)))}</span>
-                </div>
-              )}
-            </>
-          )}
-          {applied && (
-            <div className="chk-order-row chk-disc">
-              <span>referral {applied}</span>
-              <span>− {inr(quote.discount)}</span>
-            </div>
-          )}
-          {!!quote.taxInr && (
-            <div className="chk-order-row">
-              <span>tax ({Math.round(quote.taxRate * 100)}% · {effectiveCountry})</span>
-              <span>+ {inr(quote.taxInr)}</span>
-            </div>
-          )}
-          <div className="chk-order-total">
-            <span>Total{billingCycle === "yearly" ? " / year" : " / month"}</span>
-            <span>{inr(quote.totalInr)}</span>
-          </div>
-          <ul className="chk-order-list">
-            <li>Pay what you see — amount locked in your magic link.</li>
-            <li>Nodes and tax fixed at checkout, no surprises later.</li>
-            <li>Secured by Razorpay — we never store your card.</li>
-          </ul>
+          <p className="co-note">Review the locked price next — you pay via Razorpay, nothing stored with us.</p>
         </aside>
       </div>
     </div>
