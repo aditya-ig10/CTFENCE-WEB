@@ -1,5 +1,6 @@
 import { SignJWT, jwtVerify } from "jose";
 import { getFirebaseDb } from "@/lib/firebase";
+import { getAdminDb } from "@/lib/firebaseAdmin";
 import { doc, getDoc, setDoc, serverTimestamp } from "firebase/firestore";
 
 export type PlanId = "free" | "starter" | "teams" | "enterprise";
@@ -113,6 +114,45 @@ export async function getServerSubscription(uid: string): Promise<SubscriptionRe
 
   if (MEMORY_SUBSCRIPTION_STORE.has(uid)) {
     return MEMORY_SUBSCRIPTION_STORE.get(uid)!;
+  }
+
+  // Prefer the Admin SDK (server context, bypasses client rules). The client
+  // SDK path below stays as a fallback for non-server callers.
+  try {
+    const adminDb = getAdminDb();
+    if (adminDb) {
+      const subSnap = await adminDb.collection("subscriptions").doc(uid).get();
+      if (subSnap.exists) {
+        const data = subSnap.data() as Partial<SubscriptionRecord>;
+        const rec: SubscriptionRecord = {
+          userId: uid,
+          plan: data.plan || "free",
+          status: data.status || "active",
+          nodeCount: typeof data.nodeCount === "number" ? data.nodeCount : 1,
+          version: typeof data.version === "number" ? data.version : 1,
+          keyVersion: data.keyVersion,
+        };
+        MEMORY_SUBSCRIPTION_STORE.set(uid, rec);
+        return rec;
+      }
+      const userSnap = await adminDb.collection("users").doc(uid).get();
+      if (userSnap.exists) {
+        const uData = userSnap.data() as Record<string, unknown>;
+        const plan = (uData.plan as PlanId) || "free";
+        const nodes = typeof uData.nodes === "number" ? uData.nodes : 1;
+        const rec: SubscriptionRecord = {
+          userId: uid,
+          plan,
+          status: "active",
+          nodeCount: nodes,
+          version: 1,
+        };
+        MEMORY_SUBSCRIPTION_STORE.set(uid, rec);
+        return rec;
+      }
+    }
+  } catch (err) {
+    console.error("Error fetching server subscription via Admin SDK:", err);
   }
 
   try {

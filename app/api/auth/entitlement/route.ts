@@ -1,13 +1,16 @@
 import { NextResponse } from "next/server";
 import { getServerSubscription, issueEntitlementToken } from "@/lib/entitlements";
+import { verifyRequestUser } from "@/lib/firebaseAdmin";
 
-// POST /api/auth/entitlement — Issue signed entitlement claim for authenticated user
+// POST /api/auth/entitlement — Issue signed entitlement claim for the
+// authenticated caller. Requires a verified Firebase ID token
+// (Authorization: Bearer <idToken>, revocation-checked). The entitlement is
+// minted ONLY for the uid inside that token — any uid in the request body
+// is ignored. No token -> generic 401.
 export async function POST(request: Request) {
-  const body = await request.json().catch(() => null);
-  const uid = typeof body?.uid === "string" ? body.uid : "";
-
+  const uid = await verifyRequestUser(request);
   if (!uid) {
-    return NextResponse.json({ ok: false, error: "Missing uid" }, { status: 400 });
+    return NextResponse.json({ ok: false, error: "unauthorized" }, { status: 401 });
   }
 
   // 1. Fetch server source of truth (subscriptions/{uid})

@@ -15,6 +15,7 @@
 //      with Application Default Credentials attached.
 import { initializeApp, getApps, getApp, cert, type App } from "firebase-admin/app";
 import { getFirestore, type Firestore } from "firebase-admin/firestore";
+import { getAuth, type Auth } from "firebase-admin/auth";
 
 interface ServiceAccountLike {
   projectId?: string;
@@ -94,6 +95,36 @@ export function getAdminDb(): Firestore | null {
     return getFirestore(a);
   } catch (err) {
     console.error("Failed to obtain Admin Firestore instance:", err);
+    return null;
+  }
+}
+
+export function getAdminAuth(): Auth | null {
+  const a = getAdminApp();
+  if (!a) return null;
+  try {
+    return getAuth(a);
+  } catch (err) {
+    console.error("Failed to obtain Admin Auth instance:", err);
+    return null;
+  }
+}
+
+/**
+ * Verify a Firebase ID token from an `Authorization: Bearer <token>` header.
+ * Returns the uid on success, null on any failure (missing/invalid/revoked).
+ * checkRevoked:true ensures logged-out/disabled sessions are rejected.
+ */
+export async function verifyRequestUser(request: Request): Promise<string | null> {
+  const header = request.headers.get("authorization") || "";
+  const [scheme, token] = header.split(" ");
+  if (scheme !== "Bearer" || !token) return null;
+  const auth = getAdminAuth();
+  if (!auth) return null;
+  try {
+    const decoded = await auth.verifyIdToken(token, true);
+    return decoded.uid || null;
+  } catch {
     return null;
   }
 }
