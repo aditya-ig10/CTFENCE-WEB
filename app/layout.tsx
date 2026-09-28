@@ -8,7 +8,6 @@ import Footer from "@/components/Footer";
 import GaTag from "@/components/GaTag";
 import SmoothScroll from "@/components/SmoothScroll";
 import CookieToast from "@/components/CookieToast";
-import LoadingOverlay from "@/components/LoadingOverlay";
 import CascadeWrapper from "@/components/CascadeWrapper";
 import { organizationSchema, siteUrl, webSiteSchema } from "@/lib/seo";
 import { site } from "@/content/copy";
@@ -33,7 +32,7 @@ export const metadata: Metadata = {
     template: `%s — ${site.name}`,
   },
   description:
-    "Context Fence is a local MCP policy proxy for AI coding agents: schema-based tool call checks under 10ms, secret stripping, append-only audit log, zero cloud routing.",
+    "Context Fence is a local firewall for what AI agents send out. It checks data before it leaves your machine and blocks secrets. Today it protects MCP tools. Version 2.1 is coming.",
   applicationName: site.name,
   authors: [{ name: "Synthrun" }],
   creator: "Synthrun",
@@ -41,7 +40,9 @@ export const metadata: Metadata = {
   category: "developer-tools",
   keywords: [
     "context fence",
-    "MCP policy proxy",
+    "AI agent DLP",
+    "stop AI agent secret leaks",
+    "local AI agent firewall",
     "AI agent security",
     "LLM tool call guardrails",
     "local AI proxy",
@@ -97,23 +98,28 @@ export default function RootLayout({
     <html lang="en" suppressHydrationWarning>
       <head>
         <script dangerouslySetInnerHTML={{ __html: themeBoot }} />
+        {/* First-load fast lane: warm the only third-party origins the site
+            ever talks to on day one (analytics loads post-consent, fonts via
+            next/font). Route chunks prefetch automatically via next/link. */}
+        <link rel="preconnect" href="https://www.googletagmanager.com" />
+        <link rel="preconnect" href="https://www.google-analytics.com" />
       </head>
       <body className={`${jetbrains.variable} ${spaceMono.variable} antialiased`}>
         <script
           type="application/ld+json"
           dangerouslySetInnerHTML={{ __html: JSON.stringify({ "@context": "https://schema.org", "@graph": graph }) }}
         />
-        <CascadeWrapper>
-          <div className="site-shell">
-            <Navbar />
-            <LoadingOverlay />
-            <Breadcrumbs />
-            <SmoothScroll />
-            <CookieToast />
-            {children}
-            <Footer />
-          </div>
-        </CascadeWrapper>
+        <div className="site-shell">
+          <Navbar />
+          <Breadcrumbs />
+          <SmoothScroll />
+          <CascadeWrapper>{children}</CascadeWrapper>
+          <Footer />
+        </div>
+        {/* Outside .site-shell on purpose: the shell's will-change: transform
+            becomes the containing block for fixed descendants, which would
+            dock viewport-fixed UI (cookie banner/asker) to the page instead. */}
+        <CookieToast />
         <Suspense fallback={null}>
           <GaTag />
         </Suspense>
