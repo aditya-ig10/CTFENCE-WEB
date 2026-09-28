@@ -729,7 +729,7 @@ const expiryDate = useMemo(() => {
           <h2 className="chk-card-title" style={{ margin: 0 }}>Your devices</h2>
           <span className="chk-hint">{effectiveNodes} slots · {isPaid ? "active" : "free tier"}</span>
         </div>
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(260px, 1fr))", gap: 12 }}>
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(min(260px, 100%), 1fr))", gap: 12 }}>
           {[
             { name: "MacBook Pro", os: "macOS 14.5", last: "2 min ago", status: "online" },
             { name: "iPhone 15", os: "iOS 18.0", last: "1 hour ago", status: "offline" },
