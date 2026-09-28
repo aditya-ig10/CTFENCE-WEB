@@ -6,8 +6,9 @@ import { useRouter } from "next/navigation";
 import { addDoc, collection, doc, setDoc, serverTimestamp, Timestamp } from "firebase/firestore";
 import { onAuthStateChanged, type User } from "firebase/auth";
 import { firebaseEnabled, getFirebaseAuth, getFirebaseDb } from "@/lib/firebase";
-import type { BillingAddress, PlanId } from "@/lib/checkout";
+import type { BillingAddress, CheckoutCurrency, PlanId } from "@/lib/checkout";
 import { PLAN_PRICING } from "@/lib/checkout";
+import { localeForCurrency } from "@/lib/currency";
 import gsap from "gsap";
 import { motionAllowed } from "@/lib/anim";
 
@@ -34,7 +35,14 @@ declare global {
 }
 
 const PLAN_NAMES: Record<PlanId, string> = { starter: "Starter", teams: "Teams" };
-const inr = (n: number) => "₹" + n.toLocaleString("en-IN");
+// locked-amount display in the settlement currency minted into the token —
+// same formatting as the pricing section and checkout, never INR-only.
+const fmtLocked = (n: number, currency: CheckoutCurrency) =>
+  new Intl.NumberFormat(localeForCurrency(currency), {
+    style: "currency",
+    currency,
+    maximumFractionDigits: 0,
+  }).format(Math.round(n));
 
 const METHODS = [
   { id: "", label: "Any method" },
@@ -55,8 +63,12 @@ export default function CheckoutConfirm({ token }: { token: string }) {
     plan: PlanId;
     email: string;
     amount: number;
-    currency: "INR";
+    amountInr: number;
+    currency: CheckoutCurrency;
     nodes: number;
+    subtotal: number;
+    discount: number;
+    tax: number;
     subtotalInr: number;
     discountInr: number;
     taxInr: number;
@@ -100,12 +112,19 @@ export default function CheckoutConfirm({ token }: { token: string }) {
       const data = await res.json();
       if (cancelled) return;
       if (!res.ok || !data.ok) return setState("invalid");
+      // pre-currency tokens only carry INR fields — fall back to those so old
+      // magic links still render (in INR) instead of breaking.
+      const cur = (data.currency ?? "INR") as CheckoutCurrency;
       setClaims({
         plan: data.plan,
         email: data.email,
         amount: data.amount,
-        currency: data.currency,
+        amountInr: typeof data.amountInr === "number" ? data.amountInr : data.amount,
+        currency: cur,
         nodes: data.nodes,
+        subtotal: typeof data.subtotal === "number" ? data.subtotal : (data.subtotalInr ?? 0),
+        discount: typeof data.discount === "number" ? data.discount : (data.discountInr ?? 0),
+        tax: typeof data.tax === "number" ? data.tax : (data.taxInr ?? 0),
         subtotalInr: data.subtotalInr,
         discountInr: data.discountInr ?? 0,
         taxInr: data.taxInr,
@@ -144,13 +163,15 @@ export default function CheckoutConfirm({ token }: { token: string }) {
     }
     // separate payments table — one doc per checkout with full billing + expiry
     try {
-      await addDoc(collection(db, "payments"), {
-        userId: auth.currentUser.uid,
-        email: claims.email,
-        plan: claims.plan,
-        nodes: claims.nodes,
-        amountInr: claims.amount,
-        subtotalInr: claims.subtotalInr,
+        await addDoc(collection(db, "payments"), {
+          userId: auth.currentUser.uid,
+          email: claims.email,
+          plan: claims.plan,
+          nodes: claims.nodes,
+          amountInr: claims.amountInr,
+          currency: claims.currency,
+          amount: claims.amount,
+          subtotalInr: claims.subtotalInr,
         discountInr: claims.discountInr,
         taxInr: claims.taxInr,
         taxRate: claims.taxRate,
@@ -170,7 +191,8 @@ export default function CheckoutConfirm({ token }: { token: string }) {
           {
             plan: claims.plan,
             nodes: claims.nodes,
-            amountInr: claims.amount,
+            amountInr: claims.amountInr,
+            currency: claims.currency,
             amount: claims.amount,
             status: "paid",
             billing: claims.billing,
@@ -344,7 +366,7 @@ export default function CheckoutConfirm({ token }: { token: string }) {
       <div className="chk-eyebrow">{"// secure payment"}</div>
       <h1 className="chk-title">Settle your {PLAN_NAMES[claims.plan]} plan.</h1>
       <p className="chk-sub">
-        Amount locked for <strong>{inr(claims.amount)}</strong> · paying as{" "}
+        Amount locked for <strong>{fmtLocked(claims.amount, claims.currency)}</strong> · paying as{" "}
         <strong>{claims.email}</strong>.
       </p>
 
@@ -442,21 +464,21 @@ export default function CheckoutConfirm({ token }: { token: string }) {
               <span>
                 {PLAN_NAMES[claims.plan]} · {claims.nodes} nodes
               </span>
-              <span>{inr(claims.subtotalInr)}</span>
+              <span>{fmtLocked(claims.subtotal, claims.currency)}</span>
             </div>
-            {!!claims.discountInr && (
+            {!!claims.discount && (
               <div className="chk-order-row chk-disc">
                 <span>referral ({claims.referralCode})</span>
-                <span>− {inr(claims.discountInr)}</span>
+                <span>− {fmtLocked(claims.discount, claims.currency)}</span>
               </div>
             )}
             <div className="chk-order-row">
               <span>tax ({Math.round(claims.taxRate * 100)}%)</span>
-              <span>+ {inr(claims.taxInr)}</span>
+              <span>+ {fmtLocked(claims.tax, claims.currency)}</span>
             </div>
             <div className="chk-summary-total">
               <span>Total</span>
-              <span>{inr(claims.amount)}</span>
+              <span>{fmtLocked(claims.amount, claims.currency)}</span>
             </div>
           </div>
           <button
@@ -469,7 +491,7 @@ export default function CheckoutConfirm({ token }: { token: string }) {
             {state === "modal" && "Complete in the modal…"}
             {state === "verifying" && "Verifying…"}
             {state === "done" && "Paid ✓"}
-            {state === "ready" && `Pay ${inr(claims.amount)}`}
+            {state === "ready" && `Pay ${fmtLocked(claims.amount, claims.currency)}`}
           </button>
           {error && (
             <p className="chk-error" role="alert">

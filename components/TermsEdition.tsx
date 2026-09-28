@@ -4,6 +4,7 @@ import { Fragment, useEffect, useRef, useState } from "react";
 import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 import { terms } from "@/content/copy";
+import { Reveal } from "@/components/Reveal";
 import SignatureDraw from "@/components/SignatureDraw";
 import { adityaSignature, saniyaSignature } from "@/components/signaturePaths";
 
@@ -37,6 +38,7 @@ export default function TermsEdition() {
 
   return (
     <div ref={rootRef} style={{ maxWidth: 1140, margin: "0 auto", padding: "32px 2rem 80px" }}>
+      <Reveal>
       <div className="terms-hero" style={{ paddingBottom: 8, marginBottom: 24 }}>
         <div style={{ fontFamily: "DM Mono, monospace", fontSize: "0.58rem", letterSpacing: "0.18em", textTransform: "uppercase", color: "var(--ink4)", marginBottom: 12 }}>{terms.eyebrow} — contract corner · August 16, 2026</div>
         <h1 style={{ fontFamily: "Fraunces, serif", fontWeight: 200, fontSize: "clamp(2.4rem, 5vw, 3.8rem)", lineHeight: 1.05, letterSpacing: "-0.04em", color: "var(--ink)", margin: 0, overflow: "hidden" }}>
@@ -50,6 +52,7 @@ export default function TermsEdition() {
           <span style={{ marginLeft: "auto", fontFamily: "DM Mono, monospace", fontSize: "0.62rem", color: "var(--ink4)" }}>{terms.updated}</span>
         </div>
       </div>
+      </Reveal>
 
       <div className="terms-layout">
         <div className="terms-side">

@@ -1,5 +1,6 @@
 import SplitText from "@/components/SplitText";
 import { FeatureIcon } from "@/components/FeatureIcon";
+import { RevealGroup } from "@/components/Reveal";
 import { features } from "@/content/copy";
 
 export default function Features() {
@@ -10,11 +11,11 @@ export default function Features() {
           <div className="cap-statement-sticky">
             <div className="section-eyebrow">{features.eyebrow}</div>
             <h2 className="cap-statement-title" id="features-title">
-              <span>What the proxy checks</span>
+              <span>What Context Fence</span>
               <br />
               <SplitText
                 tag="span"
-                text="before every call"
+                text="protects"
                 className="cap-statement-accent"
                 delay={24}
                 duration={0.7}
@@ -36,7 +37,7 @@ export default function Features() {
           </div>
         </div>
 
-        <div className="cap-grid">
+        <RevealGroup className="cap-grid">
           {features.grid.map((f, i) => (
             <article className="cap-cell" key={f.title}>
               <div className="cap-cell-top">
@@ -46,11 +47,12 @@ export default function Features() {
               <h3 className="cap-title">
                 {f.title}
                 {f.roadmap && <span className="cap-flag">Roadmap</span>}
+                {f.tag && <span className="cap-flag">{f.tag}</span>}
               </h3>
-              <p className="cap-desc">{f.desc}</p>
-            </article>
+            <p className="cap-desc">{f.desc}</p>
+          </article>
           ))}
-        </div>
+        </RevealGroup>
       </div>
     </section>
   );

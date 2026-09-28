@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
+import { Reveal } from "@/components/Reveal";
 import { privacy } from "@/content/copy";
 
 gsap.registerPlugin(ScrollTrigger);
@@ -42,6 +43,7 @@ export default function PrivacyEdition() {
 
   return (
     <div ref={rootRef} style={{ maxWidth: 1140, margin: "0 auto", padding: "32px 2rem 80px" }}>
+      <Reveal>
       <div className="legal-hero" style={{ paddingBottom: 8, marginBottom: 24 }}>
         <div style={{ fontFamily: "DM Mono, monospace", fontSize: "0.58rem", letterSpacing: "0.18em", textTransform: "uppercase", color: "#ef4444", marginBottom: 14, fontWeight: 600 }}>— confidential — do not redact · August 16, 2026</div>
         <h1 style={{ fontFamily: "Fraunces, serif", fontWeight: 200, fontSize: "clamp(2.4rem, 5vw, 3.8rem)", lineHeight: 1.05, letterSpacing: "-0.04em", color: "var(--ink)", margin: 0, overflow: "hidden" }}>
@@ -52,13 +54,16 @@ export default function PrivacyEdition() {
         <p style={{ fontFamily: "DM Mono, monospace", fontWeight: 300, fontSize: "0.82rem", lineHeight: 1.8, color: "var(--ink3)", maxWidth: 640, marginTop: 16 }}>{privacy.sub}</p>
         <p style={{ fontFamily: "DM Mono, monospace", fontSize: "0.58rem", letterSpacing: "0.1em", textTransform: "uppercase", color: "var(--ink4)", marginTop: 16 }}>{privacy.updated}</p>
       </div>
+      </Reveal>
 
-      {/* TLDR band */}
+      {/* TLDR band — renders only when items exist */}
+      {privacy.tldr.length > 0 && (
       <div style={{ display: "grid", gridTemplateColumns: "repeat(4, minmax(0,1fr))", gap: 12, marginBottom: 32 }}>
         {privacy.tldr.map((t) => (
           <div key={t} style={{ border: "1px solid var(--rule)", borderRadius: 12, padding: "14px 16px", background: "var(--white)", fontFamily: "DM Mono, monospace", fontSize: "0.62rem", letterSpacing: "0.06em", textTransform: "uppercase", color: "var(--ink2)", lineHeight: 1.6, borderLeft: "2px solid #ef4444" }}>{t}</div>
         ))}
       </div>
+      )}
 
       <div className="privacy-layout">
         {/* Sticky TOC */}

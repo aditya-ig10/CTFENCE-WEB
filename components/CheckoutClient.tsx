@@ -5,6 +5,7 @@ import {
   EMPTY_BILLING,
   REFERRAL_CODES,
   PLAN_PRICING,
+  isCheckoutCurrency,
   quoteCheckout,
   referralDiscount,
   taxRateForCountry,
@@ -13,6 +14,13 @@ import {
   type PlanId,
   type BillingCycle,
 } from "@/lib/checkout";
+import {
+  currencyFromCountry,
+  localeForCurrency,
+  ratePerInrStatic,
+  toMinorUnits,
+  type CurrencyCode,
+} from "@/lib/currency";
 import {
   fetchStates,
   verifyIndiaPin,
@@ -29,8 +37,9 @@ import gsap from "gsap";
 import { motionAllowed } from "@/lib/anim";
 import { BillingToggle, RollingNumber } from "@/components/PricingMotion";
 
-// step one of checkout: billing details + order summary. no currency selector
-// — the site prices in INR and the amount is fixed server-side. the visitor
+// step one of checkout: billing details + order summary. the display
+// currency follows the billing country (same helper the pricing section
+// uses); the amount is fixed server-side in that currency. the visitor
 // picks their node count, enters an optional referral, fills billing, and
 // presses "send payment link". the page mints a one-time magic link (token)
 // carrying the tax-inclusive total for the chosen nodes — the amount the
@@ -40,16 +49,36 @@ const PLAN_NAMES: Record<PlanId, string> = {
   starter: "Starter",
   teams: "Teams",
 };
-const inr = (n: number) => "₹" + n.toLocaleString("en-IN");
+const fmtMoney = (n: number, currency: CurrencyCode, locale: string) =>
+  new Intl.NumberFormat(locale, {
+    style: "currency",
+    currency,
+    maximumFractionDigits: 0,
+  }).format(Math.round(n));
 
-// rolling ₹ figure — same odometer as the pricing section. currency mark
+// rolling money figure — same odometer as the pricing section. currency mark
 // stays pinned, digits roll on every quote change.
-const rollInr = (n: number) => (
-  <>
-    <span>₹</span>
-    <RollingNumber formatted={Math.round(n).toLocaleString("en-IN")} />
-  </>
-);
+const rollMoney = (n: number, currency: CurrencyCode, locale: string) => {
+  const parts = new Intl.NumberFormat(locale, {
+    style: "currency",
+    currency,
+    maximumFractionDigits: 0,
+  }).formatToParts(Math.round(n));
+  const digits = parts
+    .filter((p) => p.type === "integer" || p.type === "group" || p.type === "decimal" || p.type === "fraction")
+    .map((p) => p.value)
+    .join("");
+  const prefix = parts
+    .filter((p) => p.type !== "integer" && p.type !== "group" && p.type !== "decimal" && p.type !== "fraction")
+    .map((p) => p.value)
+    .join("");
+  return (
+    <>
+      {prefix && <span>{prefix}</span>}
+      <RollingNumber formatted={digits} />
+    </>
+  );
+};
 
 const CITY_PLACEHOLDER: Record<string, string> = {
   India: "Bengaluru",
@@ -178,6 +207,13 @@ export default function CheckoutClient({
 
   const effectiveCountry = fixedCountry ?? billing.country;
 
+  // display + quote currency follows the billing country — same helper the
+  // pricing section uses, so both always agree. the server recomputes the
+  // same currency from the submitted billing at mint time.
+  const detectedCurrency = currencyFromCountry(effectiveCountry);
+  const currency: CurrencyCode = isCheckoutCurrency(detectedCurrency) ? detectedCurrency : "INR";
+  const moneyLocale = localeForCurrency(currency);
+
   const quote = useMemo(() => {
     if (isAddOn) {
       const perNodeInr = pricing.perNodeInr;
@@ -192,26 +228,31 @@ export default function CheckoutClient({
       const taxRate = taxRateForCountry(effectiveCountry);
       const taxInr = Math.round(taxable * taxRate);
       const totalInr = taxable + taxInr;
+      const rate = ratePerInrStatic(currency);
+      const conv = (inr: number) => (currency === "INR" ? inr : Math.round(inr * rate));
+      const amountMajor = conv(totalInr);
       return {
         planId: plan,
-        currency: "INR" as const,
+        currency,
         baseInr,
-        base: baseInr,
-        discount,
-        amount: totalInr,
-        amountPaise: totalInr * 100,
+        base: conv(baseInr),
+        discount: conv(discount),
+        tax: conv(taxInr),
+        amount: amountMajor,
+        amountPaise: toMinorUnits(currency, amountMajor),
         referralCode: code,
         nodes,
         perNodeInr,
         subtotalInr: baseInr,
+        discountInr: discount,
         taxInr,
         taxRate,
         totalInr,
         billingCycle,
       };
     }
-    return quoteCheckout(plan, "INR", applied, { nodes, country: effectiveCountry, billingCycle });
-  }, [plan, applied, nodes, effectiveCountry, pricing, isAddOn, billingCycle]);
+    return quoteCheckout(plan, currency, applied, { nodes, country: effectiveCountry, billingCycle });
+  }, [plan, applied, nodes, effectiveCountry, currency, pricing, isAddOn, billingCycle]);
 
   // resolve country from IP when the server didn't supply one (localhost / dev)
   useEffect(() => {
@@ -699,8 +740,10 @@ function cleanPlaintext(val: unknown): string {
                     plan: plan,
                     nodes: nodes,
                     amountInr: quote.totalInr,
+                    currency: quote.currency,
+                    amount: quote.amount,
                     subtotalInr: quote.subtotalInr,
-                    discountInr: quote.discount,
+                    discountInr: quote.discountInr,
                     taxInr: quote.taxInr,
                     taxRate: quote.taxRate,
                     billing: effectiveBilling,
@@ -817,23 +860,23 @@ function cleanPlaintext(val: unknown): string {
               </div>
               <div className="co-line">
                 <dt>Plan subtotal</dt>
-                <dd>{rollInr(quote.subtotalInr)}</dd>
+                <dd>{rollMoney(quote.base, currency, moneyLocale)}</dd>
               </div>
               {billingCycle === "yearly" && (
                 <div className="co-line">
                   <dt>Monthly equivalent</dt>
-                  <dd>{rollInr(Math.round(quote.totalInr / 12))} / mo</dd>
+                  <dd>{rollMoney(Math.round(quote.amount / 12), currency, moneyLocale)} / mo</dd>
                 </div>
               )}
               {applied && (
                 <div className="co-line is-good">
                   <dt>Referral {applied}</dt>
-                  <dd>− {rollInr(quote.discount)}</dd>
+                  <dd>− {rollMoney(quote.discount, currency, moneyLocale)}</dd>
                 </div>
               )}
               <div className="co-line">
                   <dt>Tax ({Math.round(quote.taxRate * 100)}%)</dt>
-                  <dd>+ {rollInr(quote.taxInr)}</dd>
+                  <dd>+ {rollMoney(quote.tax, currency, moneyLocale)}</dd>
               </div>
             </dl>
             <div className="co-sep" />
@@ -856,7 +899,7 @@ function cleanPlaintext(val: unknown): string {
             </div>
             <div className="co-total">
               <span className="co-total-label">Due today</span>
-              <span className="co-total-amount">{rollInr(quote.totalInr)}</span>
+              <span className="co-total-amount">{rollMoney(quote.amount, currency, moneyLocale)}</span>
               <span className="co-total-note">
                 {billingCycle === "yearly" ? "billed annually" : "billed monthly"} · inclusive of tax
               </span>
@@ -865,7 +908,7 @@ function cleanPlaintext(val: unknown): string {
               {busy ? (
                 <span className="co-spinner" aria-hidden="true" />
               ) : null}
-              {phase === "ordering" ? "Preparing…" : phase === "verifying" ? "Verifying…" : phase === "done" ? "Paid ✓" : `Pay ${inr(quote.totalInr)}`}
+              {phase === "ordering" ? "Preparing…" : phase === "verifying" ? "Verifying…" : phase === "done" ? "Paid ✓" : `Pay ${fmtMoney(quote.amount, currency, moneyLocale)}`}
             </button>
             {!rzpReady && phase === "review" && <p className="co-hint">Loading payment gateway… please wait</p>}
             {error && (
@@ -1218,18 +1261,18 @@ function cleanPlaintext(val: unknown): string {
             {isAddOn ? (
               <div className="co-line">
                 <dt>Add {nodes} node{nodes > 1 ? "s" : ""}</dt>
-                <dd>{rollInr(quote.subtotalInr)}</dd>
+                <dd>{rollMoney(quote.base, currency, moneyLocale)}</dd>
               </div>
             ) : (
               <>
                 <div className="co-line">
                   <dt>{min} nodes included</dt>
-                  <dd>{rollInr(Math.round((quote.subtotalInr * min) / Math.max(nodes, 1)))}</dd>
+                  <dd>{rollMoney(Math.round((quote.base * min) / Math.max(nodes, 1)), currency, moneyLocale)}</dd>
                 </div>
                 {nodes > min && (
                   <div className="co-line">
                     <dt>{nodes - min} extra node{nodes - min > 1 ? "s" : ""}</dt>
-                    <dd>+ {rollInr(quote.subtotalInr - Math.round((quote.subtotalInr * min) / Math.max(nodes, 1)))}</dd>
+                    <dd>+ {rollMoney(quote.base - Math.round((quote.base * min) / Math.max(nodes, 1)), currency, moneyLocale)}</dd>
                   </div>
                 )}
               </>
@@ -1237,25 +1280,25 @@ function cleanPlaintext(val: unknown): string {
             {billingCycle === "yearly" && (
               <div className="co-line">
                 <dt>Monthly equivalent</dt>
-                <dd>{rollInr(Math.round(quote.totalInr / 12))} / mo</dd>
+                <dd>{rollMoney(Math.round(quote.amount / 12), currency, moneyLocale)} / mo</dd>
               </div>
             )}
             {applied && (
               <div className="co-line is-good">
                 <dt>Referral {applied}</dt>
-                <dd>− {rollInr(quote.discount)}</dd>
+                <dd>− {rollMoney(quote.discount, currency, moneyLocale)}</dd>
               </div>
             )}
-            {!!quote.taxInr && (
+            {!!quote.tax && (
               <div className="co-line">
                 <dt>Tax ({Math.round(quote.taxRate * 100)}% · {effectiveCountry})</dt>
-                <dd>+ {rollInr(quote.taxInr)}</dd>
+                <dd>+ {rollMoney(quote.tax, currency, moneyLocale)}</dd>
               </div>
             )}
           </dl>
           <div className="co-total">
             <span className="co-total-label">Total{billingCycle === "yearly" ? " / year" : " / month"}</span>
-            <span className="co-total-amount">{rollInr(quote.totalInr)}</span>
+            <span className="co-total-amount">{rollMoney(quote.amount, currency, moneyLocale)}</span>
           </div>
 
           <div className="co-referral">
@@ -1274,7 +1317,7 @@ function cleanPlaintext(val: unknown): string {
             </div>
             {applied && (
               <span className="co-hint is-ok">
-                {applied} applied — {Math.round((quote.discount / quote.subtotalInr) * 100)}% off
+                {applied} applied — {Math.round((quote.discount / Math.max(quote.base, 1)) * 100)}% off
               </span>
             )}
           </div>
@@ -1283,7 +1326,7 @@ function cleanPlaintext(val: unknown): string {
             {phase === "creating" ? (
               <><span className="co-spinner" aria-hidden="true" /> Preparing…</>
             ) : (
-              <>Continue · {rollInr(quote.totalInr)}</>
+              <>Continue · {rollMoney(quote.amount, currency, moneyLocale)}</>
             )}
           </button>
           <p className="co-note">Review the locked price next — you pay via Razorpay, nothing stored with us.</p>

@@ -9,7 +9,9 @@ export function routeUrl(path: string) {
 
 const SITE_KEYWORDS = [
   "context fence",
-  "MCP policy proxy",
+  "AI agent DLP",
+  "stop AI agent secret leaks",
+  "local AI agent firewall",
   "AI agent security",
   "LLM tool call guardrails",
   "local AI proxy",
@@ -108,7 +110,7 @@ export function organizationSchema() {
     url: siteUrl,
     slogan: site.productLine,
     description:
-      "Context Fence is a local policy proxy for AI coding agents: schema-based MCP tool call checks under 10ms, secret stripping, and an append-only local audit log with zero cloud routing.",
+      "Context Fence is a local firewall for what AI agents send out. It checks data before it leaves your machine and blocks secrets. Today it protects MCP tools. Version 2.1 is coming.",
     logo: {
       "@type": "ImageObject",
       url: `${siteUrl}/icon.png`,
@@ -165,8 +167,8 @@ export function softwareAppSchema({
     description,
     url: routeUrl(path),
     applicationCategory: "DeveloperApplication",
-    operatingSystem: "macOS, Windows",
-    softwareVersion: "1.1.6",
+    operatingSystem: "macOS, Windows, Linux",
+    softwareVersion: "2.0.0",
     releaseNotes: `${routeUrl("/downloads")}#release`,
     downloadUrl: routeUrl("/downloads"),
     offers: {

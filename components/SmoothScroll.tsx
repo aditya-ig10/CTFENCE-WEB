@@ -64,45 +64,9 @@ export default function SmoothScroll() {
         );
       }
 
-      // section headers + standalone blocks rise in — motion only, no
-      // opacity fade. strictly one-shot: once revealed they stay rendered.
-      gsap.utils
-        .toArray<HTMLElement>(
-          ".section-eyebrow, .section-title, .section-lead, .footer, .prose-page h1, .prose-page .updated, .blog-hero, .ticker, .mail-cta"
-        )
-        .forEach((el) => {
-          gsap.fromTo(
-            el,
-            { y: 28 },
-            {
-              y: 0,
-              duration: 0.8,
-              ease: "power3.out",
-              clearProps: "transform",
-              scrollTrigger: { trigger: el, start: "top 88%", once: true },
-            }
-          );
-        });
-
-      // card grids + lists stagger in — rise only, same guarantee.
-      gsap.utils
-        .toArray<HTMLElement>(
-          ".cap-grid, .plans, .signup-form, .prose-body, .thanks-box, .replay-scenes, .draft-grid, .acc-list"
-        )
-        .forEach((group) => {
-          gsap.fromTo(
-            group.children,
-            { y: 44 },
-            {
-              y: 0,
-              duration: 0.7,
-              stagger: 0.09,
-              ease: "power3.out",
-              clearProps: "transform",
-              scrollTrigger: { trigger: group, start: "top 85%", once: true },
-            }
-          );
-        });
+      // NOTE: scroll-in reveals used to live here as global queries. They
+      // moved to app/template.tsx (page enter) + <Reveal>/<RevealGroup>,
+      // so reveals run on every navigation and never double-fire.
 
       // hero terminal lags behind the page as you scroll away (404 page only)
       if (document.querySelector(".terminal-wrap")) {

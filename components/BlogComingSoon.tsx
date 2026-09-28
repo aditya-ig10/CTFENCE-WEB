@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState, type FormEvent } from "react";
+import { Reveal, RevealGroup } from "@/components/Reveal";
 import { blog } from "@/content/copy";
 import { motionAllowed } from "@/lib/anim";
 
@@ -41,6 +42,7 @@ export default function BlogComingSoon() {
 
   return (
     <main className="blog-page">
+      <Reveal>
       <section className="blog-hero">
         <div className="section-eyebrow">{blog.eyebrow}</div>
         <div className="blog-coming" role="status">
@@ -54,10 +56,11 @@ export default function BlogComingSoon() {
           <span className="blog-caret" aria-hidden="true" />
         </div>
       </section>
+      </Reveal>
 
       <section className="draft-board" aria-label="Planned posts">
         <div className="section-eyebrow">{blog.draftsEyebrow}</div>
-        <div className="draft-grid">
+        <RevealGroup className="draft-grid">
           {blog.drafts.map((d, i) => (
             <article key={d.no} className={`draft-card draft-card-${i + 1}`}>
               <Tape n={i + 1} />
@@ -70,7 +73,7 @@ export default function BlogComingSoon() {
               </div>
             </article>
           ))}
-        </div>
+        </RevealGroup>
       </section>
 
       <div className="ticker" aria-hidden="true">
@@ -88,6 +91,7 @@ export default function BlogComingSoon() {
         </div>
       </div>
 
+      <Reveal>
       <section className="mail-cta">
         <div className="section-eyebrow">{blog.mailEyebrow}</div>
         <h2 className="mail-title">{blog.mailTitle}</h2>
@@ -116,6 +120,7 @@ export default function BlogComingSoon() {
         </div>
         <p className="mail-note">{blog.mailNote}</p>
       </section>
+      </Reveal>
     </main>
   );
 }

@@ -147,7 +147,7 @@ export default function Faq() {
         <h2 className="section-title" id="faq-title">
           {faq.title}
         </h2>
-        <p className="section-lead">{faq.lead}</p>
+        {faq.lead ? <p className="section-lead">{faq.lead}</p> : null}
         <div className="faq-more">
           <span>{faq.more.text}</span>
           <Link className="faq-more-cta" href={faq.more.href}>

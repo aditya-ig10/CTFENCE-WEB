@@ -47,12 +47,7 @@ export default function Problem() {
           <ScrollReveal baseOpacity={0.12} baseRotation={2.5} containerClassName="why-narrative-reveal" textClassName="why-narrative-text" rotationEnd="top 60%" wordAnimationEnd="bottom 55%">
             {[
               ...problem.narrative.map((seg) => ({ text: seg.text, className: seg.hl ? "hl hl--incident" : undefined })),
-              { text: "The agent did what agents do. Everything it was asked, including the parts nobody asked for. Nothing on the machine objected. " },
-              { text: "The keys left inside an API payload.", className: "hl hl--incident" },
-              { text: " The wrong response: cloud gateway, hope, and a vendor list. Route all agent traffic through a cloud gateway and hope the vendor list of bad things is good enough. " },
-              { text: "Every call leaves your machine first.", className: "hl hl--incident" },
-              { text: " The right response: the guard lives where the agent lives. On your machine, checking every call before it happens. " },
-              { text: "Schema speed, not jury speed.", className: "hl hl--incident" },
+              { text: " Most teams just trust the agent. The fence checks first." },
             ]}
           </ScrollReveal>
         </div>

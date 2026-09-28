@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { Reveal } from "@/components/Reveal";
 import { signup } from "@/content/copy";
 
 export default function SignupForm() {
@@ -29,6 +30,7 @@ export default function SignupForm() {
   return (
     <section className="section signup" id="early-access" aria-labelledby="signup-title">
       <div className="signup-inner">
+        <Reveal>
         <div>
           <h2 className="section-title" id="signup-title">{signup.title}</h2>
         </div>
@@ -57,6 +59,7 @@ export default function SignupForm() {
             <p className="signup-note">One honest issue a month · unsubscribe anytime</p>
           )}
         </div>
+        </Reveal>
       </div>
     </section>
   );

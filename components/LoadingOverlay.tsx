@@ -11,8 +11,8 @@ export default function LoadingOverlay() {
       setPhase("gone");
       return;
     }
-    const hide = setTimeout(() => setPhase("off"), 800);
-    const remove = setTimeout(() => setPhase("gone"), 1400);
+    const hide = setTimeout(() => setPhase("off"), 300);
+    const remove = setTimeout(() => setPhase("gone"), 650);
     return () => {
       clearTimeout(hide);
       clearTimeout(remove);

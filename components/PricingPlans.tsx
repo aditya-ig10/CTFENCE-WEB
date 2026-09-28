@@ -3,6 +3,7 @@
 import { useState } from "react";
 import PlanCard from "@/components/PlanCard";
 import { BillingToggle, type Billing as BillingCycleOption } from "@/components/PricingMotion";
+import { RevealGroup } from "@/components/Reveal";
 import type { Plan } from "@/content/copy";
 import type { CurrencyCode } from "@/lib/currency";
 
@@ -25,7 +26,7 @@ export default function PricingPlans({
   return (
     <>
       <BillingToggle value={cycle} onChange={setCycle} saving="save ~18%" />
-      <div className="plans">
+      <RevealGroup className="plans">
         {plans.map((p) => (
           <PlanCard
             key={p.name}
@@ -36,7 +37,7 @@ export default function PricingPlans({
             billingCycle={cycle}
           />
         ))}
-      </div>
+      </RevealGroup>
     </>
   );
 }
