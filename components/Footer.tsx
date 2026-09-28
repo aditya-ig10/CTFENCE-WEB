@@ -1,11 +1,12 @@
 import Link from "next/link";
 import { footer } from "@/content/copy";
+import CookieSettingsButton from "@/components/CookieSettingsButton";
 
 export default function Footer() {
   return (
     <footer style={{ background: "var(--off)", borderTop: "1px solid var(--rule)", marginTop: "4rem" }}>
       <div style={{ maxWidth: 1140, margin: "0 auto", padding: "3.5rem 2rem 2rem" }}>
-        <div style={{ display: "grid", gridTemplateColumns: "1.6fr 1fr 1fr 1fr", gap: "2.5rem 2rem", alignItems: "start" }}>
+        <div className="footer-grid" style={{ display: "grid", gridTemplateColumns: "1.6fr 1fr 1fr 1fr", gap: "2.5rem 2rem", alignItems: "start" }}>
           <div>
             <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: "0.8rem" }}>
               <img src="/icon.png" alt="" width={22} height={22} style={{ width: 22, height: 22, objectFit: "contain" }} />
@@ -13,7 +14,7 @@ export default function Footer() {
               <span style={{ width: 5, height: 5, borderRadius: "50%", background: "#ef4444", display: "inline-block" }} />
             </div>
             <p style={{ fontFamily: "DM Mono, monospace", fontWeight: 300, fontSize: "0.72rem", lineHeight: 1.7, color: "var(--ink3)", maxWidth: 320, margin: 0 }}>
-              Local MCP policy proxy for AI agents. Every tool call checked before it runs — nothing leaves your machine.
+              Local DLP for AI agents. Checks what your agent sends out. Nothing leaves your machine.
             </p>
             <div style={{ display: "flex", gap: 8, marginTop: "1.2rem" }}>
               <a href="https://github.com/aditya-ig10/context-fence" target="_blank" rel="noreferrer" style={{ width: 32, height: 32, borderRadius: "50%", border: "1px solid var(--rule)", display: "grid", placeItems: "center", color: "var(--ink3)", background: "var(--white)" }} aria-label="GitHub">
@@ -29,6 +30,7 @@ export default function Footer() {
             <div style={{ fontFamily: "DM Mono, monospace", fontSize: "0.58rem", letterSpacing: "0.12em", textTransform: "uppercase", color: "var(--ink4)", marginBottom: "1rem", fontWeight: 600 }}>Product</div>
             <ul style={{ listStyle: "none", padding: 0, margin: 0, display: "flex", flexDirection: "column", gap: "0.6rem" }}>
               <li><Link href="/#features" style={{ fontFamily: "DM Mono, monospace", fontSize: "0.72rem", color: "var(--ink3)", textDecoration: "none" }}>Features</Link></li>
+              <li><Link href="/how-it-works" style={{ fontFamily: "DM Mono, monospace", fontSize: "0.72rem", color: "var(--ink3)", textDecoration: "none" }}>How it works</Link></li>
               <li><Link href="/#pricing" style={{ fontFamily: "DM Mono, monospace", fontSize: "0.72rem", color: "var(--ink3)", textDecoration: "none" }}>Pricing</Link></li>
               <li><Link href="/downloads" style={{ fontFamily: "DM Mono, monospace", fontSize: "0.72rem", color: "var(--ink3)", textDecoration: "none" }}>Downloads</Link></li>
               <li><Link href="/#faq" style={{ fontFamily: "DM Mono, monospace", fontSize: "0.72rem", color: "var(--ink3)", textDecoration: "none" }}>FAQ</Link></li>
@@ -48,7 +50,9 @@ export default function Footer() {
             <div style={{ fontFamily: "DM Mono, monospace", fontSize: "0.58rem", letterSpacing: "0.12em", textTransform: "uppercase", color: "var(--ink4)", marginBottom: "1rem", fontWeight: 600 }}>Legal</div>
             <ul style={{ listStyle: "none", padding: 0, margin: 0, display: "flex", flexDirection: "column", gap: "0.6rem" }}>
               <li><Link href="/privacy" style={{ fontFamily: "DM Mono, monospace", fontSize: "0.72rem", color: "var(--ink3)", textDecoration: "none" }}>Privacy</Link></li>
+              <li><Link href="/security" style={{ fontFamily: "DM Mono, monospace", fontSize: "0.72rem", color: "var(--ink3)", textDecoration: "none" }}>Security</Link></li>
               <li><Link href="/terms" style={{ fontFamily: "DM Mono, monospace", fontSize: "0.72rem", color: "var(--ink3)", textDecoration: "none" }}>Terms</Link></li>
+              <li><CookieSettingsButton /></li>
             </ul>
           </div>
         </div>
