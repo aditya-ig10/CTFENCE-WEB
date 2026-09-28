@@ -77,6 +77,19 @@ export default function DownloadsSection({ release }: { release?: DownloadsData 
 
   // compact bento tile for the non-primary platforms — horizontal in the
   // bento rail (fixed 16:9), vertical in the three-up fallback grid.
+  const altPkgs = (p: (typeof platforms)[number]) => {
+    if (p.id !== "linux") return null;
+    const { debHref, rpmHref } = p as { debHref?: string; rpmHref?: string };
+    if (typeof debHref !== "string" && typeof rpmHref !== "string") return null;
+    return (
+      <span className="dlm-alt">
+        also:{" "}
+        {typeof debHref === "string" && <a href={debHref} download>deb</a>}
+        {typeof debHref === "string" && typeof rpmHref === "string" && " · "}
+        {typeof rpmHref === "string" && <a href={rpmHref} download>rpm</a>}
+      </span>
+    );
+  };
   const tile = (p: (typeof platforms)[number]) => (
     <li key={p.id} className={`dlm-tile dlm-accent--${p.id}`}>
       <span className="dlm-tile-icon">{p.icon}</span>
@@ -93,14 +106,7 @@ export default function DownloadsSection({ release }: { release?: DownloadsData 
           {copied === `sha-${p.id}` ? <Check size={12} /> : <Copy size={12} />}
           <span>sha256 {p.sha256.slice(0, 12)}…</span>
         </button>
-        {p.id === "linux" && "debHref" in p && typeof (p as { debHref?: string }).debHref === "string" && (
-          <span className="dlm-alt">
-            also:{" "}
-            <a href={(p as { debHref: string }).debHref} download>deb</a>
-            {" · "}
-            <a href={(p as { rpmHref: string }).rpmHref} download>rpm</a>
-          </span>
-        )}
+        {altPkgs(p)}
       </div>
       <a href={p.href} download className="dlm-tile-cta">Download <ArrowUpRight size={14} /></a>
     </li>
@@ -151,6 +157,7 @@ export default function DownloadsSection({ release }: { release?: DownloadsData 
               {copied === "sha-primary" ? <Check size={12} /> : <Copy size={12} />}
               <span>sha256 {primary.sha256.slice(0, 20)}…</span>
             </button>
+            {altPkgs(primary)}
             <a href={primary.href} download className="dlm-big-cta">
               <Download size={15} /> {primary.cta}
             </a>
