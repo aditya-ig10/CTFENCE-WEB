@@ -10,14 +10,16 @@ import WebPageSchema from "@/components/WebPageSchema";
 import { site } from "@/content/copy";
 import { baseMetadata, softwareAppSchema } from "@/lib/seo";
 
-const HOME_TITLE = "Context Fence — Local MCP Policy Proxy for AI Coding Agents";
+const HOME_TITLE = "Context Fence: DLP for AI Agents. Stop Secret Leaks Locally.";
 
 const HOME_DESCRIPTION =
-  "Context Fence is a local MCP policy proxy for AI coding agents: schema-based checks under 10ms, secret stripping, append-only audit log, zero cloud routing.";
+  "Context Fence is a local firewall for what AI agents send out. It checks data before it leaves your machine and blocks secrets. Today it protects MCP tools. Version 2.1 is coming.";
 
 const HOME_KEYWORDS = [
   "context fence",
-  "MCP policy proxy",
+  "AI agent DLP",
+  "stop AI agent secret leaks",
+  "local AI agent firewall",
   "AI agent security",
   "LLM tool call guardrails",
   "local AI proxy",
@@ -33,14 +35,14 @@ export const metadata = baseMetadata({
   description: HOME_DESCRIPTION,
   path: "/",
   keywords: HOME_KEYWORDS,
-  ogTitle: "Context Fence — MCP Policy Proxy",
-  ogDescription: "Local MCP policy proxy that stops AI agents leaking secrets.",
+  ogTitle: "Context Fence: DLP for AI Agents",
+  ogDescription: "A local firewall for what AI agents send out. Blocks secrets before they leave your machine.",
   twitterDescription:
-    "Context Fence is a local MCP policy proxy for AI coding agents: schema-based tool call checks under 10ms, secret stripping, append-only audit log, zero cloud routing. Free for macOS, Windows and Linux.",
+    "Context Fence checks what your AI agent sends out and blocks secrets before they leave. Today it protects MCP tools. Version 2.1 is coming. Free for macOS, Windows and Linux.",
 });
 
 const SOFTWARE_KEYWORDS = [
-  "local policy proxy",
+  "local AI agent firewall",
   "MCP tool call checks",
   "schema-based guardrails",
   "secret leakage blocking",

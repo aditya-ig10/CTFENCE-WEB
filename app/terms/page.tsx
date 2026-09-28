@@ -9,7 +9,7 @@ export const metadata = baseMetadata({
     "Context Fence terms of service, a product of Synthrun: the local core is free, builds are unsigned by design, and we make no warranty the fence catches everything.",
   keywords: [
     "context fence terms",
-    "MCP proxy license",
+    "AI agent firewall license",
     "free local AI proxy",
     "synthrun terms",
   ],

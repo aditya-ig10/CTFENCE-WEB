@@ -11,7 +11,7 @@ export const metadata = baseMetadata({
     "context fence privacy",
     "local AI proxy privacy",
     "no telemetry AI proxy",
-    "MCP proxy data policy",
+    "AI agent firewall data policy",
   ],
   path: "/privacy",
 });

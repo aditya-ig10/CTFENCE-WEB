@@ -6,7 +6,7 @@ export default function manifest(): MetadataRoute.Manifest {
     name: `${site.name} — ${site.productLine}`,
     short_name: "Context Fence",
     description:
-      "Local MCP policy proxy for AI coding agents: schema-based checks, secret stripping, zero cloud routing.",
+      "A local proxy that protects AI agents from leaking secrets. Today it covers MCP tool calls. Version 2.1 is coming.",
     start_url: "/",
     display: "standalone",
     background_color: "#050507",

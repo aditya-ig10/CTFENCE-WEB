@@ -9,13 +9,13 @@ export async function generateMetadata() {
   return baseMetadata({
     image: "/og/downloads.png",
   title: "Downloads",
-    description: `Download Context Fence ${version} — the local MCP policy proxy for AI coding agents. Universal macOS dmg, Homebrew tap, Windows installer, and Linux AppImage/deb/rpm builds with published sha256 checksums.`,
+    description: `Download Context Fence ${version} — a local firewall for what AI agents send out. Today it protects MCP tools. Universal macOS dmg, Homebrew tap, Windows installer, and Linux AppImage/deb/rpm builds with published sha256 checksums.`,
     keywords: [
       "download context fence",
-      "MCP proxy download",
+      "AI agent DLP download",
       "macOS AI agent security",
       "homebrew tap",
-      "linux MCP firewall AppImage",
+      "linux AI agent firewall AppImage",
       "deb rpm agent security",
       "AI agent policy proxy install",
       "local LLM guardrails",

@@ -1,8 +1,8 @@
 # Context Fence — marketing site
 
-Next.js 14 (App Router) + TypeScript + Tailwind. A local MCP policy proxy for
-AI coding agents: blocks secret leakage before the agent acts. The site says
-exactly that and nothing invented.
+Next.js 14 (App Router) + TypeScript + Tailwind. A local firewall for what
+AI agents send out: checks data before it leaves your machine and blocks
+secrets. The site says exactly that and nothing invented.
 
 ## Setup
 
