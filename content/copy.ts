@@ -74,13 +74,13 @@ export const downloads = {
 };
 
 export const hero = {
-  tag: "Context Fence — local MCP policy proxy",
+  tag: "Context Fence: DLP for AI agents",
   titleLines: [
-    { text: "Your agent", accent: false, dim: false, highlight: false },
-    { text: "policed locally.", accent: true, dim: false, highlight: false },
-    { text: "zero cloud routing.", accent: false, dim: true, highlight: true },
+    { text: "Stop your AI agent", accent: false, dim: false, highlight: false },
+    { text: "from leaking", accent: true, dim: false, highlight: false },
+    { text: "your secrets.", accent: false, dim: false, highlight: false },
   ],
-  sub: "Every agent tool call checked on your machine in under 10ms. Nothing leaves it.",
+  sub: "Context Fence runs on your computer. It checks what your AI agent sends out and blocks secrets before they leave. Today it protects MCP tools. More is coming in v2.1.",
   primaryCta: { label: "Download now", href: "/downloads" },
   slaBadge: site.slaReply,
   terminal: {
@@ -107,12 +107,11 @@ export const problem = {
   title: ["One agent read a .env file.", "Keys went out the door."],
   lead: "The July 18 incident: what happened, why the usual fix doesn't fix it, and where the guard actually lives.",
   narrative: [
-    { text: "On July 18, a coding agent read the .env file it was never asked to open, then sent what it had read across the wire. " },
-    { text: "The keys left the machine inside an API payload.", hl: "incident" },
-    { text: " The usual fix, a cloud gateway and a vendor deny-list, hopes for the best: " },
-    { text: "every call leaves your machine first.", hl: "incident" },
-    { text: " Ours doesn't. The guard lives where the agent lives: a gate at the boundary. " },
-    { text: "Nothing leaves.", hl: "incident" },
+    { text: "On July 18, a coding agent read a .env file it was never asked to open. " },
+    { text: "The keys left the machine.", hl: "incident" },
+    { text: " AI agents often hold real secrets, like keys and passwords. Nobody sees what they do with them. " },
+    { text: "You find out later, if at all.", hl: "incident" },
+    { text: " Most teams just trust the agent. The fence checks first." },
   ],
   times: ["00:02", "00:06", "00:10"],
   incident: {
@@ -158,6 +157,7 @@ export type Feature = {
   icon: FeatureIconName;
   alt: string;
   roadmap?: boolean;
+  tag?: string;
 };
 
 export const features: {
@@ -167,53 +167,52 @@ export const features: {
   grid: Feature[];
 } = {
   eyebrow: "// capabilities",
-  title: "What the proxy checks before every call",
-  lead: "Each MCP request is checked against local YAML rules before it reaches a tool. No exfil channel, no central server to trust.",
+  title: "What Context Fence protects",
+  lead: "What your agent sends out, checked on your machine. No cloud in the path.",
   grid: [
     {
-      title: "YAML policy engine",
-      desc: "Allow- and deny-lists written in YAML, not code. No SDK, no plugin API to learn. Edit the file, the proxy picks it up.",
-      icon: "lock",
-      alt: "Icon representing a filesystem access lock",
-    },
-    {
-      title: "Secret stripping",
-      desc: "Values that look like keys, env vars, or JWTs are redacted from agent reads before they reach the model. If it walks like a token, it does not pass.",
+      title: "Secrets",
+      desc: "Strips keys and tokens from what agents read. If it looks like a secret, it does not pass.",
       icon: "shield",
       alt: "Icon representing a shield over a key",
     },
     {
-      title: "Prompt-injection detection",
-      desc: "Instructions hiding in tool output get flagged before the agent can act on them. The point is to catch the payload the page already read.",
+      title: "MCP tools",
+      desc: "Checks every MCP tool call before it runs. Plain rules decide in under 10ms.",
+      icon: "lock",
+      alt: "Icon representing a filesystem access lock",
+    },
+    {
+      title: "Hidden instructions",
+      desc: "Flags tricks hidden in tool output. The agent never acts on them.",
       icon: "scan",
       alt: "Icon representing a scanning radar",
     },
     {
-      title: "Audit log",
-      desc: "Every decision, allowed or denied, lands in a local SQLite log with the rule that fired. Findable after the fact, the way incident postmortems need.",
+      title: "The log",
+      desc: "A record of every decision. Each row names the rule that fired.",
       icon: "list",
       alt: "Icon representing a list of log entries",
     },
     {
-      title: "Local-only execution",
-      desc: "The proxy runs on your machine and talks to nobody. Uninstall it and nothing else changes; there is no account to deactivate.",
+      title: "Prompts and files",
+      desc: "Checks what is sent to AI models and what agents read and write.",
       icon: "pin",
-      alt: "Icon representing a map pin at a local location",
+      alt: "Icon representing a document being checked",
     },
     {
-      title: "Hosted control plane",
-      desc: "A web console for policies across a fleet and synced audit logs. It is on the roadmap, not in the box. Local-only works today without it.",
+      title: "Browsers, coding agents, and other tools",
+      desc: "Wider coverage for how agents work today.",
       icon: "cloud",
-      alt: "Icon representing a cloud with a question mark",
-      roadmap: true,
+      alt: "Icon representing connected tools",
     },
   ],
 };
 
 export const cases = {
   eyebrow: "// case studies",
-  title: "Where it is being tested",
-  lead: "Four real-world patterns where the fence proves its value — from solo dev to agency fleet.",
+  title: "Example situations",
+  lead: "Four patterns where the fence proves its value, from solo dev to agency fleet. These are examples, not customer stories.",
   footnote: "bench notes · july 2026",
   cards: [
     {
@@ -225,12 +224,12 @@ export const cases = {
       stages: [
         {
           label: "the problem",
-          text: "One team of agents was the attack surface for a dozen client repos at once. One wrong read, and the client's secrets move with it.",
+          text: "One team of agents touches client repos all day. One wrong read can send a client's secrets out.",
           tone: "problem",
         },
         {
           label: "what the fence did",
-          text: "Per-client policy files on a shared machine, so a denial for one repo is not overruled by another repo's rules.",
+          text: "Each client gets its own rule file. A no for one client stays a no.",
           tone: "fence",
         },
         {
@@ -250,12 +249,12 @@ export const cases = {
       stages: [
         {
           label: "the problem",
-          text: "One person, one machine, an agent with broad tool access, and production keys in env vars that have to stay in env vars.",
+          text: "One dev, one laptop, and keys that must stay in env vars. The agent can read any file.",
           tone: "problem",
         },
         {
           label: "what the fence did",
-          text: "Default-deny on the risky calls: git push to non-allowlisted remotes, writes outside the project, reads of env files.",
+          text: "Risky calls are denied by default. Bad pushes, stray writes, and env reads are stopped.",
           tone: "fence",
         },
         {
@@ -275,12 +274,12 @@ export const cases = {
       stages: [
         {
           label: "the problem",
-          text: "A production gateway with MCP endpoints pointed at internal files. One missing allowlist entry read like an open door.",
+          text: "A gateway opens private files to outside tools. One gap reads like an open door.",
           tone: "problem",
         },
         {
           label: "what the fence did",
-          text: "Each tool got a per-session allowlist. Requests outside it were denied before any tool code ran.",
+          text: "Each tool gets a short allow list. Other calls are denied first.",
           tone: "fence",
         },
         {
@@ -300,12 +299,12 @@ export const cases = {
       stages: [
         {
           label: "the problem",
-          text: "A REPL with a path into the vault. The first command anyone ran was: try to read the auth file.",
+          text: "A coding helper could reach the secret vault. The first test tried to read the keys.",
           tone: "problem",
         },
         {
           label: "what the fence did",
-          text: "Commands outside the session scope were refused. The vault path never reached the model.",
+          text: "Out of scope commands are refused. The vault path never reaches the model.",
           tone: "fence",
         },
         {
@@ -348,8 +347,8 @@ export const pricing: {
   finePrintLink: { label: string; href: string };
 } = {
   eyebrow: "// pricing",
-  title: "Priced per fence, not per seat.",
-  lead: "Per enforcement node. Unlimited policies on every tier.",
+  title: "Simple pricing. Pay per machine, not per seat.",
+  lead: "A node is one machine that runs Context Fence. Unlimited rules on every plan.",
   plans: [
     {
       name: "Free",
@@ -359,14 +358,14 @@ export const pricing: {
       nodes: "1 node · local only",
       retention: "7-day audit retention",
       features: [
-        "Full local MCP policy proxy — YAML rules, secret stripping, injection detection",
-        "Unlimited policies",
-        "1 enforcement node (local only)",
-        "7-day audit retention",
-        "Cross-platform support",
-        "Slack alerting",
+        "Full local protection for MCP tools",
+        "Unlimited rules",
+        "1 machine (local only)",
+        "7 day log history",
+        "Works on Mac, Windows, and Linux",
+        "Slack alerts",
         "CSV export",
-        "Public template registry — browse only",
+        "Shared rule templates (browse only)",
         "Community support",
       ],
       cta: { label: "Start for free", href: "/downloads", primary: false },
@@ -380,13 +379,13 @@ export const pricing: {
       retention: "30-day audit retention",
       features: [
         "Everything in Free",
-        "Unlimited policies",
-        "3 enforcement nodes",
-        "30-day audit retention",
-        "Cloud backup",
-        "Agent management",
-        "Template registry — publish, not just browse",
-        "Email support · best-effort",
+        "Unlimited rules",
+        "3 machines included",
+        "30 day log history",
+        "Cloud backup of your settings",
+        "Manage your agents",
+        "Publish and share rules",
+        "Email support",
       ],
       cta: { label: "Get Starter", href: "/checkout?plan=starter&cycle=yearly", primary: false },
     },
@@ -398,17 +397,17 @@ export const pricing: {
       status: "ready",
       nodes: "10 nodes included",
       retention: "90-day audit retention",
-      overage: "+ ≈$7–9 / node / month beyond 10",
+      overage: "+ extra nodes billed per node / month beyond 10",
       features: [
         "Everything in Starter",
-        "Unlimited policies",
-        "10 enforcement nodes included",
-        "90-day audit retention",
-        "Admin agent control",
-        "SIEM streaming — syslog / Splunk / Datadog / ELK",
-        "Policy-as-code via git sync — dry-run + drift detection",
-        "Policy change approval workflows",
-        "Fleet health dashboard",
+        "Unlimited rules",
+        "10 machines included",
+        "90 day log history",
+        "Admin control over agents",
+        "Send logs to Splunk, Datadog, or ELK",
+        "Sync rules from Git",
+        "Approval step for risky actions",
+        "Fleet dashboard",
         "Priority email support",
       ],
       cta: { label: "Get Teams", href: "/checkout?plan=teams&cycle=yearly", primary: true },
@@ -422,27 +421,27 @@ export const pricing: {
       retention: "180-day+ audit retention",
       features: [
         "Everything in Teams",
-        "Unlimited policies and nodes",
-        "180-day+ audit retention — 12-month optional",
-        "SSO / SAML + IdP-driven policy assignment, granular RBAC",
-        "Policy version control + admin user control",
-        "Tamper-evident audit log — hash chaining",
-        "Compliance reports — SOC 2 / ISO 27001 / EU AI Act evidence packs",
-        "Custom sandboxed environment — deploy under your own entity",
-        "Incident replay — reconstruct exactly what an agent did",
+        "Unlimited rules and machines",
+        "180+ day log history",
+        "Single sign on and roles",
+        "Rule version history",
+        "Tamper proof log",
+        "Compliance report packs",
+        "Safe test mode",
+        "Incident replay",
         "Dedicated support SLA",
       ],
       cta: { label: "Contact us", href: "mailto:hello@synthrun.site", primary: false },
     },
   ],
-  finePrint: "Nodes, not seats. $22/$105 monthly, or $18/$90 billed annually. Converted to your currency live.",
+  finePrint: "Nodes, not seats. Monthly or annual billing — prices converted to your currency live.",
   finePrintLink: { label: "privacy policy", href: "/privacy" },
 };
 
 export const faq = {
   eyebrow: "// faq",
   title: "Questions a security engineer actually asks",
-  lead: "Five answers, no hedging. If we have not shipped it yet, we say so.",
+  lead: "",
   more: {
     text: "Still curious?",
     cta: "Subscribe to the newsletter",
@@ -450,24 +449,28 @@ export const faq = {
   },
   items: [
     {
-      q: "Does my agent's data ever leave my machine?",
-      a: "No. The proxy runs locally and every policy check happens locally. The only thing that leaves your machine is what your tools send on their own. The hosted control plane, when it ships, is opt-in and syncs the audit log only.",
+      q: "Does my data leave my machine?",
+      a: "No. All checks run on your computer. Nothing is sent anywhere to be checked.",
     },
     {
-      q: "How fast is the policy check?",
-      a: "Under 10ms per call. It is a schema match against local YAML rules, not a prompt to an LLM judge. A hundred calls a minute stays imperceptible.",
+      q: "How fast is it?",
+      a: "Under 10ms per check. It uses plain rules, not an AI judge. You will not feel it.",
     },
     {
-      q: "What does it actually block?",
-      a: "Destructive tool calls, filesystem escape outside the project, connections to non-allowlisted domains, secret leakage — keys, env vars, JWTs — and prompt-injection payloads hiding in tool output.",
+      q: "What does it block?",
+      a: "Keys and tokens. Unsafe file reads like .env files. Risky tool calls and hidden tricks in tool output. More coverage is coming in v2.1.",
     },
     {
-      q: "How is this different from MintMCP, Lasso, or Kong AI Gateway?",
-      a: "They route your agent traffic through their cloud to inspect it. We do the inspection on your machine and route nothing anywhere. If your threat model dislikes putting secrets through a third party, that difference is the product.",
+      q: "How is it different from other tools?",
+      a: "Old DLP tools and cloud gateways send your traffic to their servers to inspect it. We check everything on your machine. Nothing is sent anywhere.",
     },
     {
       q: "Is it free?",
-      a: "The local proxy is free and it is the core of the product. The paid piece is the hosted control plane — fleet policy sync, audit aggregation, retention — which is policy sync and audit aggregation only; it never routes your agent traffic. It is not built yet.",
+      a: "Yes, the local proxy is free. Paid plans add more machines, longer log history, and team features. The hosted control plane is not built yet.",
+    },
+    {
+      q: "When is v2.1 coming?",
+      a: "Soon. It widens Context Fence from MCP tools to full protection for AI agents. Join the newsletter to hear when it ships.",
     },
   ],
 };
@@ -864,7 +867,7 @@ export const privacy = {
   eyebrow: "// privacy policy",
   title: "What crosses the fence.",
   sub: "The short version: in the default mode, nothing does. Read the long version anyway — it is honest, and it should be.",
-  updated: "Last updated: August 2026",
+  updated: "Last updated: September 2026",
   tldr: [],
   who: {
     h: "Who we are",
@@ -897,6 +900,18 @@ export const privacy = {
     {
       h: "What the website sees",
       p: "This site uses Google Analytics to count visits and see which pages people read. GA sets cookies and we see aggregate numbers only: rough visitor counts, popular pages, broad geography. We do not see your identity through it, and we do not try to. The downloads page itself reads a public release manifest from GitHub — that is a public file any visitor can read, and it contains only version numbers, file sizes, and checksums.",
+    },
+    {
+      h: "Cookie policy",
+      p: "The website stores the minimum and asks before anything optional. Essential storage is always on: your theme preference and your consent choice itself (cf-consent), kept in your browser's local storage — no tracking, no expiry that matters, delete it any time and we simply ask again. Analytics (Google Analytics) is strictly opt-in: until you press Accept, no analytics script loads and no analytics cookie is set. With consent, GA sets _ga (2 years) and _ga_<container-id> (2 years) to count visits in aggregate — rough visitor counts, popular pages, broad geography. We never see your identity through it. Change your mind any time via Cookie settings in the footer; declining later stops future collection (already-set GA cookies can be cleared in your browser). A Global Privacy Control signal is honored as a decline. Signing in with Google stores a Firebase auth session so you stay signed in — Google's own privacy policy covers their side of that handshake.",
+    },
+    {
+      h: "Do Not Track and Global Privacy Control",
+      p: "We honor Global Privacy Control as a decline of analytics: with the signal present, analytics stays off and the customize panel says so. Do Not Track headers are treated the same way. Essential storage is unaffected — the site cannot remember your theme or your choice without it.",
+    },
+    {
+      h: "International transfers",
+      p: "The product keeps everything on your machine, so there is nothing to transfer. The only cross-border processing is Google Analytics, and only after you opt in: Google may process aggregate visit data on infrastructure outside India, including the US, under its own terms. No other website data leaves the region by design — email replies stay with the founders.",
     },
     {
       h: "The early access form",
@@ -963,7 +978,7 @@ export const terms = {
     {
       h: "What the product is",
       legal:
-        "The Product is a local policy proxy for MCP tool calls. In its default configuration it operates entirely on your machine: it reads a policy file (cf.policy.yml), evaluates tool calls against it, writes an append-only audit log to local SQLite, and routes nothing to Synthrun or any third party. Nothing in these terms grants or implies any right to use the Product as a hosted service unless separately agreed.",
+        "The Product is a local policy proxy for AI agent tool calls. In its default configuration it operates entirely on your machine: it reads a policy file (cf.policy.yml), evaluates tool calls against it, writes an append-only audit log to local SQLite, and routes nothing to Synthrun or any third party. Nothing in these terms grants or implies any right to use the Product as a hosted service unless separately agreed.",
       plain: "It is a fence that sits on your machine and checks every tool call. By default it sends nothing anywhere.",
     },
     {
