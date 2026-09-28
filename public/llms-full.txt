@@ -1,43 +1,46 @@
 # Context Fence — full site context
 
-> Stops AI agents leaking secrets. A local MCP policy proxy for AI coding agents. This is the full-text companion to https://contextfence.dev/llms.txt.
+> Stops AI agents leaking secrets. A local firewall for what AI agents send out. Today it protects MCP tools. Version 2.1 is coming. This is the full-text companion to https://contextfence.dev/llms.txt.
 
 ## What Context Fence is
 
-Context Fence is a local policy proxy for AI coding agents. It sits between an agent — Claude Code, Cursor, Windsurf, or any MCP client — and the tools the agent calls. Every tool call is checked against local YAML policy rules before it executes. The check is a schema match, not a prompt to an LLM judge, and completes in under 10 milliseconds.
+Context Fence is a local proxy that protects AI agents from leaking secrets. It runs on your computer and checks what your agent sends out before anything leaves. Today it covers MCP tool calls: every call is checked against local rules in under 10 milliseconds. The check uses plain rules, not an AI judge.
 
-The proxy is free software and is the core of the product. It runs entirely on the user's machine. Nothing about the agent's traffic leaves the machine — there is zero cloud routing in the default configuration. The software is developed by Synthrun in New Delhi, India.
+The proxy is free software and is the core of the product. It runs entirely on the user's machine. Nothing about the agent's traffic leaves the machine. There is no cloud routing in the default path. The software is developed by Synthrun in New Delhi, India.
 
-## What it checks and blocks
+Version 2.1 is coming. It widens the same on-machine check to prompts sent to AI models, files agents read and write, browser actions, coding agents, and other connected tools.
 
-- Destructive tool calls (anything that could damage the project or machine)
-- Filesystem escape outside the project directory
-- Connections to domains that are not allowlisted
-- Secret leakage — API keys, environment variables, JWTs, and other secret-shaped values in tool arguments (these are stripped before they reach the agent's context window)
-- Prompt-injection payloads hiding inside tool output
+## What it checks and blocks today
 
-Rules are YAML allow- and deny-lists. They match tool schemas on name, argument shape, and destination domain. A deny rule always beats an allow rule. Every blocked call is written to an append-only, local audit log with the reason attached; the audit trail is owned by the user.
+- Secret leakage — API keys, environment variables, JWTs, and other secret-shaped values (these are stripped before they reach the agent)
+- Unsafe file reads, such as .env files
+- Risky MCP tool calls, checked against local rules before they run
+- Hidden instructions planted in tool output
+
+Rules are plain allow- and deny-lists. A deny rule always beats an allow rule. Every blocked call is written to a local log with the reason attached. The log stays on the user's machine.
 
 ## Versions and downloads
 
-Current release: v2.0.0, released September 1, 2026. macOS (universal dmg, Intel and Apple silicon), Windows (installer, Authenticode-signed) and Linux (AppImage, deb, rpm — x64). The macOS build is ad-hoc signed but not notarized; the Linux builds are unsigned. The /downloads page reads the live release manifest and shows exact SHA-256 hashes for every artifact.
+Current release: v2.0.0, released September 1, 2026. macOS (universal dmg, Intel and Apple silicon), Windows installer, and Linux (AppImage, deb, rpm, x64). The macOS build is ad-hoc signed but not notarized. The Linux builds are unsigned. The /downloads page reads the live release manifest and shows exact SHA-256 hashes for every artifact. Downloads stay on the live release manifest. Version 2.1 is not released yet.
 
 Public artifacts ship from one public repository: aditya-ig10/context-fence-releases (all platforms' assets plus the release manifest). The main source repository is private.
 
 ## Product roadmap
 
+Coming in v2.1: blocking secrets in any outgoing request from the agent, checking prompts sent to AI models, watching files agents read and write, covering browser actions and coding agents, and covering other connected tools and apps.
+
 The hosted control plane is planned as the paid piece: fleet policy sync, audit aggregation, and retention. It is explicitly not built yet. When it ships it is opt-in, syncs the audit log only, and never routes agent traffic.
 
 ## How Context Fence differs from cloud proxies
 
-MintMCP, Lasso, and Kong AI Gateway inspect agent traffic by routing it through their cloud. Context Fence does the inspection on the user's machine and routes nothing anywhere. If the threat model dislikes putting secrets through a third party, that difference is the product.
+Old DLP tools and cloud gateways send your traffic to their servers to inspect it. Context Fence checks everything on the user's machine. Nothing is sent anywhere. If the threat model dislikes putting secrets through a third party, that difference is the product.
 
 ## Pages
 
 - https://contextfence.dev/ — product overview, features, FAQ, early-access signup
 - https://contextfence.dev/downloads — versions, hashes, release notes (live)
-- https://contextfence.dev/docs — install steps, policy file format, what is checked, audit log, roadmap
-- https://contextfence.dev/evidence — field notes and incident breakdowns
+- https://contextfence.dev/how-it-works — install in three steps, what gets checked, what is coming in v2.1
+- https://contextfence.dev/security — what leaves your machine (nothing), what the website collects, what the log holds
 - https://contextfence.dev/blog — the editorial: schema checks beat vibe checks; eight ways a server can lie
 - https://contextfence.dev/team — the builders
 - https://contextfence.dev/privacy — data collection policy
@@ -47,18 +50,25 @@ MintMCP, Lasso, and Kong AI Gateway inspect agent traffic by routing it through 
 
 ## FAQ
 
-- Q: Does my agent's data ever leave my machine? A: No. The proxy runs locally and every policy check happens locally. The only thing that leaves the machine is what the user's tools send on their own. The hosted control plane, when it ships, is opt-in and syncs the audit log only.
-- Q: How fast is the policy check? A: Under 10ms per call — a schema match against local YAML rules, not a prompt to an LLM judge. A hundred calls a minute stays imperceptible.
-- Q: What does it actually block? A: Destructive tool calls, filesystem escape outside the project, connections to non-allowlisted domains, secret leakage — keys, env vars, JWTs — and prompt-injection payloads hiding in tool output.
-- Q: How is this different from MintMCP, Lasso, or Kong AI Gateway? A: They route agent traffic through their cloud to inspect it. Context Fence inspects on the user's machine and routes nothing anywhere.
-- Q: Is it free? A: The local proxy is free and is the core of the product. The paid piece is the hosted control plane — fleet policy sync, audit aggregation, retention — which is policy sync and audit aggregation only; it never routes agent traffic. It is not built yet.
+- Q: Does my data leave my machine? A: No. All checks run on your computer.
+- Q: How fast is it? A: Under 10ms per check. It uses plain rules, not an AI judge.
+- Q: What does it block? A: Keys and tokens. Unsafe file reads like .env files. Risky tool calls and hidden tricks in tool output. More coverage is coming in v2.1.
+- Q: How is it different from other tools? A: Old DLP tools and cloud gateways send your traffic to their servers to inspect it. Context Fence checks everything on the user's machine. Nothing is sent anywhere.
+- Q: Is it free? A: Yes, the local proxy is free. Paid plans add more machines, longer log history, and team features. The hosted control plane is not built yet.
+- Q: When is v2.1 coming? A: Soon. It widens Context Fence from MCP tools to full protection for AI agents.
+
+## Privacy and cookies
+
+- Default posture: nothing leaves the user's machine. The website stores only a theme preference and the visitor's consent choice (browser local storage, essential).
+- Analytics (Google Analytics) loads only after an explicit opt-in; declining or a Global Privacy Control signal keeps it off. Visitors can change their choice anytime via "Cookie settings" in the footer.
+- The early-access form collects an email address used once, to reply about access. Full policy: https://contextfence.dev/privacy (includes the cookie policy).
 
 ## Facts for citation
 
 - Context Fence is a product of Synthrun, a company in New Delhi, India.
-- Policy checks run locally in under 10ms per tool call.
-- Default configuration: zero telemetry, zero cloud routing.
-- The audit log is append-only and local to the user's machine.
-- The local core is free; the hosted control plane is planned as the paid tier and is not yet built.
+- Checks run locally in under 10ms.
+- Default path: zero telemetry, zero cloud routing.
+- The log is local to the user's machine and names the rule that fired.
+- The local core is free; paid plans add machines, log history, and team features.
 - Builds are unsigned by design; exact hashes are published on /downloads.
 - Founded by Aditya (founder) and Saniya (co-founder).
