@@ -32,11 +32,64 @@ function NavHoverLink({ href, label, active }: { href: string; label: string; ac
   );
 }
 
+function NavDashboardLink({ href, label, active }: { href: string; label: string; active?: boolean }) {
+  const isActive = active ?? false;
+  return (
+    <Link
+      href={href}
+      style={{
+        display: "inline-flex",
+        alignItems: "center",
+        padding: "0.6rem 1.35rem",
+        borderRadius: 999,
+        color: isActive ? "white" : "#ef4444",
+        background: isActive ? "#ef4444" : "rgba(239,68,68,0.1)",
+        border: isActive ? "1px solid #ef4444" : "1px solid rgba(239,68,68,0.25)",
+        boxShadow: isActive ? "0 4px 14px rgba(239,68,68,0.22)" : "none",
+        textDecoration: "none",
+        fontFamily: "DM Mono, monospace",
+        fontSize: "0.62rem",
+        letterSpacing: "0.08em",
+        textTransform: "uppercase",
+        fontWeight: 600,
+        whiteSpace: "nowrap",
+        transition: "background 0.2s, transform 0.2s, box-shadow 0.2s, border-color 0.2s, color 0.2s",
+      }}
+      onMouseEnter={(e) => {
+        if (isActive) {
+          e.currentTarget.style.background = "#dc2626";
+          e.currentTarget.style.borderColor = "#dc2626";
+        } else {
+          e.currentTarget.style.background = "rgba(239,68,68,0.18)";
+          e.currentTarget.style.borderColor = "rgba(239,68,68,0.45)";
+        }
+        e.currentTarget.style.transform = "translateY(-1px)";
+        e.currentTarget.style.boxShadow = "0 6px 20px rgba(239,68,68,0.3)";
+      }}
+      onMouseLeave={(e) => {
+        if (isActive) {
+          e.currentTarget.style.background = "#ef4444";
+          e.currentTarget.style.borderColor = "#ef4444";
+          e.currentTarget.style.boxShadow = "0 4px 14px rgba(239,68,68,0.22)";
+        } else {
+          e.currentTarget.style.background = "rgba(239,68,68,0.1)";
+          e.currentTarget.style.borderColor = "rgba(239,68,68,0.25)";
+          e.currentTarget.style.boxShadow = "none";
+        }
+        e.currentTarget.style.transform = "translateY(0)";
+      }}
+    >
+      {label}
+    </Link>
+  );
+}
+
 export default function Navbar() {
   const pathname = usePathname();
   const [scrolled, setScrolled] = useState(false);
   const [dark, setDark] = useState(false);
   const [user, setUser] = useState<User | null>(null);
+  const [menuOpen, setMenuOpen] = useState(false);
 
   useEffect(() => {
     const onScroll = () => {
@@ -90,6 +143,29 @@ export default function Navbar() {
     return pathname === href || pathname.startsWith(`${href}/`);
   };
 
+  // Mobile sheet never stays open across navigations.
+  useEffect(() => {
+    setMenuOpen(false);
+  }, [pathname]);
+
+  useEffect(() => {
+    if (!menuOpen) return;
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") setMenuOpen(false);
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [menuOpen]);
+
+  const signIn = async () => {
+    const auth = getFirebaseAuth();
+    if (!auth) return;
+    try {
+      await signInWithPopup(auth, new GoogleAuthProvider());
+      setMenuOpen(false);
+    } catch {}
+  };
+
   return (
     <>
       <nav
@@ -105,6 +181,7 @@ export default function Navbar() {
         }}
       >
         <div
+          className="nav-inner"
           style={{
             maxWidth: 1140,
             margin: "0 auto",
@@ -149,7 +226,7 @@ export default function Navbar() {
             <NavHoverLink href="/downloads" label="Downloads" active={isActive("/downloads")} />
           </div>
 
-          <div style={{ display: "flex", alignItems: "center", gap: "0.9rem" }}>
+          <div className="nav-actions" style={{ display: "flex", alignItems: "center", gap: "0.9rem" }}>
             <button
               onClick={toggleTheme}
               aria-label={dark ? "Switch to light mode" : "Switch to dark mode"}
@@ -190,6 +267,7 @@ export default function Navbar() {
               )}
             </button>
 
+            <span className="nav-action-primary" style={{ display: "inline-flex", alignItems: "center" }}>
             <Link
               href="/downloads"
               style={{
@@ -221,19 +299,15 @@ export default function Navbar() {
             >
               Download
             </Link>
+            </span>
+            <span className="nav-action-primary" style={{ display: "inline-flex", alignItems: "center" }}>
             {user ? (
-              <NavHoverLink href="/dashboard" label="Dashboard" active={isActive("/dashboard")} />
+              <NavDashboardLink href="/dashboard" label="Dashboard" active={isActive("/dashboard")} />
             ) : (
               firebaseEnabled && (
                 <button
                   type="button"
-                  onClick={async () => {
-                    const auth = getFirebaseAuth();
-                    if (!auth) return;
-                    try {
-                      await signInWithPopup(auth, new GoogleAuthProvider());
-                    } catch {}
-                  }}
+                  onClick={signIn}
                   style={{
                     display: "inline-flex",
                     alignItems: "center",
@@ -262,10 +336,56 @@ export default function Navbar() {
                 </button>
               )
             )}
+            </span>
+            <button
+              type="button"
+              className="nav-hamburger"
+              aria-label={menuOpen ? "Close menu" : "Open menu"}
+              aria-expanded={menuOpen}
+              onClick={() => setMenuOpen((v) => !v)}
+            >
+              <span aria-hidden="true" />
+              <span aria-hidden="true" />
+              <span aria-hidden="true" />
+            </button>
           </div>
         </div>
+        {menuOpen && (
+          <div className="nav-sheet" role="dialog" aria-label="Site menu">
+            {[
+              { href: "/team", label: "Team" },
+              { href: "/privacy", label: "Privacy" },
+              { href: "/terms", label: "Terms" },
+              { href: "/downloads", label: "Downloads" },
+            ].map((l) => (
+              <Link
+                key={l.href}
+                href={l.href}
+                onClick={() => setMenuOpen(false)}
+                className={isActive(l.href) ? "nav-sheet-link nav-sheet-link-active" : "nav-sheet-link"}
+              >
+                {l.label}
+              </Link>
+            ))}
+            <div className="nav-sheet-actions">
+              <Link href="/downloads" onClick={() => setMenuOpen(false)} className="nav-sheet-download">
+                Download
+              </Link>
+              {user ? (
+                <Link href="/dashboard" onClick={() => setMenuOpen(false)} className="nav-sheet-secondary">
+                  Dashboard →
+                </Link>
+              ) : (
+                firebaseEnabled && (
+                  <button type="button" onClick={signIn} className="nav-sheet-secondary">
+                    Continue with Google
+                  </button>
+                )
+              )}
+            </div>
+          </div>
+        )}
       </nav>
-      <style>{`@media (max-width: 860px) { .nav-links-center { display: none !important; } }`}</style>
     </>
   );
 }
