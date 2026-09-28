@@ -27,6 +27,7 @@ import { useRouter } from "next/navigation";
 import { addDoc, collection, doc, getDoc, getDocs, limit, query, serverTimestamp, setDoc, Timestamp, where } from "firebase/firestore";
 import gsap from "gsap";
 import { motionAllowed } from "@/lib/anim";
+import { BillingToggle, RollingNumber } from "@/components/PricingMotion";
 
 // step one of checkout: billing details + order summary. no currency selector
 // — the site prices in INR and the amount is fixed server-side. the visitor
@@ -40,6 +41,15 @@ const PLAN_NAMES: Record<PlanId, string> = {
   teams: "Teams",
 };
 const inr = (n: number) => "₹" + n.toLocaleString("en-IN");
+
+// rolling ₹ figure — same odometer as the pricing section. currency mark
+// stays pinned, digits roll on every quote change.
+const rollInr = (n: number) => (
+  <>
+    <span>₹</span>
+    <RollingNumber formatted={Math.round(n).toLocaleString("en-IN")} />
+  </>
+);
 
 const CITY_PLACEHOLDER: Record<string, string> = {
   India: "Bengaluru",
@@ -803,27 +813,27 @@ function cleanPlaintext(val: unknown): string {
             <dl className="co-lines">
               <div className="co-line">
                 <dt>{PLAN_NAMES[plan]} · {billingCycle === "yearly" ? "annual" : "monthly"}</dt>
-                <dd>{nodes} node{nodes !== 1 ? "s" : ""}</dd>
+                <dd><RollingNumber formatted={String(nodes)} /> node{nodes !== 1 ? "s" : ""}</dd>
               </div>
               <div className="co-line">
                 <dt>Plan subtotal</dt>
-                <dd>{inr(quote.subtotalInr)}</dd>
+                <dd>{rollInr(quote.subtotalInr)}</dd>
               </div>
               {billingCycle === "yearly" && (
                 <div className="co-line">
                   <dt>Monthly equivalent</dt>
-                  <dd>{inr(Math.round(quote.totalInr / 12))} / mo</dd>
+                  <dd>{rollInr(Math.round(quote.totalInr / 12))} / mo</dd>
                 </div>
               )}
               {applied && (
                 <div className="co-line is-good">
                   <dt>Referral {applied}</dt>
-                  <dd>− {inr(quote.discount)}</dd>
+                  <dd>− {rollInr(quote.discount)}</dd>
                 </div>
               )}
               <div className="co-line">
-                <dt>Tax ({Math.round(quote.taxRate * 100)}%)</dt>
-                <dd>+ {inr(quote.taxInr)}</dd>
+                  <dt>Tax ({Math.round(quote.taxRate * 100)}%)</dt>
+                  <dd>+ {rollInr(quote.taxInr)}</dd>
               </div>
             </dl>
             <div className="co-sep" />
@@ -846,7 +856,7 @@ function cleanPlaintext(val: unknown): string {
             </div>
             <div className="co-total">
               <span className="co-total-label">Due today</span>
-              <span className="co-total-amount">{inr(quote.totalInr)}</span>
+              <span className="co-total-amount">{rollInr(quote.totalInr)}</span>
               <span className="co-total-note">
                 {billingCycle === "yearly" ? "billed annually" : "billed monthly"} · inclusive of tax
               </span>
@@ -945,7 +955,7 @@ function cleanPlaintext(val: unknown): string {
           >
             −
           </button>
-          <span className="co-stepper-count" aria-live="polite">{nodes}</span>
+          <span className="co-stepper-count" aria-live="polite"><RollingNumber formatted={String(nodes)} /></span>
           <button
             type="button"
             className="co-stepper-btn"
@@ -958,28 +968,11 @@ function cleanPlaintext(val: unknown): string {
         </div>
         <span className="co-planbar-sep" aria-hidden="true" />
         <div className="co-planbar-cycle">
-          <div className="billing-toggle" role="group" aria-label="Billing period" data-cycle={billingCycle}>
-            <span className="billing-toggle-slider" aria-hidden="true" />
-            <button
-              type="button"
-              className={`billing-toggle-btn${billingCycle === "monthly" ? " is-active" : ""}`}
-              aria-pressed={billingCycle === "monthly"}
-              onClick={() => setBillingCycle("monthly")}
-            >
-              Monthly
-            </button>
-            <button
-              type="button"
-              className={`billing-toggle-btn${billingCycle === "yearly" ? " is-active" : ""}`}
-              aria-pressed={billingCycle === "yearly"}
-              onClick={() => setBillingCycle("yearly")}
-            >
-              Annual
-              <span className="billing-toggle-save">
-                {plan === "starter" ? "save 18%" : "save 14%"}
-              </span>
-            </button>
-          </div>
+          <BillingToggle
+            value={billingCycle}
+            onChange={(v) => setBillingCycle(v)}
+            saving={plan === "starter" ? "save 18%" : "save 14%"}
+          />
         </div>
       </div>
 
@@ -1225,18 +1218,18 @@ function cleanPlaintext(val: unknown): string {
             {isAddOn ? (
               <div className="co-line">
                 <dt>Add {nodes} node{nodes > 1 ? "s" : ""}</dt>
-                <dd>{inr(quote.subtotalInr)}</dd>
+                <dd>{rollInr(quote.subtotalInr)}</dd>
               </div>
             ) : (
               <>
                 <div className="co-line">
                   <dt>{min} nodes included</dt>
-                  <dd>{inr(Math.round((quote.subtotalInr * min) / Math.max(nodes, 1)))}</dd>
+                  <dd>{rollInr(Math.round((quote.subtotalInr * min) / Math.max(nodes, 1)))}</dd>
                 </div>
                 {nodes > min && (
                   <div className="co-line">
                     <dt>{nodes - min} extra node{nodes - min > 1 ? "s" : ""}</dt>
-                    <dd>+ {inr(quote.subtotalInr - Math.round((quote.subtotalInr * min) / Math.max(nodes, 1)))}</dd>
+                    <dd>+ {rollInr(quote.subtotalInr - Math.round((quote.subtotalInr * min) / Math.max(nodes, 1)))}</dd>
                   </div>
                 )}
               </>
@@ -1244,25 +1237,25 @@ function cleanPlaintext(val: unknown): string {
             {billingCycle === "yearly" && (
               <div className="co-line">
                 <dt>Monthly equivalent</dt>
-                <dd>{inr(Math.round(quote.totalInr / 12))} / mo</dd>
+                <dd>{rollInr(Math.round(quote.totalInr / 12))} / mo</dd>
               </div>
             )}
             {applied && (
               <div className="co-line is-good">
                 <dt>Referral {applied}</dt>
-                <dd>− {inr(quote.discount)}</dd>
+                <dd>− {rollInr(quote.discount)}</dd>
               </div>
             )}
             {!!quote.taxInr && (
               <div className="co-line">
                 <dt>Tax ({Math.round(quote.taxRate * 100)}% · {effectiveCountry})</dt>
-                <dd>+ {inr(quote.taxInr)}</dd>
+                <dd>+ {rollInr(quote.taxInr)}</dd>
               </div>
             )}
           </dl>
           <div className="co-total">
             <span className="co-total-label">Total{billingCycle === "yearly" ? " / year" : " / month"}</span>
-            <span className="co-total-amount">{inr(quote.totalInr)}</span>
+            <span className="co-total-amount">{rollInr(quote.totalInr)}</span>
           </div>
 
           <div className="co-referral">
@@ -1290,7 +1283,7 @@ function cleanPlaintext(val: unknown): string {
             {phase === "creating" ? (
               <><span className="co-spinner" aria-hidden="true" /> Preparing…</>
             ) : (
-              <>Continue · {inr(quote.totalInr)}</>
+              <>Continue · {rollInr(quote.totalInr)}</>
             )}
           </button>
           <p className="co-note">Review the locked price next — you pay via Razorpay, nothing stored with us.</p>

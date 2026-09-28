@@ -1714,6 +1714,121 @@ html[data-theme="light"] .dl-panel-overlay {
   margin: 0 auto;
 }
 
+/* case dossier grid — 2×2 editorial cards, bottom-to-top rise */
+.cs-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 16px;
+}
+@media (min-width: 760px) {
+  .cs-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+@media (min-width: 1180px) {
+  .cs-grid { grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 14px; }
+}
+.cs-card {
+  background: var(--white);
+  border: 1px solid var(--border);
+  border-radius: 20px;
+  padding: clamp(22px, 2.6vw, 30px);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  min-height: 600px;
+  transition: border-color 200ms var(--ease-out), transform 200ms var(--ease-out), box-shadow 200ms var(--ease-out);
+}
+@media (hover: hover) and (pointer: fine) {
+  .cs-card:hover {
+    transform: translateY(-4px);
+    border-color: var(--border-strong, var(--muted));
+    box-shadow: 0 20px 44px -26px rgba(0, 0, 0, 0.35);
+  }
+}
+.cs-top {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 14px;
+}
+.cs-num {
+  font-family: var(--font-canela), serif;
+  font-weight: 700;
+  font-size: 15px;
+  letter-spacing: 0.02em;
+  color: var(--bright);
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  padding: 4px 12px;
+  font-variant-numeric: tabular-nums;
+}
+.cs-file {
+  font-family: var(--font-sans);
+  font-size: 11px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+.cs-title {
+  font-family: var(--font-canela), serif;
+  font-weight: 700;
+  font-size: clamp(24px, 2.8vw, 32px);
+  letter-spacing: -0.02em;
+  line-height: 1.05;
+  color: var(--bright);
+  margin: 0;
+}
+.cs-role {
+  font-family: var(--font-sans);
+  font-size: 13px;
+  color: var(--muted);
+  margin: 6px 0 0;
+}
+.cs-block {
+  border-top: 1px solid var(--border);
+  margin-top: 16px;
+  padding-top: 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.cs-label {
+  font-family: var(--font-sans);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+.cs-block--problem .cs-label { color: #ef4444; }
+.cs-block--fence .cs-label { color: #10b981; }
+.cs-text {
+  font-family: var(--font-sans);
+  font-size: 14.5px;
+  line-height: 1.65;
+  color: var(--text);
+  margin: 0;
+}
+.cs-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: auto;
+  padding-top: 18px;
+}
+.cs-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-family: var(--font-sans);
+  font-size: 11.5px;
+  font-weight: 600;
+  color: var(--text);
+  background: var(--off);
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  padding: 6px 12px;
+}
+
 @media (min-width: 640px) {
   .pc-row { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 }
@@ -3966,6 +4081,7 @@ html.dark .pc-inner, html[data-theme="dark"] .pc-inner { color: var(--ink); }
   margin-right: auto;
 }
 
+.pricing-head .section-title { margin-bottom: 16px; }
 .pricing-head .section-lead { margin-bottom: 0; }
 
 .plans {
@@ -3974,7 +4090,7 @@ html.dark .pc-inner, html[data-theme="dark"] .pc-inner { color: var(--ink); }
   gap: 16px;
   width: 100%;
   max-width: none;
-  margin: clamp(56px, 7vw, 88px) auto 0;
+  margin: clamp(28px, 3.5vw, 44px) auto 0;
 }
 
 /* pricing runs full-bleed — only 56px of breathing room each side */
@@ -4147,7 +4263,7 @@ html.dark .pc-inner, html[data-theme="dark"] .pc-inner { color: var(--ink); }
 .pm-toggle-wrap {
   position: relative;
   width: fit-content;
-  margin: clamp(28px, 3vw, 40px) auto 0;
+  margin: 24px auto 0;
 }
 .pm-toggle { margin: 0; }
 .pm-toggle .billing-toggle-btn { position: relative; }
@@ -5829,6 +5945,7 @@ html.vt-active *::after {
 }
 .co-planbar-cycle { display: flex; flex-direction: column; gap: 6px; }
 .co-planbar-cycle .billing-toggle { margin: 0; }
+.co-planbar-cycle .pm-toggle-wrap { margin: 0; }
 
 /* layout */
 .co-grid {

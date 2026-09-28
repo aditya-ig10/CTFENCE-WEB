@@ -153,3 +153,60 @@ function DigitColumn({ digit, grow }: { digit: number | null; grow: boolean }) {
     </span>
   );
 }
+
+const UPPER = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+
+// Same odometer, alphabetical: each letter rolls through A–Z (case kept).
+// Columns are keyed by index, so "Starter" to "Teams" morphs letter by
+// letter while extra columns grow or shrink away.
+export function RollingWord({ text, className }: { text: string; className?: string }) {
+  const chars = text.split("");
+  const [slots, setSlots] = useState(chars.length || 1);
+  if (chars.length > slots) setSlots(chars.length);
+  const [initialSlots] = useState(chars.length || 1);
+
+  const cols = [];
+  for (let i = 0; i < slots; i++) {
+    const ch = i < chars.length ? chars[i] : null;
+    cols.push(<LetterColumn key={i} ch={ch} grow={i >= initialSlots} />);
+  }
+
+  return (
+    <span aria-hidden className={cn("pm-roll", className)}>
+      {cols}
+    </span>
+  );
+}
+
+function LetterColumn({ ch, grow }: { ch: string | null; grow: boolean }) {
+  const reduceMotion = useReducedMotion();
+  const isAlpha = ch !== null && /[a-zA-Z]/.test(ch);
+  const [shown, setShown] = useState(ch ?? "A");
+  if (ch !== null && ch !== shown) setShown(ch);
+  // case follows the visible letter so shrinking columns keep their reel
+  const upper = /[A-Z]/.test(shown);
+  const alpha = upper ? UPPER : UPPER.toLowerCase();
+  const present = ch !== null && isAlpha;
+  const idx = Math.max(0, alpha.indexOf((upper ? shown.toUpperCase() : shown.toLowerCase())));
+
+  if (ch !== null && !isAlpha) {
+    return <span className="pm-sep">{ch}</span>;
+  }
+
+  return (
+    <span className={cn("pm-digit", present ? "is-present" : "is-gone", grow && "pm-digit--grow")}>
+      <motion.span
+        className="pm-reel"
+        initial={false}
+        animate={{ y: `${(-idx * 100) / 26}%` }}
+        transition={reduceMotion ? { duration: 0 } : ROLL}
+      >
+        {alpha.split("").map((g) => (
+          <span key={g} className="pm-glyph">
+            {g}
+          </span>
+        ))}
+      </motion.span>
+    </span>
+  );
+}

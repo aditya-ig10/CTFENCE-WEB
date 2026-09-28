@@ -20,7 +20,6 @@ export default function Pricing() {
       <div className="container">
         <RevealOnScroll>
           <div className="pricing-head">
-            <div className="section-eyebrow">{pricing.eyebrow}</div>
             <h2 className="section-title" id="pricing-title">
               {pricing.title}
             </h2>
