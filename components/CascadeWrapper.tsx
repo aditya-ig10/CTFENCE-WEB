@@ -8,12 +8,17 @@ export default function CascadeWrapper({ children }: { children: React.ReactNode
   return (
     <RouteTransitionProvider
       navigate={(url) => router.push(url)}
-      columns={10}
-      colors={["#fafaf8", "#f2f1ee", "#e0dfd9", "#111110", "#ef4444"]}
-      duration={0.55}
-      staggerDelay={0.035}
-      direction="top"
+      columns={14}
+      colors={["#ef4444"]}
+      duration={0.4}
+      staggerDelay={0.025}
+      exitOpposite
       mode="in-to-out"
+      showLeadingStroke={false}
+      showTrailingStroke={false}
+      strokeWidth={10}
+      className="cf-cascade"
+      panelClassName="cf-cascade-panel"
     >
       {children}
     </RouteTransitionProvider>
