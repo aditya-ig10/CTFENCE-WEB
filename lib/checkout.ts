@@ -1,13 +1,14 @@
 import type { CurrencyCode } from "@/lib/currency";
-import { ratePerInrStatic } from "@/lib/currency";
+import { ratePerInrStatic, toMinorUnits } from "@/lib/currency";
 
 // checkout pricing — everything here runs on the server (or is shared
 // constants): the amount charged is always recomputed from the plan id,
 // never trusted from the client. currency conversion uses the same static
 // snapshot the site displays with until live rates land.
 
-// currencies razorpay standard checkout can settle in
-export const CHECKOUT_CURRENCIES = ["INR", "USD", "EUR", "GBP", "SGD", "AED", "AUD", "CAD"] as const;
+// currencies razorpay standard checkout can settle in — kept in sync with
+// CurrencyCode in lib/currency so pricing display and checkout agree.
+export const CHECKOUT_CURRENCIES = ["INR", "USD", "EUR", "GBP", "SGD", "AED", "AUD", "CAD", "JPY", "BRL"] as const;
 export type CheckoutCurrency = (typeof CHECKOUT_CURRENCIES)[number];
 
 export function isCheckoutCurrency(v: unknown): v is CheckoutCurrency {
@@ -129,6 +130,7 @@ export type CheckoutQuote = {
   baseInr: number; // headline plan price (perNode × minNodes), in INR
   base: number; // plan price in the checkout currency
   discount: number; // discount amount in the checkout currency
+  tax: number; // tax amount in the checkout currency
   amount: number; // final charge, major value
   amountPaise: number; // final charge in the currency's smallest unit
   referralCode: string | null;
@@ -136,6 +138,7 @@ export type CheckoutQuote = {
   nodes: number; // total nodes chosen
   perNodeInr: number;
   subtotalInr: number; // base price for the chosen node count, pre-tax, pre-discount
+  discountInr: number; // referral discount in INR (audit trail)
   taxInr: number; // tax added on the discounted subtotal
   taxRate: number; // tax fraction applied
   // convenience: the tax-inclusive amount in INR (source of truth charged by razorpay)
@@ -196,13 +199,15 @@ export function quoteCheckout(
   const taxRate = taxRateForCountry(opts?.country);
   const taxInr = Math.round(taxable * taxRate);
   const totalInr = taxable + taxInr; // what razorpay actually charges (INR)
-    // convert INR base → checkout currency via the static snapshot for display.
-  // INR is the base, so it passes through unchanged; other currencies round.
+    // convert INR base → checkout currency via the static snapshot. same
+  // rounding as Money (exact Math.round) so the pricing section and the
+  // checkout charge always agree. INR is the base, passes through unchanged.
   const rate = ratePerInrStatic(currency as CurrencyCode);
   const conv = (inr: number) =>
-    currency === "INR" ? inr : Math.round((inr * rate) / 10) * 10;
+    currency === "INR" ? inr : Math.round(inr * rate);
   const base = conv(baseInr);
   const discountMajor = conv(discount);
+  const taxMajor = conv(taxInr);
   const amount = conv(totalInr);
   return {
     planId,
@@ -210,12 +215,14 @@ export function quoteCheckout(
     baseInr,
     base,
     discount: discountMajor,
+    tax: taxMajor,
     amount,
-    amountPaise: amount * 100,
+    amountPaise: toMinorUnits(currency as CurrencyCode, amount),
     referralCode: code,
     nodes,
     perNodeInr,
     subtotalInr: baseInr,
+    discountInr: discount,
     taxInr,
     taxRate,
     totalInr,

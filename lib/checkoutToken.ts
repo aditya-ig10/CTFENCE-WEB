@@ -1,6 +1,7 @@
 import { createHmac, randomBytes } from "node:crypto";
-import type { BillingAddress } from "@/lib/checkout";
+import type { BillingAddress, CheckoutCurrency } from "@/lib/checkout";
 import type { PlanId } from "@/lib/checkout";
+import { ratePerInrStatic, toMinorUnits } from "@/lib/currency";
 
 // one-time checkout magic link — a signed, short-lived token that encodes
 // the checkout intent (plan + email + amount + billing). server-only:
@@ -15,18 +16,28 @@ import type { PlanId } from "@/lib/checkout";
 export type CheckoutTokenClaims = {
   plan: PlanId;
   email: string;
-  inr: number; // final charge in INR (tax-inclusive) — what razorpay charges
+  inr: number; // final charge in INR (tax-inclusive) — audit trail, not charged
+  // settlement currency + amounts — what razorpay actually charges. locked at
+  // mint time from the billing country so pricing and checkout always agree.
+  currency: CheckoutCurrency;
+  amount: number; // final charge in `currency`, major value
+  amountMinor: number; // final charge in the currency's smallest unit
   referralCode: string | null;
   billing: BillingAddress;
   nonce: string;
   iat: number;
   exp: number;
-    // pricing breakdown, locked at checkout-mint time so the payment page can
-  // display (never recompute) the node count + tax that produced `inr`
+    // pricing breakdown, locked at checkout-mint time so the payment step can
+  // display (never recompute) the node count + tax that produced `amount`.
+  // *Inr fields are the INR audit trail; subtotal/discount/tax are the same
+  // figures in `currency` for display.
   nodes: number;
   subtotalInr: number;
   discountInr: number;
   taxInr: number;
+  subtotal: number;
+  discount: number;
+  tax: number;
   taxRate: number;
   billingCycle?: "monthly" | "yearly";
 };
@@ -41,12 +52,18 @@ export function mintCheckoutToken(input: {
   plan: PlanId;
   email: string;
   inr: number; // total billed in INR (subtotal incl. discount + tax)
+  currency: CheckoutCurrency;
+  amount: number; // total billed in `currency`, major value
+  amountMinor: number; // total billed in `currency`, smallest unit
   referralCode: string | null;
   billing: BillingAddress;
   nodes: number;
   subtotalInr: number;
   discountInr: number;
   taxInr: number;
+  subtotal: number; // same breakdown in `currency`, for display
+  discount: number;
+  tax: number;
   taxRate: number;
   billingCycle?: "monthly" | "yearly";
 }): { token: string; claims: CheckoutTokenClaims } {
@@ -81,12 +98,34 @@ export function verifyCheckoutToken(token: string): CheckoutTokenClaims | null {
     if (typeof c.inr !== "number" || typeof c.email !== "string" || !c.email) return null;
     if (!["starter", "teams"].includes(c.plan)) return null;
     if (!c.billing || typeof c.billing !== "object") return null;
-    // tolerate pre-node/tax tokens by defaulting the new fields
+    // tolerate pre-node/tax/currency tokens by defaulting the new fields.
+    // old tokens were INR-only, so the charge-currency fields equal INR.
+    const nodes = Number(c.nodes) || 0;
+    const subtotalInr = Number(c.subtotalInr) || 0;
+    const discountInr = Number((c as Partial<CheckoutTokenClaims>).discountInr) || 0;
+    const taxInr = Number(c.taxInr) || 0;
+    const currency = (typeof c.currency === "string" ? c.currency : "INR") as CheckoutCurrency;
+    const rate = ratePerInrStatic(currency as Parameters<typeof ratePerInrStatic>[0]);
+    const conv = (inr: number) => (currency === "INR" ? inr : Math.round(inr * rate));
+    const amount =
+      typeof c.amount === "number"
+        ? c.amount
+        : conv(typeof c.inr === "number" ? c.inr : 0);
     return {
       ...c,
-      nodes: Number(c.nodes) || 0,
-      subtotalInr: Number(c.subtotalInr) || 0,
-      taxInr: Number(c.taxInr) || 0,
+      currency,
+      amount,
+      amountMinor:
+        typeof c.amountMinor === "number"
+          ? c.amountMinor
+          : toMinorUnits(currency as Parameters<typeof toMinorUnits>[0], amount),
+      nodes,
+      subtotalInr,
+      discountInr,
+      taxInr,
+      subtotal: typeof c.subtotal === "number" ? c.subtotal : conv(subtotalInr),
+      discount: typeof c.discount === "number" ? c.discount : conv(discountInr),
+      tax: typeof c.tax === "number" ? c.tax : conv(taxInr),
       taxRate: Number(c.taxRate) || 0,
       billingCycle: (c.billingCycle as "monthly" | "yearly") ?? "monthly",
     };

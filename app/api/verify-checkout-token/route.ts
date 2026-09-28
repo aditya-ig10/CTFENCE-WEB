@@ -20,13 +20,17 @@ export async function POST(request: Request) {
     token,
     plan: claims.plan,
     email: claims.email,
-    amount: claims.inr, // tax-inclusive total in INR that razorpay charges
-    currency: "INR",
+    amount: claims.amount, // tax-inclusive total in `currency` that razorpay charges
+    currency: claims.currency,
+    amountInr: claims.inr, // same total in INR (audit trail)
     referralCode: claims.referralCode,
     billing: claims.billing,
         nodes: claims.nodes,
+    subtotal: claims.subtotal,
+    discount: claims.discount,
+    tax: claims.tax,
     subtotalInr: claims.subtotalInr,
-    discountInr: claims.discountInr,
+    discountInr: claims.discountInr ?? 0,
     taxInr: claims.taxInr,
     taxRate: claims.taxRate,
   });

@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { isCheckoutCurrency } from "@/lib/checkout";
 import { verifyCheckoutToken } from "@/lib/checkoutToken";
 
 // POST /api/create-order — razorpay standard checkout, step 2.
@@ -31,7 +32,11 @@ export async function POST(request: Request) {
     );
   }
 
-  const amountPaise = Math.round(claims.inr * 100);
+  // settlement currency + minor-unit amount are locked in the token at
+  // checkout time (derived from the billing country). pre-currency tokens
+  // backfill to INR in verifyCheckoutToken.
+  const currency = isCheckoutCurrency(claims.currency) ? claims.currency : "INR";
+  const amountPaise = Math.round(claims.amountMinor);
   if (amountPaise < 100) {
     return NextResponse.json(
       { ok: false, error: "amount below minimum", code: "AMOUNT_TOO_LOW" },
@@ -51,7 +56,7 @@ export async function POST(request: Request) {
       },
       body: JSON.stringify({
         amount: amountPaise,
-        currency: "INR",
+        currency,
         receipt,
         notes: {
           plan: claims.plan,

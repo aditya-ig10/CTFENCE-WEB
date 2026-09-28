@@ -1,13 +1,16 @@
 import { NextResponse } from "next/server";
 import {
   isPlanId,
+  isCheckoutCurrency,
   quoteCheckout,
   clampNodes,
   PLAN_PRICING,
   referralDiscount,
   taxRateForCountry,
   type BillingAddress,
+  type CheckoutCurrency,
 } from "@/lib/checkout";
+import { currencyFromCountry, localeForCurrency, ratePerInrStatic, toMinorUnits } from "@/lib/currency";
 import { mintCheckoutToken } from "@/lib/checkoutToken";
 
 // POST /api/checkout-link — step 1 of the magic-link flow. given a plan,
@@ -42,6 +45,12 @@ export async function POST(request: Request) {
     return NextResponse.json({ ok: false, error: "enter a valid email" }, { status: 400 });
   }
 
+  // settlement currency comes from the billing country (same helper the
+  // pricing section uses), so display and charge always agree. recomputed
+  // here server-side — never trusted from the request body.
+  const detected = currencyFromCountry(country);
+  const currency: CheckoutCurrency = isCheckoutCurrency(detected) ? detected : "INR";
+
   // handle add-on vs full purchase: addNodes = buy extra nodes only (at per-node price), not the full plan
   const addNodesRaw = typeof body?.addNodes === "number" ? body.addNodes : NaN;
   const isAddOn = Number.isFinite(addNodesRaw) && addNodesRaw > 0;
@@ -63,18 +72,24 @@ export async function POST(request: Request) {
     const taxRate = taxRateForCountry(country || undefined);
     const taxInr = Math.round(taxable * taxRate);
     const totalInr = taxable + taxInr;
+    // same conversion as quoteCheckout so add-ons round exactly like full plans
+    const r = ratePerInrStatic(currency);
+    const conv = (inr: number) => (currency === "INR" ? inr : Math.round(inr * r));
+    const amountMajor = conv(totalInr);
     quote = {
       planId: plan,
-      currency: "INR",
+      currency,
       baseInr,
-      base: baseInr,
-      discount,
-      amount: totalInr,
-      amountPaise: totalInr * 100,
+      base: conv(baseInr),
+      discount: conv(discount),
+      tax: conv(taxInr),
+      amount: amountMajor,
+      amountPaise: toMinorUnits(currency, amountMajor),
       referralCode: code,
       nodes: addNodes,
       perNodeInr,
       subtotalInr: baseInr,
+      discountInr: discount,
       taxInr,
       taxRate,
       totalInr,
@@ -83,7 +98,7 @@ export async function POST(request: Request) {
   } else {
     const requested = typeof body?.nodes === "number" ? body.nodes : NaN;
     nodes = Number.isFinite(requested) ? clampNodes(plan, requested) : PLAN_PRICING[plan].minNodes;
-    quote = quoteCheckout(plan, "INR", referralCode, {
+    quote = quoteCheckout(plan, currency, referralCode, {
       nodes,
       country: country || undefined,
       billingCycle,
@@ -93,6 +108,9 @@ export async function POST(request: Request) {
     plan,
     email,
     inr: quote.totalInr,
+    currency: quote.currency,
+    amount: quote.amount,
+    amountMinor: quote.amountPaise,
     referralCode: quote.referralCode,
         billing: {
       email,
@@ -110,13 +128,21 @@ export async function POST(request: Request) {
     },
         nodes: quote.nodes,
     subtotalInr: quote.subtotalInr,
-    discountInr: quote.discount,
+    discountInr: quote.discountInr,
     taxInr: quote.taxInr,
+    subtotal: quote.base,
+    discount: quote.discount,
+    tax: quote.tax,
     taxRate: quote.taxRate,
     billingCycle,
   });
 
   const link = `${BASE}/checkout/confirm?t=${encodeURIComponent(token)}`;
+  const amountLabel = new Intl.NumberFormat(localeForCurrency(claims.currency), {
+    style: "currency",
+    currency: claims.currency,
+    maximumFractionDigits: 0,
+  }).format(claims.amount);
 
   // best-effort email via emailjs; when keys are absent the inbound link still works
   if (process.env.EMAILJS_PUBLIC_KEY) {
@@ -132,7 +158,7 @@ export async function POST(request: Request) {
           to_email: email,
           plan: claims.plan,
           nodes: claims.nodes,
-          amount: `₹${claims.inr.toLocaleString("en-IN")}`,
+          amount: amountLabel,
           checkout_url: link,
           date: new Date().toISOString().slice(0, 16).replace("T", " "),
         },
@@ -146,11 +172,13 @@ export async function POST(request: Request) {
     ok: true,
     token,
     link,
-    amount: claims.inr,
+    amount: claims.amount,
+    currency: claims.currency,
+    amountInr: claims.inr,
     nodes: claims.nodes,
     taxInr: claims.taxInr,
     taxRate: claims.taxRate,
     expiresIn: 30 * 60,
-    });
+  });
 }
 
