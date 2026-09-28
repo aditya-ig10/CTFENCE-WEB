@@ -3,10 +3,40 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { createPortal } from "react-dom";
 import { GoogleAuthProvider, onAuthStateChanged, signInWithPopup, type User } from "firebase/auth";
+import { Download, FileText, LayoutDashboard, ShieldCheck, Users } from "lucide-react";
 import { firebaseEnabled, getFirebaseAuth } from "@/lib/firebase";
 
-function NavHoverLink({ href, label, active }: { href: string; label: string; active?: boolean }) {
+// Last-known sign-in, persisted locally on every auth change (cookie first,
+// localStorage as backup). The auth slot renders an identical neutral
+// placeholder on the server and first client pass — then swaps to the cached
+// hint instantly on mount — so launch never flashes the wrong control and
+// never hydration-mismatches. Firebase confirms a beat later.
+const AUTH_HINT_KEY = "cf-auth";
+function readAuthHint(): boolean {
+  try {
+    return (
+      localStorage.getItem(AUTH_HINT_KEY) === "1" ||
+      document.cookie.split("; ").some((c) => c === "cf_auth=1")
+    );
+  } catch {
+    return false;
+  }
+}
+function writeAuthHint(on: boolean) {
+  try {
+    if (on) {
+      localStorage.setItem(AUTH_HINT_KEY, "1");
+      document.cookie = "cf_auth=1; path=/; max-age=31536000; SameSite=Lax";
+    } else {
+      localStorage.removeItem(AUTH_HINT_KEY);
+      document.cookie = "cf_auth=; path=/; max-age=0; SameSite=Lax";
+    }
+  } catch {}
+}
+
+function NavHoverLink({ href, label, active, icon }: { href: string; label: string; active?: boolean; icon?: React.ReactNode }) {
   const isActive = active ?? false;
   return (
     <Link
@@ -14,6 +44,7 @@ function NavHoverLink({ href, label, active }: { href: string; label: string; ac
       style={{
         display: "inline-flex",
         alignItems: "center",
+        gap: 6,
         padding: "0.35rem 0.75rem",
         borderRadius: 999,
         color: isActive ? "var(--white)" : "var(--ink3)",
@@ -27,6 +58,7 @@ function NavHoverLink({ href, label, active }: { href: string; label: string; ac
         transition: "background 0.2s ease, color 0.2s ease",
       }}
     >
+      {icon}
       {label}
     </Link>
   );
@@ -40,6 +72,7 @@ function NavDashboardLink({ href, label, active }: { href: string; label: string
       style={{
         display: "inline-flex",
         alignItems: "center",
+        gap: 6,
         padding: "0.6rem 1.35rem",
         borderRadius: 999,
         color: isActive ? "white" : "#ef4444",
@@ -79,6 +112,7 @@ function NavDashboardLink({ href, label, active }: { href: string; label: string
         e.currentTarget.style.transform = "translateY(0)";
       }}
     >
+      <LayoutDashboard size={12} strokeWidth={2} aria-hidden="true" />
       {label}
     </Link>
   );
@@ -90,6 +124,14 @@ export default function Navbar() {
   const [dark, setDark] = useState(false);
   const [user, setUser] = useState<User | null>(null);
   const [menuOpen, setMenuOpen] = useState(false);
+  // Cached sign-in paints instantly; Firebase confirms a beat later.
+  const [authedHint] = useState(readAuthHint);
+  const [authLive, setAuthLive] = useState(false);
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   useEffect(() => {
     const onScroll = () => {
@@ -115,7 +157,11 @@ export default function Navbar() {
     if (!firebaseEnabled) return;
     const auth = getFirebaseAuth();
     if (!auth) return;
-    const unsub = onAuthStateChanged(auth, setUser);
+    const unsub = onAuthStateChanged(auth, (u) => {
+      setUser(u);
+      setAuthLive(true);
+      writeAuthHint(!!u);
+    });
     return () => unsub();
   }, []);
 
@@ -154,7 +200,12 @@ export default function Navbar() {
       if (e.key === "Escape") setMenuOpen(false);
     };
     window.addEventListener("keydown", onKey);
-    return () => window.removeEventListener("keydown", onKey);
+    const prev = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    return () => {
+      window.removeEventListener("keydown", onKey);
+      document.body.style.overflow = prev;
+    };
   }, [menuOpen]);
 
   const signIn = async () => {
@@ -162,9 +213,14 @@ export default function Navbar() {
     if (!auth) return;
     try {
       await signInWithPopup(auth, new GoogleAuthProvider());
+      writeAuthHint(true);
       setMenuOpen(false);
     } catch {}
   };
+
+  // Live Firebase state wins; before it resolves, trust the cached hint so
+  // launch never flashes the wrong control.
+  const showAuthed = !!user || (!authLive && authedHint);
 
   return (
     <>
@@ -220,10 +276,10 @@ export default function Navbar() {
               justifyContent: "center",
             }}
           >
-            <NavHoverLink href="/team" label="Team" active={isActive("/team")} />
-            <NavHoverLink href="/privacy" label="Privacy" active={isActive("/privacy")} />
-            <NavHoverLink href="/terms" label="Terms" active={isActive("/terms")} />
-            <NavHoverLink href="/downloads" label="Downloads" active={isActive("/downloads")} />
+            <NavHoverLink href="/team" label="Team" active={isActive("/team")} icon={<Users size={12} strokeWidth={2} aria-hidden="true" />} />
+            <NavHoverLink href="/privacy" label="Privacy" active={isActive("/privacy")} icon={<ShieldCheck size={12} strokeWidth={2} aria-hidden="true" />} />
+            <NavHoverLink href="/terms" label="Terms" active={isActive("/terms")} icon={<FileText size={12} strokeWidth={2} aria-hidden="true" />} />
+            <NavHoverLink href="/downloads" label="Downloads" active={isActive("/downloads")} icon={<Download size={12} strokeWidth={2} aria-hidden="true" />} />
           </div>
 
           <div className="nav-actions" style={{ display: "flex", alignItems: "center", gap: "0.9rem" }}>
@@ -301,7 +357,19 @@ export default function Navbar() {
             </Link>
             </span>
             <span className="nav-action-primary" style={{ display: "inline-flex", alignItems: "center" }}>
-            {user ? (
+            {!mounted ? (
+              <span
+                aria-hidden="true"
+                style={{
+                  display: "inline-flex",
+                  width: 118,
+                  height: 33,
+                  borderRadius: 999,
+                  border: "1px solid var(--rule)",
+                  background: "var(--off)",
+                }}
+              />
+            ) : showAuthed ? (
               <NavDashboardLink href="/dashboard" label="Dashboard" active={isActive("/dashboard")} />
             ) : (
               firebaseEnabled && (
@@ -350,30 +418,49 @@ export default function Navbar() {
             </button>
           </div>
         </div>
-        {menuOpen && (
-          <div className="nav-sheet" role="dialog" aria-label="Site menu">
-            {[
-              { href: "/team", label: "Team" },
-              { href: "/privacy", label: "Privacy" },
-              { href: "/terms", label: "Terms" },
-              { href: "/downloads", label: "Downloads" },
-            ].map((l) => (
-              <Link
-                key={l.href}
-                href={l.href}
+        {menuOpen && createPortal(
+          <div className="nav-sheet" role="dialog" aria-modal="true" aria-label="Site menu">
+            <div className="nav-sheet-top">
+              <span className="nav-sheet-eyebrow">{"// menu"}</span>
+              <button
+                type="button"
+                className="nav-sheet-close"
                 onClick={() => setMenuOpen(false)}
-                className={isActive(l.href) ? "nav-sheet-link nav-sheet-link-active" : "nav-sheet-link"}
+                aria-label="Close menu"
               >
-                {l.label}
-              </Link>
-            ))}
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
+                  <path d="M18 6L6 18M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+            <nav className="nav-sheet-links" aria-label="Primary">
+              {[
+                { href: "/team", label: "Team", icon: <Users size={20} strokeWidth={1.8} aria-hidden="true" /> },
+                { href: "/privacy", label: "Privacy", icon: <ShieldCheck size={20} strokeWidth={1.8} aria-hidden="true" /> },
+                { href: "/terms", label: "Terms", icon: <FileText size={20} strokeWidth={1.8} aria-hidden="true" /> },
+                { href: "/downloads", label: "Downloads", icon: <Download size={20} strokeWidth={1.8} aria-hidden="true" /> },
+              ].map((l, i) => (
+                <Link
+                  key={l.href}
+                  href={l.href}
+                  onClick={() => setMenuOpen(false)}
+                  className={isActive(l.href) ? "nav-sheet-link nav-sheet-link-active" : "nav-sheet-link"}
+                  style={{ animationDelay: `${0.05 + i * 0.05}s` }}
+                >
+                  <span className="nav-sheet-index">{String(i + 1).padStart(2, "0")}</span>
+                  <span className="nav-sheet-icon">{l.icon}</span>
+                  <span>{l.label}</span>
+                  <span className="nav-sheet-arrow" aria-hidden="true">→</span>
+                </Link>
+              ))}
+            </nav>
             <div className="nav-sheet-actions">
               <Link href="/downloads" onClick={() => setMenuOpen(false)} className="nav-sheet-download">
-                Download
+                <Download size={15} strokeWidth={2} aria-hidden="true" /> Download
               </Link>
-              {user ? (
+              {showAuthed ? (
                 <Link href="/dashboard" onClick={() => setMenuOpen(false)} className="nav-sheet-secondary">
-                  Dashboard →
+                  <LayoutDashboard size={15} strokeWidth={2} aria-hidden="true" /> Dashboard →
                 </Link>
               ) : (
                 firebaseEnabled && (
@@ -383,7 +470,9 @@ export default function Navbar() {
                 )
               )}
             </div>
-          </div>
+            <div className="nav-sheet-foot">Context Fence · Stops AI agents leaking secrets</div>
+          </div>,
+          document.body
         )}
       </nav>
     </>
